@@ -51,6 +51,8 @@ data class StudySummary(
     val streak: Int,
     val totalAnswered: Int,
     val totalCorrect: Int,
+    /** 今天到期需要复习的单词数。 */
+    val dueReview: Int,
     val days: List<DailyStat>,
 )
 

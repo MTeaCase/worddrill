@@ -69,7 +69,10 @@ class ReportActivity : BaseActivity() {
         binding.tvStreak.text = "${summary.streak} 天"
         binding.tvTotal.text = "${summary.totalAnswered} 题"
         val accuracy = if (summary.totalAnswered == 0) 0 else summary.totalCorrect * 100 / summary.totalAnswered
-        binding.tvAccuracy.text = "累计正确率 $accuracy% · 答对 ${summary.totalCorrect} / ${summary.totalAnswered} 题"
+        binding.tvAccuracy.text = buildString {
+            append("累计正确率 $accuracy% · 答对 ${summary.totalCorrect} / ${summary.totalAnswered} 题")
+            append("\n待复习 ${summary.dueReview} 词（按遗忘曲线安排）")
+        }
         binding.chart.setStats(summary.days, goal)
     }
 

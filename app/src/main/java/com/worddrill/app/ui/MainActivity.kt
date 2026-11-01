@@ -79,6 +79,7 @@ class MainActivity : BaseActivity() {
         binding.cardSpell.setOnClickListener { selectMode(PracticeMode.ZH_EN_SPELL) }
 
         binding.btnStart.setOnClickListener { startPractice() }
+        binding.btnReview.setOnClickListener { startReview() }
         binding.cardHero.setOnClickListener { startActivity(ReportActivity.intent(this)) }
         binding.btnWordList.setOnClickListener { openList(WordFilter.ALL) }
         binding.btnStarred.setOnClickListener { openList(WordFilter.STARRED) }
@@ -161,7 +162,15 @@ class MainActivity : BaseActivity() {
             val practiced = repo.practicedCount(book.id)
             val blocked = repo.blockedCount(book.id)
             val summary = repo.studySummary(7, Settings.dailyGoal(this@MainActivity))
-            BookStats(range, practiced, blocked, summary.todayAnswered, summary.dailyGoal, summary.streak)
+            BookStats(
+                range,
+                practiced,
+                blocked,
+                summary.todayAnswered,
+                summary.dailyGoal,
+                summary.streak,
+                summary.dueReview,
+            )
         }) { result ->
             result.onSuccess { stats ->
                 if (isFinishing || isDestroyed) return@onSuccess
@@ -190,6 +199,12 @@ class MainActivity : BaseActivity() {
                 binding.tvBookInfo.text = buildString {
                     append("共 $total 词")
                     if (stats.blocked > 0) append(" · 屏蔽 ${stats.blocked}")
+                }
+                binding.btnReview.isEnabled = stats.dueReview > 0
+                binding.btnReview.text = if (stats.dueReview > 0) {
+                    "复习今日到期的 ${stats.dueReview} 个单词"
+                } else {
+                    getString(R.string.review_none)
                 }
                 binding.tvRangeHint.text = buildString {
                     if (max > 0) {
@@ -263,6 +278,35 @@ class MainActivity : BaseActivity() {
         )
     }
 
+    /** 取出今天到期的单词，选个模式直接开练（间隔重复复习）。 */
+    private fun startReview() {
+        Bg.run({ repo.dueReviewWords(200) }) { result ->
+            result.onSuccess { words ->
+                if (isFinishing || isDestroyed) return@onSuccess
+                if (words.isEmpty()) {
+                    toast(getString(R.string.review_none))
+                    loadBooks()
+                    return@onSuccess
+                }
+                val labels = PracticeMode.entries.map { it.label }.toTypedArray()
+                AlertDialog.Builder(this)
+                    .setTitle("复习 ${words.size} 个单词")
+                    .setItems(labels) { _, which ->
+                        startActivity(
+                            PracticeActivity.retryIntent(
+                                context = this,
+                                mode = PracticeMode.entries[which],
+                                bookName = "复习",
+                                wordIds = words.map { it.id }.toLongArray(),
+                            ),
+                        )
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }.onFailure { toast("读取复习列表失败：${it.message}") }
+        }
+    }
+
     private fun openList(filter: WordFilter) {
         val book = books.firstOrNull { it.id == selectedBookId } ?: run {
             toast("还没有可用的词库")
@@ -298,6 +342,7 @@ class MainActivity : BaseActivity() {
         val todayAnswered: Int,
         val dailyGoal: Int,
         val streak: Int,
+        val dueReview: Int,
     )
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

@@ -250,12 +250,59 @@ class WordRepository(context: Context) {
             streak = StreakCalc.current(today(), studied),
             totalAnswered = totals.first,
             totalCorrect = totals.second,
+            dueReview = dueReviewCount(),
             days = stats,
         )
     }
 
     fun clearDaily() {
         db.delete("daily", null, null)
+    }
+
+    // ---------- 复习（间隔重复） ----------
+
+    /** 今天到期、且没被屏蔽的单词数。 */
+    fun dueReviewCount(now: Long = System.currentTimeMillis()): Int =
+        db.rawQuery(
+            """
+            SELECT COUNT(*) FROM review r
+            JOIN words w ON w._id = r.word_id
+            WHERE r.due_at <= ? AND w.blocked = 0
+            """.trimIndent(),
+            arrayOf(now.toString()),
+        ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+
+    /** 到期单词，按「等级低（更不熟）优先、到期早优先」排序。 */
+    fun dueReviewWords(limit: Int = 100, now: Long = System.currentTimeMillis()): List<Word> {
+        val sql =
+            """
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            FROM review r JOIN words w ON w._id = r.word_id
+            WHERE r.due_at <= ? AND w.blocked = 0
+            ORDER BY r.level ASC, r.due_at ASC
+            LIMIT $limit
+            """.trimIndent()
+        return db.rawQuery(sql, arrayOf(now.toString())).use { c -> c.toWords() }
+    }
+
+    /** 未来若干天每天到期的复习量，用于报告页提示。 */
+    fun reviewForecast(days: Int, now: Long = System.currentTimeMillis()): List<Int> {
+        if (days <= 0) return emptyList()
+        val counts = IntArray(days)
+        val end = now + days * ReviewScheduler.DAY_MS
+        db.rawQuery(
+            """
+            SELECT r.due_at FROM review r JOIN words w ON w._id = r.word_id
+            WHERE r.due_at > ? AND r.due_at <= ? AND w.blocked = 0
+            """.trimIndent(),
+            arrayOf(now.toString(), end.toString()),
+        ).use { c ->
+            while (c.moveToNext()) {
+                val index = ((c.getLong(0) - now) / ReviewScheduler.DAY_MS).toInt()
+                if (index in 0 until days) counts[index]++
+            }
+        }
+        return counts.toList()
     }
 
     fun setStar(wordId: Long, starred: Boolean) {
@@ -348,6 +395,19 @@ class WordRepository(context: Context) {
                           COALESCE((SELECT correct FROM daily WHERE date = ?), 0) + ?)
                 """.trimIndent(),
                 arrayOf<Any>(day, day, day, if (correct) 1 else 0),
+            )
+            val (currentLevel, currentLapses) = db.rawQuery(
+                "SELECT level, lapses FROM review WHERE word_id = ?",
+                arrayOf(wordId.toString()),
+            ).use { c ->
+                if (c.moveToFirst()) c.getInt(0) to c.getInt(1) else 0 to 0
+            }
+            val nextLevel = ReviewScheduler.nextLevel(currentLevel, correct)
+            val dueAt = ReviewScheduler.nextDueAt(currentLevel, correct, now)
+            val lapses = if (correct) currentLapses else currentLapses + 1
+            db.execSQL(
+                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses) VALUES(?,?,?,?,?)",
+                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses),
             )
             db.setTransactionSuccessful()
         } finally {

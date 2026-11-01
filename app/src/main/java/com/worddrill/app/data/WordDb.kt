@@ -74,6 +74,18 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
             )
             """.trimIndent(),
         )
+        db.execSQL(
+            """
+            CREATE TABLE review(
+                word_id INTEGER PRIMARY KEY REFERENCES words(_id) ON DELETE CASCADE,
+                level INTEGER NOT NULL DEFAULT 0,
+                due_at INTEGER NOT NULL,
+                last_at INTEGER NOT NULL,
+                lapses INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX idx_review_due ON review(due_at)")
         seedBuiltin(db)
     }
 
@@ -94,6 +106,28 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
                 """.trimIndent(),
             )
             backfillExamples(db)
+        }
+        if (oldVersion < 4) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS review(
+                    word_id INTEGER PRIMARY KEY REFERENCES words(_id) ON DELETE CASCADE,
+                    level INTEGER NOT NULL DEFAULT 0,
+                    due_at INTEGER NOT NULL,
+                    last_at INTEGER NOT NULL,
+                    lapses INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent(),
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_review_due ON review(due_at)")
+            // 老用户练过的词全部进入复习队列（立即到期），保证升级后就有内容可复习
+            db.execSQL(
+                """
+                INSERT OR IGNORE INTO review(word_id, level, due_at, last_at, lapses)
+                SELECT p.word_id, 0, ?, p.last_at, 0 FROM practice_log p
+                """.trimIndent(),
+                arrayOf<Any>(System.currentTimeMillis()),
+            )
         }
     }
 
@@ -182,7 +216,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 3
+        const val VERSION = 4
         const val BUILTIN_NAME = "高中 3500 词"
         private const val ASSET_NAME = "words3500.json"
         private const val EXAMPLES_ASSET = "examples.json"

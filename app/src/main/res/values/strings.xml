@@ -17,6 +17,8 @@
     <string name="mode_spell_desc">看中文，自己拼写英文</string>
 
     <string name="start_practice">开始练习</string>
+    <string name="action_review">复习今日到期的单词</string>
+    <string name="review_none">今天没有待复习的单词</string>
     <string name="starred_words">星标词汇</string>
     <string name="mistake_book">错题本</string>
 
