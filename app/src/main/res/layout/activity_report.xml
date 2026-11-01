@@ -212,6 +212,13 @@
                 android:minHeight="48dp"
                 android:text="@string/setting_tts"
                 android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestTts"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/action_test_tts" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

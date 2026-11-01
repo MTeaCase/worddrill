@@ -35,6 +35,7 @@ class PracticeActivity : BaseActivity() {
     private var answered = false
     private val records = mutableListOf<AnswerRecord>()
     private var pendingNext: Runnable? = null
+    private var ttsWarned = false
 
     private val optionRows get() = listOf(binding.option1, binding.option2, binding.option3, binding.option4)
     private val optionTexts
@@ -157,10 +158,10 @@ class PracticeActivity : BaseActivity() {
         binding.tvPromptLabel.text = if (mode == PracticeMode.EN_ZH) "英 文" else "中 文 释 义"
         binding.tvPrompt.text = item.prompt
         binding.tvPrompt.setOnClickListener {
-            if (mode == PracticeMode.EN_ZH) Tts.speak(this, item.word.text)
+            if (mode == PracticeMode.EN_ZH) speakWord(item.word.text)
         }
         if (mode == PracticeMode.EN_ZH && Settings.ttsEnabled(this)) {
-            Tts.speak(this, item.word.text)
+            speakWord(item.word.text)
         }
         binding.feedbackCard.visibility = View.GONE
         binding.btnNext.visibility = View.GONE
@@ -265,7 +266,16 @@ class PracticeActivity : BaseActivity() {
         } else {
             "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}$example"
         }
-        Tts.speak(this, item.word.text)
+        speakWord(item.word.text)
+    }
+
+    private fun speakWord(text: String) {
+        Tts.speak(this, text) { reason ->
+            if (!ttsWarned) {
+                ttsWarned = true
+                toast(reason)
+            }
+        }
     }
 
     private fun persist(correct: Boolean, userAnswer: String) {

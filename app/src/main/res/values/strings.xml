@@ -71,6 +71,7 @@
     <string name="report_week">近 7 天练习量</string>
     <string name="action_set_goal">设置每日目标</string>
     <string name="setting_tts">练习时自动发音</string>
+    <string name="action_test_tts">测试发音</string>
     <string name="action_clear_log">清空练习记录</string>
 
     <!-- 桌面小组件 -->

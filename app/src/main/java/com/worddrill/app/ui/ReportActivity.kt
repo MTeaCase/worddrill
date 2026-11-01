@@ -10,6 +10,7 @@ import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityReportBinding
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
+import com.worddrill.app.util.Tts
 import com.worddrill.app.util.WidgetUpdater
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -30,9 +31,11 @@ class ReportActivity : BaseActivity() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         binding.btnGoal.setOnClickListener { askGoal() }
+        binding.btnTestTts.setOnClickListener { testTts() }
         binding.swTts.isChecked = Settings.ttsEnabled(this)
         binding.swTts.setOnCheckedChangeListener { _, checked ->
             Settings.setTtsEnabled(this, checked)
+            if (checked) Tts.speak(this, "hello")
         }
 
         load()
@@ -96,6 +99,27 @@ class ReportActivity : BaseActivity() {
             }
             .setNegativeButton("取消", null)
             .show()
+    }
+
+    private fun testTts() {
+        var error: String? = null
+        Tts.speak(this, "hello, this is a test") { error = it }
+        binding.root.postDelayed({
+            if (isFinishing || isDestroyed) return@postDelayed
+            val message = buildString {
+                if (error != null) {
+                    append("❌ ").append(error).append("\n\n")
+                } else {
+                    append("✅ 已调用系统语音引擎；能听到声音说明正常。\n\n")
+                }
+                append(Tts.diagnose(this@ReportActivity))
+            }
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.action_test_tts)
+                .setMessage(message)
+                .setPositiveButton("好", null)
+                .show()
+        }, 900)
     }
 
     private fun toast(message: String) {

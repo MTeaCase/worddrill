@@ -33,6 +33,7 @@ class DictionaryActivity : BaseActivity() {
     private var bookNames: Map<Long, String> = emptyMap()
     private var items: List<Word> = emptyList()
     private var searchSeq = 0
+    private var ttsWarned = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,7 +136,7 @@ class DictionaryActivity : BaseActivity() {
         AlertDialog.Builder(this)
             .setTitle(word.text)
             .setMessage(message)
-            .setPositiveButton(R.string.action_pronounce) { _, _ -> Tts.speak(this, word.text) }
+            .setPositiveButton(R.string.action_pronounce) { _, _ -> speakWord(word.text) }
             .setNeutralButton(R.string.action_practice_this) { _, _ ->
                 startActivity(
                     PracticeActivity.retryIntent(
@@ -158,6 +159,15 @@ class DictionaryActivity : BaseActivity() {
                 items = updated
                 adapter.submit(updated)
             }.onFailure { toast("操作失败：${it.message}") }
+        }
+    }
+
+    private fun speakWord(text: String) {
+        Tts.speak(this, text) { reason ->
+            if (!ttsWarned) {
+                ttsWarned = true
+                toast(reason)
+            }
         }
     }
 

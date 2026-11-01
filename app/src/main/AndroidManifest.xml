@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Android 11+ 包可见性：不声明的话拿不到语音引擎列表，部分设备 TTS 无法初始化 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
