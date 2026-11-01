@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">单词练习</string>
+
+    <string name="title_main">单词练习</string>
+    <string name="title_practice">练习</string>
+    <string name="title_result">练习结果</string>
+    <string name="title_books">词库管理</string>
+    <string name="title_import">导入词汇表</string>
+
+    <string name="mode_en_zh">英译汉</string>
+    <string name="mode_zh_en">汉译英</string>
+    <string name="mode_spell">单词默写</string>
+
+    <string name="mode_en_zh_desc">看英文，从四个中文释义中选</string>
+    <string name="mode_zh_en_desc">看中文，从四个英文单词中选</string>
+    <string name="mode_spell_desc">看中文，自己拼写英文</string>
+
+    <string name="start_practice">开始练习</string>
+    <string name="starred_words">星标词汇</string>
+    <string name="mistake_book">错题本</string>
+
+    <string name="label_book">词库</string>
+    <string name="label_mode">练习方式</string>
+    <string name="label_count">每次题量</string>
+    <string name="label_range">练习范围（词库索引）</string>
+    <string name="range_start">起始</string>
+    <string name="range_end">结束</string>
+    <string name="allow_repeat">允许重复抽到已练过的单词</string>
+    <string name="empty_range_hint">留空表示整本词库</string>
+
+    <string name="action_next">下一题</string>
+    <string name="action_submit">提交</string>
+    <string name="action_retry_wrong">重练错题</string>
+    <string name="action_back_home">完成</string>
+    <string name="action_practice_these">练习这些单词</string>
+    <string name="action_import">导入自组词汇库</string>
+    <string name="action_paste">从剪贴板粘贴</string>
+    <string name="action_preview">解析预览</string>
+    <string name="action_save">保存导入</string>
+    <string name="action_delete">删除</string>
+    <string name="action_star">星标</string>
+    <string name="action_unstar">取消星标</string>
+
+    <string name="import_pick_file">选择 Markdown 文件</string>
+    <string name="import_file_hint">支持 .md / .markdown / .txt，自动识别 UTF-8 与 GBK 编码</string>
+    <string name="import_or_paste">或者直接粘贴表格内容</string>
+    <string name="import_phrase_tip">尽量不要导入词组！就算导入词组，也不要填词性。</string>
+
+    <!-- 屏蔽 -->
+    <string name="title_blocked">已屏蔽单词</string>
+    <string name="blocked_words">已屏蔽单词</string>
+    <string name="action_block">屏蔽</string>
+    <string name="action_unblock">恢复</string>
+    <string name="action_unblock_all">全部恢复</string>
+    <string name="hint_block">长按单词可屏蔽；被屏蔽的词不参与练习，索引会自动重排</string>
+    <string name="hint_unblock">点击单词即可恢复</string>
+    <string name="label_word_list">词表</string>
+
+    <!-- 关于 -->
+    <string name="about">关于</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_version_placeholder">版本 1.0.0</string>
+    <string name="about_summary">看单词、记释义、练拼写\n内置高中 3500 词，也可导入自己的词汇表</string>
+    <string name="about_developer_label">开发者</string>
+    <string name="about_developer_value">2816 .</string>
+    <string name="about_vocab_label">词库</string>
+    <string name="about_vocab_value">内置「高中 3500 词」，支持导入 Markdown 词汇表</string>
+    <string name="about_data_label">数据</string>
+    <string name="about_data_value">全部保存在本机，不联网、不收集个人信息</string>
+    <string name="about_note">仅供学习交流使用，不应将本软件用于商业用途。默认3500词库来自github开源项目，准确性不100%保证。</string>
+</resources>
