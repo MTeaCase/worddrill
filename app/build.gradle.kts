@@ -15,7 +15,27 @@ android {
         versionName = "1.1.0"
     }
 
+    /**
+     * 固定调试签名。
+     *
+     * GitHub Actions 的 runner 每次都是全新的，AGP 会临时生成一个 debug.keystore，
+     * 导致每次 CI 打出来的 APK 签名都不一样，无法覆盖安装（手机上会提示「包名不一致」）。
+     * 这里把一把专门用于 debug 的密钥提交进仓库，保证所有构建签名一致。
+     * 注意：这只是 debug 密钥，不要用它给正式版签名。
+     */
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/worddrill-debug.p12")
+            storePassword = "android"
+            keyAlias = "worddrill"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
