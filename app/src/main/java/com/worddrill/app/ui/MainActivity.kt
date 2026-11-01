@@ -16,6 +16,8 @@ import com.worddrill.app.databinding.ActivityMainBinding
 import com.worddrill.app.util.AboutConfig
 import com.worddrill.app.util.AboutRow
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.Settings
+import com.worddrill.app.util.WidgetUpdater
 
 class MainActivity : BaseActivity() {
 
@@ -53,6 +55,16 @@ class MainActivity : BaseActivity() {
                     true
                 }
 
+                R.id.action_dictionary -> {
+                    startActivity(DictionaryActivity.intent(this))
+                    true
+                }
+
+                R.id.action_report -> {
+                    startActivity(ReportActivity.intent(this))
+                    true
+                }
+
                 else -> false
             }
         }
@@ -67,6 +79,7 @@ class MainActivity : BaseActivity() {
         binding.cardSpell.setOnClickListener { selectMode(PracticeMode.ZH_EN_SPELL) }
 
         binding.btnStart.setOnClickListener { startPractice() }
+        binding.cardHero.setOnClickListener { startActivity(ReportActivity.intent(this)) }
         binding.btnWordList.setOnClickListener { openList(WordFilter.ALL) }
         binding.btnStarred.setOnClickListener { openList(WordFilter.STARRED) }
         binding.btnMistakes.setOnClickListener { openList(WordFilter.MISTAKES) }
@@ -80,6 +93,7 @@ class MainActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         loadBooks()
+        WidgetUpdater.refresh(this)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -146,7 +160,8 @@ class MainActivity : BaseActivity() {
             val range = repo.ordRange(book.id)
             val practiced = repo.practicedCount(book.id)
             val blocked = repo.blockedCount(book.id)
-            BookStats(range, practiced, blocked)
+            val summary = repo.studySummary(7, Settings.dailyGoal(this@MainActivity))
+            BookStats(range, practiced, blocked, summary.todayAnswered, summary.dailyGoal, summary.streak)
         }) { result ->
             result.onSuccess { stats ->
                 if (isFinishing || isDestroyed) return@onSuccess
@@ -158,6 +173,11 @@ class MainActivity : BaseActivity() {
                 binding.pbHero.max = maxOf(total, 1)
                 binding.pbHero.setProgressCompat(stats.practiced.coerceAtMost(total), true)
                 binding.tvHeroSub.text = buildString {
+                    if (stats.todayAnswered > 0 || stats.streak > 0) {
+                        append("今日 ${stats.todayAnswered}/${stats.dailyGoal} 题")
+                        if (stats.streak > 0) append(" · 连续 ${stats.streak} 天")
+                        append("\n")
+                    }
                     if (max > 0) {
                         append("索引 1 – $max · 还有 ${(total - stats.practiced).coerceAtLeast(0)} 词未练")
                     } else if (stats.blocked > 0) {
@@ -271,7 +291,14 @@ class MainActivity : BaseActivity() {
         AboutDialog.show(this)
     }
 
-    private data class BookStats(val range: IntRange?, val practiced: Int, val blocked: Int)
+    private data class BookStats(
+        val range: IntRange?,
+        val practiced: Int,
+        val blocked: Int,
+        val todayAnswered: Int,
+        val dailyGoal: Int,
+        val streak: Int,
+    )
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 

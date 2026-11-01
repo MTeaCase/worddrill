@@ -27,7 +27,17 @@
 
 完整协议文本见各组件仓库或其 LICENSE 文件。
 
-## 3. 图标
+## 3. 例句语料
+
+- 来源：[Tatoeba](https://tatoeba.org/) 英文—中文（普通话）句对，经 [ManyThings](https://www.manythings.org/anki/) 打包分发
+- 协议：CC-BY 2.0 FR（署名要求）
+- 本项目对原始数据做的修改：
+  - 按词表筛选出包含目标单词的短句（每条 6–80 字符），每个单词保留一条；
+  - 只保留英文原句与中文译文，丢弃 Tatoeba 的句子编号与贡献者信息；
+  - 生成 `app/src/main/assets/examples.json`（约 2850 个单词）。
+- 例句为社区贡献内容，可能存在翻译不准确或语境偏差，仅供参考。
+
+## 4. 图标
 
 `app/src/main/res/mipmap-*`、`drawable/ic_launcher_*`、`drawable/ic_logo.xml` 为本项目自制，
 由 `tools/make_icon.py` 与同名矢量图生成，随本项目 MIT 协议发布。

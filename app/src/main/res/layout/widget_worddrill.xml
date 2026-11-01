@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_widget"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="今日进度"
+        android:textColor="#7A83A6"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tvWidgetProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="0 / 30"
+        android:textColor="#1D2B6B"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <ProgressBar
+        android:id="@+id/pbWidget"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:max="30"
+        android:progress="0"
+        android:progressTint="#3F5BD9"
+        android:progressBackgroundTint="#DDE2F5" />
+
+    <TextView
+        android:id="@+id/tvWidgetStreak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="今天开始打卡"
+        android:textColor="#5B6172"
+        android:textSize="12sp" />
+</LinearLayout>

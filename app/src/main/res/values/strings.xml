@@ -57,6 +57,25 @@
     <string name="hint_unblock">点击单词即可恢复</string>
     <string name="label_word_list">词表</string>
 
+    <!-- 词典 -->
+    <string name="title_dictionary">词典</string>
+    <string name="dictionary_search_hint">搜索英文或中文释义</string>
+    <string name="action_pronounce">发音</string>
+    <string name="action_practice_this">练这个词</string>
+
+    <!-- 学习报告 -->
+    <string name="title_report">学习报告</string>
+    <string name="report_today">今日进度</string>
+    <string name="report_streak">连续打卡</string>
+    <string name="report_total">累计答题</string>
+    <string name="report_week">近 7 天练习量</string>
+    <string name="action_set_goal">设置每日目标</string>
+    <string name="setting_tts">练习时自动发音</string>
+    <string name="action_clear_log">清空练习记录</string>
+
+    <!-- 桌面小组件 -->
+    <string name="widget_description">今日练习进度与连续打卡天数</string>
+
     <!-- 关于 -->
     <string name="about">关于</string>
     <string name="about_version">版本 %1$s</string>

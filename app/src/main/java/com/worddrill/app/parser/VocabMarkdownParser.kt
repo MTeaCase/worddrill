@@ -1,10 +1,11 @@
 package com.worddrill.app.parser
 
-/** 一条词汇：英文、词性、中文释义。 */
+/** 一条词汇：英文、词性、中文释义，以及可选的例句（英文例句||中文翻译）。 */
 data class VocabEntry(
     val word: String,
     val pos: String,
     val meaning: String,
+    val example: String = "",
 )
 
 /**
@@ -39,23 +40,35 @@ object VocabMarkdownParser {
             val word: String
             val pos: String
             val meaning: String
+            val example: String
             when {
-                body.size >= 3 -> {
+                body.size >= 4 -> {
                     word = body[0]
                     pos = body[1]
                     meaning = body[2]
+                    example = body[3]
                 }
+
+                body.size == 3 -> {
+                    word = body[0]
+                    pos = body[1]
+                    meaning = body[2]
+                    example = ""
+                }
+
                 body.size == 2 -> {
                     word = body[0]
                     pos = ""
                     meaning = body[1]
+                    example = ""
                 }
+
                 else -> continue
             }
             if (!isValidWord(word) || meaning.isBlank()) continue
             val key = word.lowercase()
             if (out.containsKey(key)) continue
-            out[key] = VocabEntry(word = word, pos = pos, meaning = meaning)
+            out[key] = VocabEntry(word = word, pos = pos, meaning = meaning, example = example)
         }
         return out.values.toList()
     }

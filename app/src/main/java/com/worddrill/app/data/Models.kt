@@ -13,11 +13,46 @@ data class Word(
     val meaning: String,
     val starred: Boolean,
     val blocked: Boolean = false,
+    /** 例句，格式为「英文例句||中文翻译」；没有例句时为空串。 */
+    val example: String = "",
 ) {
     /** 展示用释义：词性 + 中文。 */
     val meaningWithPos: String
         get() = if (pos.isBlank()) meaning else "$pos $meaning"
+
+    val exampleEn: String
+        get() = example.substringBefore(SEP).trim()
+
+    val exampleZh: String
+        get() = example.substringAfter(SEP, "").trim()
+
+    val hasExample: Boolean
+        get() = exampleEn.isNotEmpty()
+
+    companion object {
+        const val SEP = "||"
+    }
 }
+
+/** 某一天的练习统计。date 为 yyyy-MM-dd。 */
+data class DailyStat(
+    val date: String,
+    val answered: Int,
+    val correct: Int,
+) {
+    val accuracy: Int
+        get() = if (answered <= 0) 0 else correct * 100 / answered
+}
+
+/** 首页 / 报告页用的汇总数据。 */
+data class StudySummary(
+    val todayAnswered: Int,
+    val dailyGoal: Int,
+    val streak: Int,
+    val totalAnswered: Int,
+    val totalCorrect: Int,
+    val days: List<DailyStat>,
+)
 
 data class Book(
     val id: Long,

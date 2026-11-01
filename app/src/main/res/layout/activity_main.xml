@@ -33,8 +33,12 @@
             android:paddingBottom="24dp">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardHero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/brand"
                 app:cardCornerRadius="22dp"
                 app:cardElevation="0dp">

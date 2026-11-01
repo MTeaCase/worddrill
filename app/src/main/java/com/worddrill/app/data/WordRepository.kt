@@ -5,6 +5,10 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import com.worddrill.app.parser.VocabEntry
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /**
  * 业务查询层。所有方法都会阻塞，调用方必须在后台线程使用。
@@ -95,7 +99,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM words w
             """.trimIndent(),
         )
@@ -126,7 +130,7 @@ class WordRepository(context: Context) {
         if (ids.isEmpty()) return emptyList()
         val placeholders = ids.joinToString(",") { "?" }
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
         val byId = db.rawQuery(sql, ids.map { it.toString() }.toTypedArray()).use { c ->
             c.toWords().associateBy { it.id }
         }
@@ -136,7 +140,7 @@ class WordRepository(context: Context) {
     fun mistakes(bookId: Long? = null): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, m.wrong
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
             FROM mistakes m JOIN words w ON w._id = m.word_id
             WHERE w.blocked = 0
             """.trimIndent(),
@@ -150,7 +154,7 @@ class WordRepository(context: Context) {
         val items = db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
                 while (c.moveToNext()) {
-                    add(MistakeItem(c.toWord(), c.getInt(8)))
+                    add(MistakeItem(c.toWord(), c.getInt(9)))
                 }
             }
         }
@@ -164,8 +168,94 @@ class WordRepository(context: Context) {
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
     fun allWords(limit: Int = 5000): List<Word> {
-        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 LIMIT $limit"
+        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
+    }
+
+    // ---------- 词典 ----------
+
+    /**
+     * 词典搜索：英文单词或中文释义都能搜，做 LIKE 模糊匹配。
+     * 排序依次是：完全匹配 > 前缀匹配 > 包含匹配，同档按词长与字母序。
+     */
+    fun searchWords(query: String, limit: Int = 300): List<Word> {
+        val q = query.trim()
+        if (q.isEmpty()) return emptyList()
+        val like = "%$q%"
+        val prefix = "$q%"
+        val sql =
+            """
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            FROM words w
+            WHERE w.blocked = 0 AND (w.word LIKE ? OR w.meaning LIKE ?)
+            ORDER BY CASE
+                        WHEN lower(w.word) = lower(?) THEN 0
+                        WHEN lower(w.word) LIKE lower(?) THEN 1
+                        ELSE 2
+                     END,
+                     length(w.word) ASC, w.word COLLATE NOCASE ASC
+            LIMIT $limit
+            """.trimIndent()
+        return db.rawQuery(sql, arrayOf(like, like, q, prefix)).use { c -> c.toWords() }
+    }
+
+    // ---------- 学习统计 ----------
+
+    fun today(): String = todayString()
+
+    fun dailyStats(days: Int): List<DailyStat> {
+        if (days <= 0) return emptyList()
+        val fmt = SimpleDateFormat(StreakCalc.DATE_FORMAT, Locale.US)
+        val keys = ArrayList<String>(days)
+        for (offset in days - 1 downTo 0) {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -offset)
+            keys.add(fmt.format(cal.time))
+        }
+        val map = HashMap<String, Pair<Int, Int>>()
+        db.rawQuery(
+            "SELECT date, answered, correct FROM daily WHERE date >= ?",
+            arrayOf(keys.first()),
+        ).use { c ->
+            while (c.moveToNext()) {
+                map[c.getString(0)] = c.getInt(1) to c.getInt(2)
+            }
+        }
+        return keys.map { key ->
+            val value = map[key]
+            DailyStat(key, value?.first ?: 0, value?.second ?: 0)
+        }
+    }
+
+    fun studySummary(days: Int, dailyGoal: Int): StudySummary {
+        val stats = dailyStats(days)
+        val studied: Set<String> = db.rawQuery(
+            "SELECT date FROM daily WHERE answered > 0",
+            null,
+        ).use { c ->
+            buildSet {
+                while (c.moveToNext()) add(c.getString(0))
+            }
+        }
+        val todayAnswered = stats.lastOrNull()?.answered ?: 0
+        val totals = db.rawQuery(
+            "SELECT COALESCE(SUM(answered), 0), COALESCE(SUM(correct), 0) FROM daily",
+            null,
+        ).use { c ->
+            if (c.moveToFirst()) c.getInt(0) to c.getInt(1) else 0 to 0
+        }
+        return StudySummary(
+            todayAnswered = todayAnswered,
+            dailyGoal = dailyGoal,
+            streak = StreakCalc.current(today(), studied),
+            totalAnswered = totals.first,
+            totalCorrect = totals.second,
+            days = stats,
+        )
+    }
+
+    fun clearDaily() {
+        db.delete("daily", null, null)
     }
 
     fun setStar(wordId: Long, starred: Boolean) {
@@ -200,7 +290,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM words w
             """.trimIndent(),
         )
@@ -250,6 +340,15 @@ class WordRepository(context: Context) {
                 """.trimIndent(),
                 arrayOf<Any>(wordId, wordId, now),
             )
+            val day = today()
+            db.execSQL(
+                """
+                INSERT OR REPLACE INTO daily(date, answered, correct)
+                VALUES(?, COALESCE((SELECT answered FROM daily WHERE date = ?), 0) + 1,
+                          COALESCE((SELECT correct FROM daily WHERE date = ?), 0) + ?)
+                """.trimIndent(),
+                arrayOf<Any>(day, day, day, if (correct) 1 else 0),
+            )
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
@@ -292,7 +391,7 @@ class WordRepository(context: Context) {
             var skipped = 0
             val exists = db.compileStatement("SELECT 1 FROM words WHERE book_id = ? AND lower(word) = lower(?) LIMIT 1")
             val insert = db.compileStatement(
-                "INSERT INTO words(book_id, ord, word, pos, meaning, starred, created_at) VALUES(?,?,?,?,?,0,?)",
+                "INSERT INTO words(book_id, ord, word, pos, meaning, example, starred, created_at) VALUES(?,?,?,?,?,?,0,?)",
             )
             val now = System.currentTimeMillis()
             for (entry in entries) {
@@ -311,7 +410,8 @@ class WordRepository(context: Context) {
                 insert.bindString(3, entry.word)
                 insert.bindString(4, entry.pos)
                 insert.bindString(5, entry.meaning)
-                insert.bindLong(6, now)
+                insert.bindString(6, entry.example.trim())
+                insert.bindLong(7, now)
                 insert.executeInsert()
                 added++
             }
@@ -345,6 +445,9 @@ class WordRepository(context: Context) {
             map
         }
 
+    private fun todayString(): String =
+        SimpleDateFormat(StreakCalc.DATE_FORMAT, Locale.US).format(Date())
+
     private fun practicedIds(): Set<Long> =
         db.rawQuery("SELECT word_id FROM practice_log", null).use { c ->
             buildSet {
@@ -361,6 +464,7 @@ class WordRepository(context: Context) {
         meaning = getString(5) ?: "",
         starred = getInt(6) == 1,
         blocked = getInt(7) == 1,
+        example = getString(8) ?: "",
     )
 
     private fun Cursor.toWords(): List<Word> = buildList {

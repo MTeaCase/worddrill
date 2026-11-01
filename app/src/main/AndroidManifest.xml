@@ -27,11 +27,28 @@
 
         <activity android:name=".ui.WordListActivity" />
 
+        <activity
+            android:name=".ui.DictionaryActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity android:name=".ui.ReportActivity" />
+
         <activity android:name=".ui.BookManageActivity" />
 
         <activity
             android:name=".ui.ImportActivity"
             android:windowSoftInputMode="adjustResize" />
+
+        <receiver
+            android:name=".ui.widget.WordDrillWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_worddrill_info" />
+        </receiver>
     </application>
 
 </manifest>

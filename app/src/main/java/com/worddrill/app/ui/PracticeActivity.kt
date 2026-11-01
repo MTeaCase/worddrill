@@ -19,6 +19,9 @@ import com.worddrill.app.databinding.ActivityPracticeBinding
 import com.worddrill.app.quiz.QuizEngine
 import com.worddrill.app.quiz.QuizItem
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.Settings
+import com.worddrill.app.util.Tts
+import com.worddrill.app.util.WidgetUpdater
 
 class PracticeActivity : BaseActivity() {
 
@@ -153,6 +156,12 @@ class PracticeActivity : BaseActivity() {
         binding.progressBar.setProgressCompat(index, true)
         binding.tvPromptLabel.text = if (mode == PracticeMode.EN_ZH) "英 文" else "中 文 释 义"
         binding.tvPrompt.text = item.prompt
+        binding.tvPrompt.setOnClickListener {
+            if (mode == PracticeMode.EN_ZH) Tts.speak(this, item.word.text)
+        }
+        if (mode == PracticeMode.EN_ZH && Settings.ttsEnabled(this)) {
+            Tts.speak(this, item.word.text)
+        }
         binding.feedbackCard.visibility = View.GONE
         binding.btnNext.visibility = View.GONE
         updateStar(item)
@@ -239,11 +248,24 @@ class PracticeActivity : BaseActivity() {
         binding.feedbackCard.visibility = View.VISIBLE
         binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
         binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
-        binding.tvFeedback.text = if (correct) {
-            "✓ 答对了\n${item.word.text} — ${item.word.meaningWithPos}"
+        val example = if (item.word.hasExample) {
+            buildString {
+                append("\n\n")
+                append(item.word.exampleEn)
+                if (item.word.exampleZh.isNotBlank()) {
+                    append("\n")
+                    append(item.word.exampleZh)
+                }
+            }
         } else {
-            "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}"
+            ""
         }
+        binding.tvFeedback.text = if (correct) {
+            "✓ 答对了\n${item.word.text} — ${item.word.meaningWithPos}$example"
+        } else {
+            "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}$example"
+        }
+        Tts.speak(this, item.word.text)
     }
 
     private fun persist(correct: Boolean, userAnswer: String) {
@@ -279,6 +301,7 @@ class PracticeActivity : BaseActivity() {
     }
 
     private fun finishSession() {
+        WidgetUpdater.refresh(this)
         startActivity(ResultActivity.intent(this, mode, bookName, records.toList()))
         finish()
     }

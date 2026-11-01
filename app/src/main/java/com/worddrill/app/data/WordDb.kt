@@ -39,6 +39,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
                 meaning TEXT NOT NULL,
                 starred INTEGER NOT NULL DEFAULT 0,
                 blocked INTEGER NOT NULL DEFAULT 0,
+                example TEXT NOT NULL DEFAULT '',
                 created_at INTEGER NOT NULL
             )
             """.trimIndent(),
@@ -64,6 +65,15 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
             )
             """.trimIndent(),
         )
+        db.execSQL(
+            """
+            CREATE TABLE daily(
+                date TEXT PRIMARY KEY,
+                answered INTEGER NOT NULL DEFAULT 0,
+                correct INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent(),
+        )
         seedBuiltin(db)
     }
 
@@ -72,7 +82,61 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE words ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0")
         }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE words ADD COLUMN example TEXT NOT NULL DEFAULT ''")
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS daily(
+                    date TEXT PRIMARY KEY,
+                    answered INTEGER NOT NULL DEFAULT 0,
+                    correct INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent(),
+            )
+            backfillExamples(db)
+        }
     }
+
+    /** 老版本升级上来时，给内置词库补上例句（自组词库不动）。 */
+    private fun backfillExamples(db: SQLiteDatabase) {
+        val examples = loadExamples() ?: return
+        val bookId = db.rawQuery("SELECT _id FROM books WHERE builtin = 1 LIMIT 1", null).use {
+            if (it.moveToFirst()) it.getLong(0) else -1L
+        }
+        if (bookId <= 0) return
+        val pending = ArrayList<Pair<Long, String>>()
+        db.rawQuery(
+            "SELECT _id, word FROM words WHERE book_id = ? AND example = ''",
+            arrayOf(bookId.toString()),
+        ).use { c ->
+            while (c.moveToNext()) {
+                val entry = examples.optJSONObject(c.getString(1).lowercase()) ?: continue
+                val en = entry.optString("en").trim()
+                val zh = entry.optString("zh").trim()
+                if (en.isNotEmpty()) pending.add(c.getLong(0) to "$en${com.worddrill.app.data.Word.SEP}$zh")
+            }
+        }
+        if (pending.isEmpty()) return
+        db.beginTransaction()
+        try {
+            val stmt = db.compileStatement("UPDATE words SET example = ? WHERE _id = ?")
+            for ((id, example) in pending) {
+                stmt.clearBindings()
+                stmt.bindString(1, example)
+                stmt.bindLong(2, id)
+                stmt.executeUpdateDelete()
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    private fun loadExamples(): org.json.JSONObject? = runCatching {
+        appContext.assets.open(EXAMPLES_ASSET).bufferedReader(Charsets.UTF_8).use {
+            org.json.JSONObject(it.readText())
+        }
+    }.getOrNull()
 
     private fun seedBuiltin(db: SQLiteDatabase) {
         val now = System.currentTimeMillis()
@@ -83,20 +147,31 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
         })
         val json = appContext.assets.open(ASSET_NAME).bufferedReader(Charsets.UTF_8).use { it.readText() }
         val arr = JSONArray(json)
+        val examples = loadExamples()
         db.beginTransaction()
         try {
             val stmt = db.compileStatement(
-                "INSERT INTO words(book_id, ord, word, pos, meaning, starred, created_at) VALUES(?,?,?,?,?,0,?)",
+                "INSERT INTO words(book_id, ord, word, pos, meaning, example, starred, created_at) VALUES(?,?,?,?,?,?,0,?)",
             )
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
+                val text = o.getString("w")
+                val entry = examples?.optJSONObject(text.lowercase())
+                val example = if (entry != null) {
+                    val en = entry.optString("en").trim()
+                    val zh = entry.optString("zh").trim()
+                    if (en.isEmpty()) "" else "$en${Word.SEP}$zh"
+                } else {
+                    ""
+                }
                 stmt.clearBindings()
                 stmt.bindLong(1, bookId)
                 stmt.bindLong(2, (i + 1).toLong())
-                stmt.bindString(3, o.getString("w"))
+                stmt.bindString(3, text)
                 stmt.bindString(4, o.optString("pos", ""))
                 stmt.bindString(5, o.getString("m"))
-                stmt.bindLong(6, now)
+                stmt.bindString(6, example)
+                stmt.bindLong(7, now)
                 stmt.executeInsert()
             }
             db.setTransactionSuccessful()
@@ -107,8 +182,9 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 2
+        const val VERSION = 3
         const val BUILTIN_NAME = "高中 3500 词"
         private const val ASSET_NAME = "words3500.json"
+        private const val EXAMPLES_ASSET = "examples.json"
     }
 }
