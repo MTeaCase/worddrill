@@ -54,7 +54,7 @@ class DictionaryAndStatsTest {
     @Test
     fun builtinWordsCarryExampleSentences() {
         val withExample = repo.allWords().count { it.hasExample }
-        assertTrue("内置词库应带上例句，实际 $withExample 条", withExample > 1000)
+        assertTrue("内置词库应基本全覆盖例句，实际 $withExample 条", withExample > 3700)
         val sample = repo.allWords().first { it.hasExample }
         assertTrue(sample.exampleEn.isNotBlank())
         assertTrue(sample.exampleZh.isNotBlank())

@@ -124,10 +124,13 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
             db.execSQL(
                 """
                 INSERT OR IGNORE INTO review(word_id, level, due_at, last_at, lapses)
-                SELECT p.word_id, 0, ?, p.last_at, 0 FROM practice_log p
+                SELECT p.word_id, 0, p.last_at, p.last_at, 0 FROM practice_log p
                 """.trimIndent(),
-                arrayOf<Any>(System.currentTimeMillis()),
             )
+        }
+        if (oldVersion < 5) {
+            // 例句资产扩量后，把内置词库里还没有例句的词补上
+            backfillExamples(db)
         }
     }
 
@@ -216,7 +219,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 4
+        const val VERSION = 5
         const val BUILTIN_NAME = "高中 3500 词"
         private const val ASSET_NAME = "words3500.json"
         private const val EXAMPLES_ASSET = "examples.json"
