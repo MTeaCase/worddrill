@@ -98,11 +98,8 @@ object Tts {
 
     fun isReady(): Boolean = ready
 
-    /** 排查用：返回引擎列表与语言可用性描述。 */
+    /** 排查用：返回语言可用性与初始化状态描述。 */
     fun diagnose(context: Context): String {
-        val app = context.applicationContext
-        val engines = runCatching { TextToSpeech.getEngines(app) }.getOrNull()
-        val names = engines?.mapNotNull { it.name }?.joinToString(", ").orEmpty()
         val langCode = runCatching { engine?.isLanguageAvailable(Locale.US) }.getOrNull() ?: Int.MIN_VALUE
         val langText = when (langCode) {
             TextToSpeech.LANG_AVAILABLE -> "可用"
@@ -114,9 +111,7 @@ object Tts {
             else -> "未知($langCode)"
         }
         return buildString {
-            append("已安装语音引擎：")
-            append(if (names.isBlank()) "无" else names)
-            append("\n英语语音：")
+            append("英语语音：")
             append(langText)
             append("\n初始化状态：")
             append(
@@ -127,6 +122,7 @@ object Tts {
                     else -> "初始化中"
                 },
             )
+            append("\n提示：若显示「缺少英语语音数据」，请到 系统设置 → 文字转语音(TTS) → 安装英语语音包")
         }
     }
 
