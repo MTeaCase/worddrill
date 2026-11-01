@@ -82,10 +82,10 @@
     <!-- 关于 -->
     <string name="about">关于</string>
     <string name="about_version">版本 %1$s</string>
-    <string name="about_version_placeholder">版本 1.0.0</string>
+    <string name="about_version_placeholder">版本 1.1.0</string>
     <string name="about_summary">看单词、记释义、练拼写\n内置高中 3500 词，也可导入自己的词汇表</string>
     <string name="about_developer_label">开发者</string>
-    <string name="about_developer_value">2816 .</string>
+    <string name="about_developer_value">2816zlt mtc</string>
     <string name="about_vocab_label">词库</string>
     <string name="about_vocab_value">内置「高中 3500 词」，支持导入 Markdown 词汇表</string>
     <string name="about_data_label">数据</string>

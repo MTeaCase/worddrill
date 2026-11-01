@@ -33,13 +33,13 @@ class AboutDialogTest {
         assertNotNull("关于对话框没有弹出", dialog)
 
         assertEquals("单词练习", dialog.findViewById<TextView>(R.id.tvAboutName).text.toString())
-        assertEquals("版本 1.0.0", dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString())
+        assertEquals("版本 1.1.0", dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString())
 
         val rows = dialog.findViewById<LinearLayout>(R.id.rowsContainer)
         assertEquals(3, rows.childCount)
         val developer = rows.getChildAt(0)
         assertEquals("开发者", developer.findViewById<TextView>(R.id.tvRowLabel).text.toString())
-        assertEquals("2816 .", developer.findViewById<TextView>(R.id.tvRowValue).text.toString())
+        assertEquals("2816zlt mtc", developer.findViewById<TextView>(R.id.tvRowValue).text.toString())
         val vocab = rows.getChildAt(1)
         assertEquals("词库", vocab.findViewById<TextView>(R.id.tvRowLabel).text.toString())
 

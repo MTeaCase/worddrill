@@ -12,6 +12,7 @@
         style="@style/Toolbar.WordDrill"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        app:navigationIcon="@drawable/ic_arrow_back"
         app:title="@string/title_report" />
 
     <ScrollView
