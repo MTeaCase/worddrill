@@ -5,7 +5,7 @@ Android 单词练习 App：**英译汉 / 汉译英 / 单词默写**三种模式�
 
 Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 
-## 截图
+## 1.0截图（现在已经1.1了）
 
 | 首页 | 英译汉 |
 |---|---|
