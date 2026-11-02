@@ -99,7 +99,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
             FROM words w
             """.trimIndent(),
         )
@@ -130,7 +130,7 @@ class WordRepository(context: Context) {
         if (ids.isEmpty()) return emptyList()
         val placeholders = ids.joinToString(",") { "?" }
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
         val byId = db.rawQuery(sql, ids.map { it.toString() }.toTypedArray()).use { c ->
             c.toWords().associateBy { it.id }
         }
@@ -140,7 +140,7 @@ class WordRepository(context: Context) {
     fun mistakes(bookId: Long? = null): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, m.wrong
             FROM mistakes m JOIN words w ON w._id = m.word_id
             WHERE w.blocked = 0
             """.trimIndent(),
@@ -154,7 +154,7 @@ class WordRepository(context: Context) {
         val items = db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
                 while (c.moveToNext()) {
-                    add(MistakeItem(c.toWord(), c.getInt(9)))
+                    add(MistakeItem(c.toWord(), c.getInt(8)))
                 }
             }
         }
@@ -168,7 +168,7 @@ class WordRepository(context: Context) {
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
     fun allWords(limit: Int = 5000): List<Word> {
-        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 LIMIT $limit"
+        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
@@ -185,7 +185,7 @@ class WordRepository(context: Context) {
         val prefix = "$q%"
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
             FROM words w
             WHERE w.blocked = 0 AND (w.word LIKE ? OR w.meaning LIKE ?)
             ORDER BY CASE
@@ -274,7 +274,7 @@ class WordRepository(context: Context) {
             entry.put("name", book.name)
             val wordArray = org.json.JSONArray()
             db.rawQuery(
-                "SELECT word, pos, meaning, example, starred, blocked FROM words WHERE book_id = ? ORDER BY ord",
+                "SELECT word, pos, meaning, starred, blocked FROM words WHERE book_id = ? ORDER BY ord",
                 arrayOf(book.id.toString()),
             ).use { c ->
                 while (c.moveToNext()) {
@@ -282,9 +282,8 @@ class WordRepository(context: Context) {
                     item.put("w", c.getString(0))
                     item.put("pos", c.getString(1) ?: "")
                     item.put("m", c.getString(2) ?: "")
-                    item.put("ex", c.getString(3) ?: "")
-                    item.put("star", c.getInt(4) == 1)
-                    item.put("block", c.getInt(5) == 1)
+                    item.put("star", c.getInt(3) == 1)
+                    item.put("block", c.getInt(4) == 1)
                     wordArray.put(item)
                 }
             }
@@ -402,7 +401,6 @@ class WordRepository(context: Context) {
                             put("word", text2)
                             put("pos", w.optString("pos", ""))
                             put("meaning", w.optString("m", ""))
-                            put("example", w.optString("ex", ""))
                             put("starred", 0)
                             put("blocked", 0)
                             put("created_at", System.currentTimeMillis())
@@ -530,7 +528,7 @@ class WordRepository(context: Context) {
     fun dueReviewWords(limit: Int = 100, now: Long = System.currentTimeMillis()): List<Word> {
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
             FROM review r JOIN words w ON w._id = r.word_id
             WHERE r.due_at <= ? AND w.blocked = 0
             ORDER BY r.level ASC, r.due_at ASC
@@ -591,7 +589,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
             FROM words w
             """.trimIndent(),
         )
@@ -705,7 +703,7 @@ class WordRepository(context: Context) {
             var skipped = 0
             val exists = db.compileStatement("SELECT 1 FROM words WHERE book_id = ? AND lower(word) = lower(?) LIMIT 1")
             val insert = db.compileStatement(
-                "INSERT INTO words(book_id, ord, word, pos, meaning, example, starred, created_at) VALUES(?,?,?,?,?,?,0,?)",
+                "INSERT INTO words(book_id, ord, word, pos, meaning, starred, created_at) VALUES(?,?,?,?,?,0,?)",
             )
             val now = System.currentTimeMillis()
             for (entry in entries) {
@@ -724,8 +722,7 @@ class WordRepository(context: Context) {
                 insert.bindString(3, entry.word)
                 insert.bindString(4, entry.pos)
                 insert.bindString(5, entry.meaning)
-                insert.bindString(6, entry.example.trim())
-                insert.bindLong(7, now)
+                insert.bindLong(6, now)
                 insert.executeInsert()
                 added++
             }
@@ -782,7 +779,6 @@ class WordRepository(context: Context) {
         meaning = getString(5) ?: "",
         starred = getInt(6) == 1,
         blocked = getInt(7) == 1,
-        example = getString(8) ?: "",
     )
 
     private fun Cursor.toWords(): List<Word> = buildList {

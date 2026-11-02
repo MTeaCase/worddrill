@@ -13,25 +13,10 @@ data class Word(
     val meaning: String,
     val starred: Boolean,
     val blocked: Boolean = false,
-    /** 例句，格式为「英文例句||中文翻译」；没有例句时为空串。 */
-    val example: String = "",
 ) {
     /** 展示用释义：词性 + 中文。 */
     val meaningWithPos: String
         get() = if (pos.isBlank()) meaning else "$pos $meaning"
-
-    val exampleEn: String
-        get() = example.substringBefore(SEP).trim()
-
-    val exampleZh: String
-        get() = example.substringAfter(SEP, "").trim()
-
-    val hasExample: Boolean
-        get() = exampleEn.isNotEmpty()
-
-    companion object {
-        const val SEP = "||"
-    }
 }
 
 /** 某一天的练习统计。date 为 yyyy-MM-dd。 */

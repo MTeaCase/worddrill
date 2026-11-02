@@ -27,25 +27,7 @@
 
 完整协议文本见各组件仓库或其 LICENSE 文件。
 
-## 3. 例句语料
-
-`app/src/main/assets/examples.json` 共 3791 条（内置 3793 个词条里仅 2 条异常词条没有例句），由两部分组成：
-
-**3.1 Tatoeba 语料（2864 条）**
-
-- 来源：[Tatoeba](https://tatoeba.org/) 英文—中文（普通话）句对，经 [ManyThings](https://www.manythings.org/anki/) 打包分发
-- 协议：CC-BY 2.0 FR（署名要求）
-- 本项目做的修改：按词表筛选包含目标单词的短句（6–120 字符），每个单词保留一条；只保留英文原句与中文译文，丢弃句子编号与贡献者信息。
-
-**3.2 模型生成（927 条）**
-
-- 来源：本项目为 Tatoeba 未覆盖的单词，用语言模型生成的简短例句与中文翻译
-- 协议：随本项目 MIT 发布
-- 说明：句子刻意保持简单、贴近高中水平，可能不如人工例句地道。
-
-> 两种情况都可能存在翻译偏差，仅供参考。
-
-## 4. 图标
+## 3. 图标
 
 `app/src/main/res/mipmap-*`、`drawable/ic_launcher_*`、`drawable/ic_logo.xml` 为本项目自制，
 由 `tools/make_icon.py` 与同名矢量图生成，随本项目 MIT 协议发布。

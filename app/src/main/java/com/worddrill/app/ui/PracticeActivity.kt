@@ -279,22 +279,10 @@ class PracticeActivity : BaseActivity() {
         binding.feedbackCard.visibility = View.VISIBLE
         binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
         binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
-        val example = if (item.word.hasExample) {
-            buildString {
-                append("\n\n")
-                append(item.word.exampleEn)
-                if (item.word.exampleZh.isNotBlank()) {
-                    append("\n")
-                    append(item.word.exampleZh)
-                }
-            }
-        } else {
-            ""
-        }
         binding.tvFeedback.text = if (correct) {
-            "✓ 答对了\n${item.word.text} — ${item.word.meaningWithPos}$example"
+            "✓ 答对了\n${item.word.text} — ${item.word.meaningWithPos}"
         } else {
-            "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}$example"
+            "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}"
         }
         speakWord(item.word.text)
     }

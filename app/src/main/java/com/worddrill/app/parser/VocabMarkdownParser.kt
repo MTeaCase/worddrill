@@ -1,11 +1,10 @@
 package com.worddrill.app.parser
 
-/** 一条词汇：英文、词性、中文释义，以及可选的例句（英文例句||中文翻译）。 */
+/** 一条词汇：英文、词性、中文释义。 */
 data class VocabEntry(
     val word: String,
     val pos: String,
     val meaning: String,
-    val example: String = "",
 )
 
 /**
@@ -19,6 +18,7 @@ data class VocabEntry(
  * ```
  * 也支持无索引列的三列表格、以及 `英文 | 词性 | 汉语` 这种不带首尾竖线的行。
  * 表格里的序号会被忽略——入库顺序完全按本文件的出现顺序。
+ * 第 4 列及之后的内容（例句等）目前不使用，解析时直接忽略。
  */
 object VocabMarkdownParser {
 
@@ -40,27 +40,17 @@ object VocabMarkdownParser {
             val word: String
             val pos: String
             val meaning: String
-            val example: String
             when {
-                body.size >= 4 -> {
+                body.size >= 3 -> {
                     word = body[0]
                     pos = body[1]
                     meaning = body[2]
-                    example = body[3]
-                }
-
-                body.size == 3 -> {
-                    word = body[0]
-                    pos = body[1]
-                    meaning = body[2]
-                    example = ""
                 }
 
                 body.size == 2 -> {
                     word = body[0]
                     pos = ""
                     meaning = body[1]
-                    example = ""
                 }
 
                 else -> continue
@@ -68,7 +58,7 @@ object VocabMarkdownParser {
             if (!isValidWord(word) || meaning.isBlank()) continue
             val key = word.lowercase()
             if (out.containsKey(key)) continue
-            out[key] = VocabEntry(word = word, pos = pos, meaning = meaning, example = example)
+            out[key] = VocabEntry(word = word, pos = pos, meaning = meaning)
         }
         return out.values.toList()
     }

@@ -21,7 +21,7 @@ import com.worddrill.app.util.Tts
 
 /**
  * 词典：跨词库搜索，中英文都支持 LIKE 模糊匹配。
- * 点条目弹出详情（释义 + 例句 + 发音）。
+ * 点条目弹出详情（释义 + 发音）。
  */
 class DictionaryActivity : BaseActivity() {
 
@@ -112,30 +112,12 @@ class DictionaryActivity : BaseActivity() {
         binding.tvCount.text = ""
     }
 
-    private fun extraFor(word: Word): String? {
-        val parts = ArrayList<String>(2)
-        bookNames[word.bookId]?.let { parts.add(it) }
-        if (word.exampleZh.isNotBlank()) parts.add(word.exampleZh)
-        return if (parts.isEmpty()) null else parts.joinToString(" · ")
-    }
+    private fun extraFor(word: Word): String? = bookNames[word.bookId]
 
     private fun showDetail(word: Word) {
-        val message = buildString {
-            append(word.meaningWithPos)
-            if (word.hasExample) {
-                append("\n\n")
-                append(word.exampleEn)
-                if (word.exampleZh.isNotBlank()) {
-                    append("\n")
-                    append(word.exampleZh)
-                }
-            } else {
-                append("\n\n（这个词还没有例句）")
-            }
-        }
         AlertDialog.Builder(this)
             .setTitle(word.text)
-            .setMessage(message)
+            .setMessage(word.meaningWithPos)
             .setPositiveButton(R.string.action_pronounce) { _, _ -> speakWord(word.text) }
             .setNeutralButton(R.string.action_practice_this) { _, _ ->
                 startActivity(

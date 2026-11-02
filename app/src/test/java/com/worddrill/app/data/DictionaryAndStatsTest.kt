@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** 词典搜索、每日统计、例句三块新功能的回归测试。 */
+/** 词典搜索、每日统计两块功能的回归测试。 */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class DictionaryAndStatsTest {
@@ -49,15 +49,6 @@ class DictionaryAndStatsTest {
     @Test
     fun searchWithBlankQueryReturnsNothing() {
         assertTrue(repo.searchWords("   ").isEmpty())
-    }
-
-    @Test
-    fun builtinWordsCarryExampleSentences() {
-        val withExample = repo.allWords().count { it.hasExample }
-        assertTrue("内置词库应基本全覆盖例句，实际 $withExample 条", withExample > 3700)
-        val sample = repo.allWords().first { it.hasExample }
-        assertTrue(sample.exampleEn.isNotBlank())
-        assertTrue(sample.exampleZh.isNotBlank())
     }
 
     @Test
