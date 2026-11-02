@@ -66,21 +66,46 @@
     <string name="settings_tts_desc">练习英译汉时自动朗读单词，也可点喇叭重听</string>
     <string name="settings_about">关于</string>
     <string name="settings_check_update">检查更新</string>
-        <string name="settings_section_study">学习</string>
+    <string name="settings_update_desc">启动时自动检查；有新版本可在应用内直接下载并安装</string>
+    <string name="settings_section_study">学习</string>
     <string name="settings_section_other">其他</string>
-<string name="settings_backup">备份与恢复</string>    <string name="settings_export">导出备份</string>
+    <string name="settings_backup">备份与恢复</string>
+    <string name="settings_export">导出备份</string>
     <string name="settings_export_desc">非默认词库、错题本、星标、打卡记录</string>
     <string name="settings_import">导入备份</string>
     <string name="settings_import_desc">与手机上的数据合并，不会覆盖已有内容</string>
 
     <!-- 更新 -->
+    <string name="update_title">检查更新</string>
+    <string name="update_ok">知道了</string>
     <string name="update_checking">正在检查更新…</string>
-    <string name="update_latest">已经是最新版本</string>
-    <string name="update_failed">检查更新失败：%1$s</string>
+    <string name="update_latest">已经是最新版本（当前 %1$s）</string>
+    <string name="update_check_failed_title">检查更新失败</string>
+    <string name="update_failed">%1$s</string>
     <string name="update_found_title">发现新版本 %1$s</string>
-    <string name="update_download">去下载</string>
+    <string name="update_size">更新包大小：%1$s</string>
+    <string name="update_default_content">建议更新到最新版本。</string>
+    <string name="update_download">立即更新</string>
     <string name="update_later">以后再说</string>
     <string name="update_no_url">没有配置更新地址</string>
+    <string name="update_downloading">正在下载 %1$s</string>
+    <string name="update_connecting">正在连接下载服务器…</string>
+    <string name="update_progress">已下载 %1$d%%（%2$s / %3$s）</string>
+    <string name="update_progress_unknown">已下载 %1$s</string>
+    <string name="update_cancel">取消</string>
+    <string name="update_cancelled">已取消下载</string>
+    <string name="update_download_failed_title">下载失败</string>
+    <string name="update_download_failed">%1$s</string>
+    <string name="update_no_storage">没有可用的存储空间，无法保存更新包</string>
+    <string name="update_apk_invalid_title">安装包校验未通过</string>
+    <string name="update_apk_missing">安装包不存在或已被删除，请重新下载</string>
+    <string name="update_installing_hint">下载完成，正在打开安装界面…</string>
+    <string name="update_install_no_installer">找不到系统安装程序，请手动到文件管理器里点击安装包安装</string>
+    <string name="update_grant_title">需要「安装未知应用」权限</string>
+    <string name="update_grant_message">Android 8.0 以上，系统要求先允许本应用安装应用，才能完成自动更新。\n\n点「去设置」后，在列表里允许本应用「安装未知应用」，返回即可自动继续安装。</string>
+    <string name="update_grant_go">去设置</string>
+    <string name="update_grant_cancel">取消</string>
+    <string name="update_grant_no_settings">没能打开系统设置，请手动到「设置 → 应用 → 特殊权限 → 安装未知应用」中允许本应用</string>
 
     <!-- 词典 -->
     <string name="title_dictionary">词典</string>

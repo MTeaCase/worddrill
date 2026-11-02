@@ -11,10 +11,12 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.1.0"
+        versionCode = 5
+        versionName = "1.2.0"
 
         // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
+        // 支持用英文逗号分隔配多个镜像，会按顺序尝试，第一个可用即返回，例如：
+        //   "https://worddrill-update.pages.dev/update.json,https://cdn.jsdelivr.net/gh/xxx/update.json"
         buildConfigField(
             "String",
             "UPDATE_URL",

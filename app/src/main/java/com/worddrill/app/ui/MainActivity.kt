@@ -15,6 +15,7 @@ import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityMainBinding
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
+import com.worddrill.app.util.ApkInstaller
 import com.worddrill.app.util.Updater
 import com.worddrill.app.util.WidgetUpdater
 
@@ -93,6 +94,8 @@ class MainActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        // 从「安装未知应用」设置页返回后，继续未完成的安装
+        ApkInstaller.onActivityResume(this)
         loadBooks()
         WidgetUpdater.refresh(this)
     }

@@ -35,6 +35,7 @@ class LayoutInflateTest {
         R.layout.item_book,
         R.layout.item_result,
         R.layout.dialog_about,
+        R.layout.dialog_update_progress,
         R.layout.item_about_row,
     )
 

@@ -11,6 +11,7 @@ import com.worddrill.app.BuildConfig
 import com.worddrill.app.R
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivitySettingsBinding
+import com.worddrill.app.util.ApkInstaller
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.Tts
@@ -58,8 +59,13 @@ class SettingsActivity : BaseActivity() {
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
     }
 
-    private fun startExport() {
-        val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
+    override fun onResume() {
+        super.onResume()
+        // 从「安装未知应用」设置页返回后，继续未完成的安装
+        ApkInstaller.onActivityResume(this)
+    }
+
+    private fun startExport() {        val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
         exportLauncher.launch("worddrill-backup-$stamp.json")
     }
 
