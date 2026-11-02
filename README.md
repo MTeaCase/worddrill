@@ -3,6 +3,8 @@
 Android 单词练习 App：**英译汉 / 汉译英 / 单词默写**三种模式，内置高中 3500 词，也可以导入自己的词汇表。
 纯离线、无广告、无联网权限，数据全部保存在本机。
 
+目前1.0版本已经部署到web： [1.0]((https://wordrill.zzlltt.xyz/)) ，1.2移植工作紧张进行中。
+
 Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 
 ## 1.0截图（现在已经1.1了）
