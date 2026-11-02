@@ -86,9 +86,10 @@ class AboutConfigTest {
 
         assertEquals("单词练习", info.name)
         assertEquals("1.1.0", info.version)
-        assertEquals("2816zlt mtc", info.developer)
+        assertEquals("zlt mtc", info.developer)
         assertEquals(2, info.rows.size)
         assertEquals("词库", info.rows[0].label)
         assertTrue(info.note.startsWith("仅供学习交流使用"))
     }
 }
+

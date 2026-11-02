@@ -69,13 +69,31 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <TextView
-                android:id="@+id/tvPromptLabel"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:letterSpacing="0.12"
-                android:textColor="@color/text_hint"
-                android:textSize="12sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvPromptLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/text_hint"
+                    android:textSize="12sp" />
+
+                <ImageButton
+                    android:id="@+id/btnSpeak"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/action_pronounce"
+                    android:src="@drawable/ic_volume_up"
+                    android:visibility="gone"
+                    app:tint="@color/brand" />
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -338,4 +356,23 @@
                 app:cornerRadius="14dp" />
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDontKnow"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="@string/action_dont_know"
+            android:textSize="15sp"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
 </LinearLayout>

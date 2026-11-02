@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.view.isVisible
 import com.worddrill.app.R
 import com.worddrill.app.data.AnswerRecord
 import com.worddrill.app.data.PracticeMode
@@ -60,6 +61,19 @@ class PracticeActivity : BaseActivity() {
 
         binding.toolbar.title = "${mode.label} · $bookName"
         binding.toolbar.setNavigationOnClickListener { confirmExit() }
+        binding.toolbar.inflateMenu(R.menu.menu_practice)
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_settings) {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            } else {
+                false
+            }
+        }
+        binding.btnSpeak.setOnClickListener {
+            items.getOrNull(index)?.let { speakWord(it.word.text) }
+        }
+        binding.btnDontKnow.setOnClickListener { markUnknown() }
         binding.btnStar.setOnClickListener { toggleStar() }
         binding.btnSubmit.setOnClickListener { submitSpelling() }
         binding.btnNext.setOnClickListener { advance() }
@@ -157,6 +171,8 @@ class PracticeActivity : BaseActivity() {
         binding.progressBar.setProgressCompat(index, true)
         binding.tvPromptLabel.text = if (mode == PracticeMode.EN_ZH) "英 文" else "中 文 释 义"
         binding.tvPrompt.text = item.prompt
+        binding.btnSpeak.isVisible = mode == PracticeMode.EN_ZH
+        binding.btnDontKnow.isEnabled = true
         binding.tvPrompt.setOnClickListener {
             if (mode == PracticeMode.EN_ZH) speakWord(item.word.text)
         }
@@ -204,6 +220,7 @@ class PracticeActivity : BaseActivity() {
         if (answered) return
         val item = items[index]
         answered = true
+        binding.btnDontKnow.isEnabled = false
         val correct = option == item.correctOption
         val userAnswer = item.options.getOrElse(option) { "" }
 
@@ -226,6 +243,19 @@ class PracticeActivity : BaseActivity() {
     }
 
     private fun color(id: Int): Int = ContextCompat.getColor(this, id)
+
+    /** 「我不会」：直接记为答错，进错题本并进入下一题。 */
+    private fun markUnknown() {
+        if (answered || items.isEmpty()) return
+        val item = items[index]
+        answered = true
+        binding.btnDontKnow.isEnabled = false
+        binding.etAnswer.isEnabled = false
+        binding.btnSubmit.isEnabled = false
+        showFeedback(false, item, "我不会")
+        persist(false, "我不会")
+        scheduleAdvance(1600L)
+    }
 
     private fun submitSpelling() {
         if (answered || items.isEmpty()) return

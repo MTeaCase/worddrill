@@ -259,6 +259,260 @@ class WordRepository(context: Context) {
         db.delete("daily", null, null)
     }
 
+    // ---------- 备份 / 恢复 ----------
+
+    /** 导出：非默认词库（含自组单词）+ 错题 + 星标 + 打卡 + 复习排期。 */
+    fun exportBackupJson(): String {
+        val root = org.json.JSONObject()
+        root.put("format", BACKUP_FORMAT)
+        root.put("version", 1)
+        root.put("exportedAt", System.currentTimeMillis())
+
+        val bookArray = org.json.JSONArray()
+        for (book in books().filter { !it.builtin }) {
+            val entry = org.json.JSONObject()
+            entry.put("name", book.name)
+            val wordArray = org.json.JSONArray()
+            db.rawQuery(
+                "SELECT word, pos, meaning, example, starred, blocked FROM words WHERE book_id = ? ORDER BY ord",
+                arrayOf(book.id.toString()),
+            ).use { c ->
+                while (c.moveToNext()) {
+                    val item = org.json.JSONObject()
+                    item.put("w", c.getString(0))
+                    item.put("pos", c.getString(1) ?: "")
+                    item.put("m", c.getString(2) ?: "")
+                    item.put("ex", c.getString(3) ?: "")
+                    item.put("star", c.getInt(4) == 1)
+                    item.put("block", c.getInt(5) == 1)
+                    wordArray.put(item)
+                }
+            }
+            entry.put("words", wordArray)
+            bookArray.put(entry)
+        }
+        root.put("books", bookArray)
+
+        val mistakes = org.json.JSONArray()
+        db.rawQuery(
+            "SELECT w.word, m.wrong, m.mode, m.last_at FROM mistakes m JOIN words w ON w._id = m.word_id",
+            null,
+        ).use { c ->
+            while (c.moveToNext()) {
+                mistakes.put(
+                    org.json.JSONObject().apply {
+                        put("w", c.getString(0))
+                        put("wrong", c.getInt(1))
+                        put("mode", c.getString(2))
+                        put("lastAt", c.getLong(3))
+                    },
+                )
+            }
+        }
+        root.put("mistakes", mistakes)
+
+        val starred = org.json.JSONArray()
+        db.rawQuery("SELECT word FROM words WHERE starred = 1", null).use { c ->
+            while (c.moveToNext()) starred.put(c.getString(0))
+        }
+        root.put("starred", starred)
+
+        val daily = org.json.JSONArray()
+        db.rawQuery("SELECT date, answered, correct FROM daily ORDER BY date", null).use { c ->
+            while (c.moveToNext()) {
+                daily.put(
+                    org.json.JSONObject().apply {
+                        put("d", c.getString(0))
+                        put("a", c.getInt(1))
+                        put("c", c.getInt(2))
+                    },
+                )
+            }
+        }
+        root.put("daily", daily)
+
+        val review = org.json.JSONArray()
+        db.rawQuery(
+            "SELECT w.word, r.level, r.due_at, r.last_at, r.lapses FROM review r JOIN words w ON w._id = r.word_id",
+            null,
+        ).use { c ->
+            while (c.moveToNext()) {
+                review.put(
+                    org.json.JSONObject().apply {
+                        put("w", c.getString(0))
+                        put("level", c.getInt(1))
+                        put("dueAt", c.getLong(2))
+                        put("lastAt", c.getLong(3))
+                        put("lapses", c.getInt(4))
+                    },
+                )
+            }
+        }
+        root.put("review", review)
+        return root.toString()
+    }
+
+    /** 导入：把备份内容合并进本地（不删除、不覆盖已有单词）。返回给用户看的摘要。 */
+    fun importBackupJson(text: String): String {
+        val root = org.json.JSONObject(text)
+        require(root.optString("format") == BACKUP_FORMAT) { "不是 WordDrill 的备份文件" }
+
+        var addedBooks = 0
+        var addedWords = 0
+        var mergedStars = 0
+        var mergedMistakes = 0
+        var mergedDays = 0
+        var mergedReview = 0
+
+        db.beginTransaction()
+        try {
+            val existingBooks = books().associateBy { it.name }
+            val bookArray = root.optJSONArray("books") ?: org.json.JSONArray()
+            for (i in 0 until bookArray.length()) {
+                val bookJson = bookArray.getJSONObject(i)
+                val name = bookJson.optString("name").ifBlank { "导入词库" }
+                var bookId = existingBooks[name]?.id ?: -1L
+                if (bookId < 0) {
+                    bookId = addBook(name)
+                    addedBooks++
+                }
+                val words = bookJson.optJSONArray("words") ?: org.json.JSONArray()
+                for (j in 0 until words.length()) {
+                    val w = words.getJSONObject(j)
+                    val text2 = w.optString("w").trim()
+                    if (text2.isEmpty()) continue
+                    val exists = db.rawQuery(
+                        "SELECT _id FROM words WHERE book_id = ? AND lower(word) = lower(?) LIMIT 1",
+                        arrayOf(bookId.toString(), text2),
+                    ).use { it.moveToFirst() }
+                    val wordId: Long
+                    if (exists) {
+                        wordId = db.rawQuery(
+                            "SELECT _id FROM words WHERE book_id = ? AND lower(word) = lower(?) LIMIT 1",
+                            arrayOf(bookId.toString(), text2),
+                        ).use { if (it.moveToFirst()) it.getLong(0) else -1L }
+                    } else {
+                        val nextOrd = db.rawQuery(
+                            "SELECT COALESCE(MAX(ord), 0) + 1 FROM words WHERE book_id = ?",
+                            arrayOf(bookId.toString()),
+                        ).use { if (it.moveToFirst()) it.getInt(0) else 1 }
+                        val cv = ContentValues().apply {
+                            put("book_id", bookId)
+                            put("ord", nextOrd)
+                            put("word", text2)
+                            put("pos", w.optString("pos", ""))
+                            put("meaning", w.optString("m", ""))
+                            put("example", w.optString("ex", ""))
+                            put("starred", 0)
+                            put("blocked", 0)
+                            put("created_at", System.currentTimeMillis())
+                        }
+                        wordId = db.insertOrThrow("words", null, cv)
+                        addedWords++
+                    }
+                    if (wordId > 0) {
+                        if (w.optBoolean("star", false)) {
+                            db.execSQL("UPDATE words SET starred = 1 WHERE _id = ? AND starred = 0", arrayOf<Any>(wordId))
+                            mergedStars++
+                        }
+                        if (w.optBoolean("block", false)) {
+                            db.execSQL("UPDATE words SET blocked = 1 WHERE _id = ?", arrayOf<Any>(wordId))
+                        }
+                    }
+                }
+            }
+
+            val starred = root.optJSONArray("starred") ?: org.json.JSONArray()
+            for (i in 0 until starred.length()) {
+                val key = starred.optString(i).trim()
+                if (key.isEmpty()) continue
+                db.execSQL(
+                    "UPDATE words SET starred = 1 WHERE lower(word) = lower(?) AND starred = 0",
+                    arrayOf<Any>(key),
+                )
+                mergedStars++
+            }
+
+            val mistakes = root.optJSONArray("mistakes") ?: org.json.JSONArray()
+            for (i in 0 until mistakes.length()) {
+                val m = mistakes.getJSONObject(i)
+                val key = m.optString("w").trim()
+                if (key.isEmpty()) continue
+                val wrong = m.optInt("wrong", 1)
+                val mode = m.optString("mode", PracticeMode.EN_ZH.name)
+                val lastAt = m.optLong("lastAt", System.currentTimeMillis())
+                val ids = ArrayList<Long>()
+                db.rawQuery("SELECT _id FROM words WHERE lower(word) = lower(?)", arrayOf(key)).use { c ->
+                    while (c.moveToNext()) ids.add(c.getLong(0))
+                }
+                for (id in ids) {
+                    val current = db.rawQuery(
+                        "SELECT wrong, last_at FROM mistakes WHERE word_id = ?",
+                        arrayOf(id.toString()),
+                    ).use { if (it.moveToFirst()) it.getInt(0) to it.getLong(1) else 0 to 0L }
+                    val mergedWrong = maxOf(current.first, wrong)
+                    val mergedLast = maxOf(current.second, lastAt)
+                    db.execSQL(
+                        "INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at) VALUES(?,?,?,?)",
+                        arrayOf<Any>(id, mode, mergedWrong, mergedLast),
+                    )
+                    mergedMistakes++
+                }
+            }
+
+            val daily = root.optJSONArray("daily") ?: org.json.JSONArray()
+            for (i in 0 until daily.length()) {
+                val d = daily.getJSONObject(i)
+                val date = d.optString("d")
+                if (date.isBlank()) continue
+                val answered = d.optInt("a", 0)
+                val correct = d.optInt("c", 0)
+                val current = db.rawQuery(
+                    "SELECT answered, correct FROM daily WHERE date = ?",
+                    arrayOf(date),
+                ).use { if (it.moveToFirst()) it.getInt(0) to it.getInt(1) else 0 to 0 }
+                db.execSQL(
+                    "INSERT OR REPLACE INTO daily(date, answered, correct) VALUES(?,?,?)",
+                    arrayOf<Any>(date, maxOf(current.first, answered), maxOf(current.second, correct)),
+                )
+                mergedDays++
+            }
+
+            val review = root.optJSONArray("review") ?: org.json.JSONArray()
+            for (i in 0 until review.length()) {
+                val r = review.getJSONObject(i)
+                val key = r.optString("w").trim()
+                if (key.isEmpty()) continue
+                val ids = ArrayList<Long>()
+                db.rawQuery("SELECT _id FROM words WHERE lower(word) = lower(?)", arrayOf(key)).use { c ->
+                    while (c.moveToNext()) ids.add(c.getLong(0))
+                }
+                for (id in ids) {
+                    val has = db.rawQuery("SELECT 1 FROM review WHERE word_id = ?", arrayOf(id.toString()))
+                        .use { it.moveToFirst() }
+                    if (has) continue
+                    db.execSQL(
+                        "INSERT INTO review(word_id, level, due_at, last_at, lapses) VALUES(?,?,?,?,?)",
+                        arrayOf<Any>(
+                            id,
+                            r.optInt("level", 0),
+                            r.optLong("dueAt", System.currentTimeMillis()),
+                            r.optLong("lastAt", System.currentTimeMillis()),
+                            r.optInt("lapses", 0),
+                        ),
+                    )
+                    mergedReview++
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+
+        return "导入完成：新增词库 $addedBooks 个、单词 $addedWords 个；合并星标 $mergedStars 个、" +
+            "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条"
+    }
+
     // ---------- 复习（间隔重复） ----------
 
     /** 今天到期、且没被屏蔽的单词数。 */
@@ -515,6 +769,10 @@ class WordRepository(context: Context) {
             }
         }
 
+    private companion object {
+        const val BACKUP_FORMAT = "worddrill-backup"
+    }
+
     private fun Cursor.toWord(): Word = Word(
         id = getLong(0),
         bookId = getLong(1),
@@ -531,3 +789,4 @@ class WordRepository(context: Context) {
         while (moveToNext()) add(toWord())
     }
 }
+

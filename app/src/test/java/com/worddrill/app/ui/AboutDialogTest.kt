@@ -15,18 +15,16 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 
-/** 首页右上角「关于」要能打开，内容来自 assets/about.txt。 */
+/** 设置页里的「关于」要能打开，内容来自 assets/about.txt。 */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AboutDialogTest {
 
     @Test
-    fun aboutMenuShowsConfiguredContent() {
+    fun aboutDialogShowsConfiguredContent() {
         val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
-        val toolbar = activity.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
-        assertNotNull(toolbar.menu.findItem(R.id.action_about))
 
-        toolbar.menu.performIdentifierAction(R.id.action_about, 0)
+        AboutDialog.show(activity)
         shadowOf(Looper.getMainLooper()).idle()
 
         val dialog = ShadowDialog.getLatestDialog()
@@ -39,7 +37,7 @@ class AboutDialogTest {
         assertEquals(3, rows.childCount)
         val developer = rows.getChildAt(0)
         assertEquals("开发者", developer.findViewById<TextView>(R.id.tvRowLabel).text.toString())
-        assertEquals("2816zlt mtc", developer.findViewById<TextView>(R.id.tvRowValue).text.toString())
+        assertEquals("zlt mtc", developer.findViewById<TextView>(R.id.tvRowValue).text.toString())
         val vocab = rows.getChildAt(1)
         assertEquals("词库", vocab.findViewById<TextView>(R.id.tvRowLabel).text.toString())
 

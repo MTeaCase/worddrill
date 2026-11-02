@@ -13,10 +13,9 @@ import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.WordFilter
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityMainBinding
-import com.worddrill.app.util.AboutConfig
-import com.worddrill.app.util.AboutRow
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
+import com.worddrill.app.util.Updater
 import com.worddrill.app.util.WidgetUpdater
 
 class MainActivity : BaseActivity() {
@@ -45,8 +44,8 @@ class MainActivity : BaseActivity() {
         binding.toolbar.inflateMenu(R.menu.menu_main)
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.action_about -> {
-                    showAbout()
+                R.id.action_settings -> {
+                    startActivity(SettingsActivity.intent(this))
                     true
                 }
 
@@ -89,6 +88,7 @@ class MainActivity : BaseActivity() {
         }
 
         selectMode(mode)
+        Updater.autoCheck(this)
     }
 
     override fun onResume() {
@@ -329,10 +329,6 @@ class MainActivity : BaseActivity() {
             }
             .setNegativeButton("取消", null)
             .show()
-    }
-
-    private fun showAbout() {
-        AboutDialog.show(this)
     }
 
     private data class BookStats(

@@ -13,6 +13,13 @@ android {
         targetSdk = 36
         versionCode = 4
         versionName = "1.1.0"
+
+        // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
+        buildConfigField(
+            "String",
+            "UPDATE_URL",
+            "\"https://worddrill-update.pages.dev/update.json\"",
+        )
     }
 
     /**
@@ -47,6 +54,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {
