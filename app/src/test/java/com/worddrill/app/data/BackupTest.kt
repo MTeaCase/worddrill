@@ -20,8 +20,8 @@ class BackupTest {
 
     private fun sampleBook(): Long {
         val entries = listOf(
-            VocabEntry("apple", "n.", "苹果"),
-            VocabEntry("banana", "n.", "香蕉"),
+            VocabEntry("zzapple", "n.", "测试苹果"),
+            VocabEntry("zzbanana", "n.", "测试香蕉"),
         )
         val bookId = repo.importEntries(null, "我的备份词表", entries).bookId
         val words = repo.words(bookId)
@@ -64,4 +64,5 @@ class BackupTest {
         assertTrue(error is IllegalArgumentException)
     }
 }
+
 
