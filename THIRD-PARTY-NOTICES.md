@@ -1,6 +1,6 @@
 # 第三方组件与数据说明
 
-本项目（WordDrill / 单词练习）以 MIT 协议开源，同时包含下列第三方成果，按各自的协议分发。
+本项目（WordDrill / 单词练习）以 GNU General Public License v3.0 发布，同时包含下列第三方成果，按各自的协议分发。
 
 ## 1. 高中 3500 词库
 
@@ -10,7 +10,8 @@
   - 把原始词表转换为 JSON（`app/src/main/assets/words3500.json`）；
   - 规范化词头，去掉 `word (过去式, 过去分词)` 这类后缀；
   - 按行拆分词性与释义，整理出 3793 条词条。
-- 上游 MIT 协议全文与 [LICENSE](LICENSE) 相同。
+- MIT 与 GPLv3 兼容：词库数据本身仍按 MIT 分发，本项目整体按 GPLv3 发布；
+  MIT 协议全文见 <https://github.com/pluto0x0/word3500/blob/main/LICENSE>。
 
 ## 2. Android 与 Kotlin 组件
 
@@ -40,7 +41,7 @@
 **3.2 模型生成（927 条）**
 
 - 来源：本项目为 Tatoeba 未覆盖的单词，用语言模型生成的简短例句与中文翻译
-- 协议：随本项目 MIT 发布
+- 协议：随本项目 GPLv3 发布
 - 说明：句子刻意保持简单、贴近高中水平，可能不如人工例句地道。
 
 > 两种情况都可能存在翻译偏差，仅供参考。
@@ -48,4 +49,4 @@
 ## 4. 图标
 
 `app/src/main/res/mipmap-*`、`drawable/ic_launcher_*`、`drawable/ic_logo.xml` 为本项目自制，
-由 `tools/make_icon.py` 与同名矢量图生成，随本项目 MIT 协议发布。
+由 `tools/make_icon.py` 与同名矢量图生成，随本项目 GPLv3 协议发布。
