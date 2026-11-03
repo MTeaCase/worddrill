@@ -139,7 +139,7 @@ class DictionaryActivity : BaseActivity() {
             }
 
             busy -> append("\n\n正在生成例句…")
-            Settings.exampleAiEnabled(this) -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
+            Settings.exampleAiEnabled(this@DictionaryActivity) -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
             else -> append("\n\n例句：未开启（设置 → AI 例句生成）")
         }
     }
