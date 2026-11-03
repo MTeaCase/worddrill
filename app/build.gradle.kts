@@ -20,7 +20,7 @@ android {
         buildConfigField(
             "String",
             "UPDATE_URL",
-            "\"https://worddrill-update.pages.dev/update.json\"",
+            "\"https://worddrill-vercel.vercel.app/update.json,https://worddrill-update.pages.dev/update.json\"",
         )
 
         // 智能解析服务（Vercel → 商汤日日新）。部署代码见 vercel/，换地址填这里即可，
