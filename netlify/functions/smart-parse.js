@@ -1,19 +1,18 @@
 /**
- * Netlify Function：把任意文本整理成 WordDrill 能导入的 Markdown 表格。
+ * Netlify Function（v1 handler）：把任意文本整理成 WordDrill 能导入的 Markdown 表格。
  *
- * 环境变量（Netlify 站点设置 → Environment variables）：
+ * 环境变量：
  *   SENSENOVA_API_KEY   必填
  *   SENSENOVA_MODEL     可选，默认 sensenova-6.8-flash-lite
  *   SENSENOVA_BASE_URL  可选，默认 https://token.sensenova.cn/v1/chat/completions
  *   ALLOWED_ORIGIN      可选，默认 *
  *
- * 调用：POST /api/smart-parse  {"text": "..."}
+ * 对外路径：/api/smart-parse（netlify.toml 里重写到 /.netlify/functions/smart-parse）
+ * 请求：{"text": "..."}
  * 返回：{"ok": true, "markdown": "...", "count": 12}
  */
 
 const DEFAULT_ENDPOINT = 'https://token.sensenova.cn/v1/chat/completions';
-
-// 单次调用最多 3000 字。再多就超时了——App 端会自己把长文本切块分发。
 const MAX_INPUT_CHARS = 3000;
 
 const SYSTEM_PROMPT = `你是词汇表格式化工具。把用户给的任意内容整理成 Markdown 表格。
@@ -32,9 +31,9 @@ const SYSTEM_PROMPT = `你是词汇表格式化工具。把用户给的任意内
 6. 同一个词只保留一次（不区分大小写）。
 7. 不要编造用户没有提供的单词。`;
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
+function reply(statusCode, body) {
+  return {
+    statusCode,
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'access-control-allow-origin': process.env.ALLOWED_ORIGIN || '*',
@@ -42,7 +41,8 @@ function json(body, status = 200) {
       'access-control-allow-methods': 'POST, OPTIONS',
       'cache-control': 'no-store',
     },
-  });
+    body: JSON.stringify(body),
+  };
 }
 
 /** 从模型输出里抠出表格行，去掉代码块围栏和多余说明。 */
@@ -64,24 +64,24 @@ function extractTable(raw) {
   };
 }
 
-export default async (req) => {
-  if (req.method === 'OPTIONS') return json({ ok: true });
-  if (req.method !== 'POST') return json({ ok: false, error: '只支持 POST' }, 405);
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return reply(200, { ok: true });
+  if (event.httpMethod !== 'POST') return reply(405, { ok: false, error: '只支持 POST' });
 
   const apiKey = process.env.SENSENOVA_API_KEY;
-  if (!apiKey) return json({ ok: false, error: '服务端没有配置 SENSENOVA_API_KEY' }, 500);
+  if (!apiKey) return reply(500, { ok: false, error: '服务端没有配置 SENSENOVA_API_KEY' });
 
   let payload;
   try {
-    payload = await req.json();
+    payload = JSON.parse(event.body || '{}');
   } catch {
-    return json({ ok: false, error: '请求体不是合法 JSON' }, 400);
+    return reply(400, { ok: false, error: '请求体不是合法 JSON' });
   }
 
   const text = String(payload?.text || '').trim();
-  if (!text) return json({ ok: false, error: 'text 不能为空' }, 400);
+  if (!text) return reply(400, { ok: false, error: 'text 不能为空' });
   if (text.length > MAX_INPUT_CHARS) {
-    return json({ ok: false, error: `这一段太长（${text.length} 字），上限 ${MAX_INPUT_CHARS} 字，请分段` }, 413);
+    return reply(413, { ok: false, error: `这一段太长（${text.length} 字），上限 ${MAX_INPUT_CHARS} 字，请分段` });
   }
 
   let upstream;
@@ -101,15 +101,14 @@ export default async (req) => {
         temperature: 0.1,
         max_tokens: 1500,
         stream: false,
-        // 这个模型默认会先"思考"再回答，几十个词就要十几秒，
-        // 会直接撞上 Netlify 函数 10 秒超时，所以显式关掉。
+        // 该模型默认先输出 reasoning，几十个词就要十几秒，会撞上函数 10 秒超时
         reasoning_effort: 'none',
         thinking: { type: 'disabled' },
       }),
       signal: AbortSignal.timeout(9000),
     });
   } catch (error) {
-    return json({ ok: false, error: `连接模型接口失败：${error.message}` }, 502);
+    return reply(502, { ok: false, error: `连接模型接口失败：${error.message}` });
   }
 
   const bodyText = await upstream.text();
@@ -119,9 +118,9 @@ export default async (req) => {
       detail = JSON.parse(bodyText)?.error?.message || detail;
     } catch { /* 保持原文 */ }
     if (upstream.status === 429) {
-      return json({ ok: false, error: `模型接口限流或额度不足：${detail}` }, 429);
+      return reply(429, { ok: false, error: `模型接口限流或额度不足：${detail}` });
     }
-    return json({ ok: false, error: `模型接口返回 ${upstream.status}：${detail}` }, 502);
+    return reply(502, { ok: false, error: `模型接口返回 ${upstream.status}：${detail}` });
   }
 
   let content = '';
@@ -131,18 +130,16 @@ export default async (req) => {
     content = parsed?.choices?.[0]?.message?.content || '';
     finish = parsed?.choices?.[0]?.finish_reason || '';
   } catch {
-    return json({ ok: false, error: '模型返回的不是合法 JSON' }, 502);
+    return reply(502, { ok: false, error: '模型返回的不是合法 JSON' });
   }
 
   if (!content.trim()) {
-    return json({ ok: false, error: '模型没有返回内容，可能是输出被截断或触发限流，稍后再试' }, 502);
+    return reply(502, { ok: false, error: '模型没有返回内容，可能被截断或触发限流，稍后再试' });
   }
 
   const { markdown, count } = extractTable(content);
   if (count === 0) {
-    return json({ ok: false, error: 'AI 没有整理出词条，换个格式或分段再试' }, 422);
+    return reply(422, { ok: false, error: 'AI 没有整理出词条，换个格式或分段再试' });
   }
-  return json({ ok: true, markdown, count, truncated: finish === 'length' });
+  return reply(200, { ok: true, markdown, count, truncated: finish === 'length' });
 };
-
-export const config = { path: '/api/smart-parse' };

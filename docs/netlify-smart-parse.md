@@ -93,13 +93,29 @@ App 的「设置 → 智能解析服务地址」可以直接改，改完立刻�
 `sensenova-6.8-flash-lite` 默认会先"思考"再回答，几十个词就要十几秒，会直接撞上
 Netlify 函数 10 秒超时。所以：
 
-- 服务端显式传 `reasoning_effort: "none"` + `thinking: {"type":"disabled"}` 关掉思考，同样的活从 10.6 秒降到 1.4 秒
-- App 端按行把长文本切成 ≤1200 字的小块，顺序请求再拼成一张表，界面上显示"第 2/5 段"
-- 服务端单块上限 3000 字，超了返回 413
+- 服务端显式传 `reasoning_effort: "none"` + `thinking: {"type":"disabled"}` 关掉思考，5 个词从 10.6 秒降到 1.4 秒
+- App 端按行把长文本切成 ≤600 字（约 40 个词）的小块，顺序请求再拼成一张表，界面显示「第 2/5 段」
+- 服务端单块上限 3000 字，超了返回 413；上游调用 9 秒超时，超了返回 502 而不是被平台硬杀
 
-实测 30 个词约 4.7 秒，100 个词分成 2~3 段也在可接受范围内。
+实测（含 Netlify 冷启动）：5 个词约 4 秒，30 个词约 7 秒。所以每块控制在 40 词左右最稳。
 
-## 7. 隐私
+## 7. 关于函数形式
+
+函数用的是 **Functions v1 写法**（`exports.handler`，文件 `smart-parse.js`）。
+
+一开始写成 v2（`export default` + `config.path`），部署后 `/api/smart-parse` 和
+`/.netlify/functions/smart-parse` 都返回 404，改成 v1 后正常。所以路径统一由
+`netlify.toml` 里的 rewrite 提供：
+
+```toml
+[[redirects]]
+  from = "/api/smart-parse"
+  to = "/.netlify/functions/smart-parse"
+  status = 200
+  force = true
+```
+
+## 8. 隐私
 
 - 只有用户点「AI 智能解析」并确认后，**当次文本**才会发到 Netlify，再转给模型接口
 - 服务端不落盘、不写内容日志

@@ -18,8 +18,11 @@ object SmartParser {
     private const val CONNECT_TIMEOUT = 15000
     private const val READ_TIMEOUT = 30000
 
-    /** 单块字符上限，留足余量让模型在 10 秒内返回。 */
-    internal const val MAX_CHUNK_CHARS = 1200
+    /**
+     * 单块字符上限。实测 30 个词走一趟 Netlify 约 7 秒，函数上限是 10 秒，
+     * 所以按 600 字（约 40 个词）切，留足余量。
+     */
+    internal const val MAX_CHUNK_CHARS = 600
 
     private val separatorRegex = Regex("^\\|[\\s:|-]+\\|$")
 
