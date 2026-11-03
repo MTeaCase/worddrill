@@ -98,6 +98,11 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
             db.execSQL("ALTER TABLE words ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0")
         }
         if (oldVersion < 3) {
+            // v3 加的例句列。3 之后的版本里例句用过、下线过、又加回来了，
+            // 所以这里用 runCatching 兜住「列已存在」的情况。
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN example TEXT NOT NULL DEFAULT ''")
+            }
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS daily(
