@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI 智能解析按钮上的小闪光图标 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,2l1.8,4.9L18.7,8.7l-4.9,1.8L12,15.4l-1.8,-4.9L5.3,8.7l4.9,-1.8z" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M18.5,14l1,2.6l2.6,1l-2.6,1l-1,2.6l-1,-2.6l-2.6,-1l2.6,-1z" />
+</vector>

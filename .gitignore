@@ -11,3 +11,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 部署工具的本地缓存
+.wrangler/
+.netlify/

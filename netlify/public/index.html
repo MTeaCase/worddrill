@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WordDrill 智能解析服务</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0 auto;
+        max-width: 720px;
+        padding: 40px 20px 80px;
+        font: 15px/1.7 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      h1 { font-size: 22px; margin-bottom: 4px; }
+      p.sub { color: #888; margin-top: 0; }
+      code, pre {
+        font-family: ui-monospace, Consolas, monospace;
+        background: rgba(127, 127, 127, 0.12);
+        border-radius: 6px;
+      }
+      code { padding: 1px 5px; }
+      pre { padding: 14px; overflow: auto; font-size: 13px; }
+      h2 { font-size: 16px; margin-top: 32px; }
+      .warn { color: #b26a00; }
+    </style>
+  </head>
+  <body>
+    <h1>WordDrill 智能解析服务</h1>
+    <p class="sub">把任意文本整理成「| 英文 | 词性 | 汉语 |」表格，供 WordDrill 导入使用。</p>
+
+    <h2>接口</h2>
+    <pre>POST /api/smart-parse
+Content-Type: application/json
+
+{ "text": "abandon 放弃\nability 能力" }</pre>
+
+    <p>成功返回：</p>
+    <pre>{ "ok": true, "markdown": "| 英文 | 词性 | 汉语 |\n| --- | --- | --- |\n| abandon | v. | 放弃 |", "count": 1 }</pre>
+
+    <p>失败返回 <code>{ "ok": false, "error": "原因" }</code>。</p>
+
+    <h2>说明</h2>
+    <p>
+      这个站点只做转发：收到的文本会发送给商汤日日新大模型做格式化，不落盘、不记录。
+      本页本身没有任何用途，只是让 Netlify 有一个可部署的静态入口。
+    </p>
+    <p class="warn">部署时记得在 Site settings → Environment variables 里配置 SENSENOVA_API_KEY。</p>
+  </body>
+</html>

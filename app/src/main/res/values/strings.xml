@@ -74,6 +74,15 @@
     <string name="settings_export_desc">非默认词库、错题本、星标、打卡记录</string>
     <string name="settings_import">导入备份</string>
     <string name="settings_import_desc">与手机上的数据合并，不会覆盖已有内容</string>
+    <string name="settings_smart_parse">智能解析服务地址</string>
+    <string name="settings_smart_parse_desc">导入页「AI 智能解析」调用的接口，默认用内置地址</string>
+
+    <!-- 智能解析 -->
+    <string name="import_ai_parse">AI 智能解析</string>
+    <string name="import_ai_running">AI 正在整理，请稍候…</string>
+    <string name="import_ai_start">开始整理</string>
+    <string name="import_ai_done">已整理 %1$d 条，确认无误后点「保存」导入</string>
+    <string name="import_ai_confirm">会把这段内容发送到 AI 服务（商汤日日新）整理成表格，只用于本次转换，不会保存在手机上。\n\n服务地址：%1$s</string>
 
     <!-- 更新 -->
     <string name="update_title">检查更新</string>

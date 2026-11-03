@@ -9,11 +9,15 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.getSystemService
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.worddrill.app.R
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityImportBinding
 import com.worddrill.app.parser.VocabEntry
 import com.worddrill.app.parser.VocabMarkdownParser
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.Settings
+import com.worddrill.app.util.SmartParser
 import com.worddrill.app.util.TextFiles
 
 class ImportActivity : BaseActivity() {
@@ -49,6 +53,7 @@ class ImportActivity : BaseActivity() {
         binding.btnPaste.setOnClickListener { pasteFromClipboard() }
         binding.btnPreview.setOnClickListener { preview() }
         binding.btnSave.setOnClickListener { save() }
+        binding.btnAiParse.setOnClickListener { confirmSmartParse() }
     }
 
     private fun loadFile(uri: Uri) {
@@ -102,6 +107,51 @@ class ImportActivity : BaseActivity() {
         }
         val more = if (parsed.size > 5) "\n…" else ""
         binding.tvPreview.text = "解析到 ${parsed.size} 条（按出现顺序入库）：\n$sample$more"
+    }
+
+    /** AI 智能解析：把当前内容发给自建服务整理成表格，再走原来的导入流程。 */
+    private fun confirmSmartParse() {
+        val text = binding.etMarkdown.text?.toString()?.trim().orEmpty()
+        if (text.isEmpty()) {
+            toast("先把要整理的内容粘贴或读进来")
+            return
+        }
+        val url = Settings.smartParseUrl(this)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.import_ai_parse)
+            .setMessage(getString(R.string.import_ai_confirm, url))
+            .setPositiveButton(R.string.import_ai_start) { _, _ -> runSmartParse(url, text) }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun runSmartParse(url: String, text: String) {
+        setBusy(true)
+        // 单独开线程：AI 推理可能十几秒，不能占用数据库线程
+        Thread({
+            val result = runCatching { SmartParser.request(url, text) }
+            Bg.post {
+                if (isFinishing || isDestroyed) return@post
+                setBusy(false)
+                result.onSuccess { r ->
+                    binding.etMarkdown.setText(r.markdown)
+                    binding.tvFileName.visibility = View.GONE
+                    preview()
+                    toast(getString(R.string.import_ai_done, r.count))
+                }.onFailure { error ->
+                    toast("智能解析失败：${error.message ?: "未知错误"}")
+                }
+            }
+        }, "worddrill-ai").apply { isDaemon = true }.start()
+    }
+
+    private fun setBusy(busy: Boolean) {
+        binding.btnAiParse.isEnabled = !busy
+        binding.btnPreview.isEnabled = !busy
+        binding.btnPaste.isEnabled = !busy
+        binding.btnPickFile.isEnabled = !busy
+        binding.btnSave.isEnabled = !busy
+        binding.aiProgress.visibility = if (busy) View.VISIBLE else View.GONE
     }
 
     private fun save() {

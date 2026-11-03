@@ -186,6 +186,24 @@
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSmartParseUrl"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start|center_vertical"
+                        android:text="@string/settings_smart_parse"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvSmartParseUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginBottom="4dp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnAbout"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"

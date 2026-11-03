@@ -4,9 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.TypedValue
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.worddrill.app.BuildConfig
 import com.worddrill.app.R
 import com.worddrill.app.data.WordRepository
@@ -54,8 +58,10 @@ class SettingsActivity : BaseActivity() {
         binding.btnExport.setOnClickListener { startExport() }
         binding.btnImport.setOnClickListener { startImport() }
         binding.btnCheckUpdate.setOnClickListener { Updater.check(this, manual = true) }
+        binding.btnSmartParseUrl.setOnClickListener { editSmartParseUrl() }
         binding.btnAbout.setOnClickListener { AboutDialog.show(this) }
 
+        refreshSmartParseUrl()
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
     }
 
@@ -65,8 +71,46 @@ class SettingsActivity : BaseActivity() {
         ApkInstaller.onActivityResume(this)
     }
 
-    private fun startExport() {        val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
+    private fun startExport() {
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
         exportLauncher.launch("worddrill-backup-$stamp.json")
+    }
+
+    private fun refreshSmartParseUrl() {
+        val current = Settings.smartParseUrl(this)
+        val isDefault = current == BuildConfig.SMART_PARSE_URL
+        binding.tvSmartParseUrl.text =
+            if (isDefault) "默认：$current" else "$current（已自定义）"
+    }
+
+    /** 部署到 Netlify 后地址不一定固定，这里允许直接改，不用重新打包。 */
+    private fun editSmartParseUrl() {
+        val input = EditText(this).apply {
+            setText(Settings.smartParseUrl(this@SettingsActivity))
+            setSingleLine(false)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        }
+        val density = resources.displayMetrics.density
+        val container = FrameLayout(this).apply {
+            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), 0)
+            addView(input)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_smart_parse)
+            .setMessage("填 Netlify 上部署好的接口地址，例如\nhttps://你的站点.netlify.app/api/smart-parse")
+            .setView(container)
+            .setPositiveButton("保存") { _, _ ->
+                Settings.setSmartParseUrl(this, input.text.toString())
+                refreshSmartParseUrl()
+                toast("已保存")
+            }
+            .setNeutralButton("恢复默认") { _, _ ->
+                Settings.setSmartParseUrl(this, "")
+                refreshSmartParseUrl()
+                toast("已恢复默认地址")
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun writeBackup(uri: Uri) {
