@@ -2,6 +2,7 @@ package com.worddrill.app.util
 
 import android.content.Context
 import android.os.Build
+import com.worddrill.app.BuildConfig
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
