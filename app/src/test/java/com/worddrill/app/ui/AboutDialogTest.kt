@@ -31,7 +31,7 @@ class AboutDialogTest {
         assertNotNull("关于对话框没有弹出", dialog)
 
         assertEquals("单词练习", dialog.findViewById<TextView>(R.id.tvAboutName).text.toString())
-        assertEquals("版本 1.3.0", dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString())
+        assertEquals("版本 1.3.1", dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString())
 
         val rows = dialog.findViewById<LinearLayout>(R.id.rowsContainer)
         assertEquals(3, rows.childCount)

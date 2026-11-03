@@ -19,6 +19,7 @@ import com.worddrill.app.R
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivitySettingsBinding
 import com.worddrill.app.util.ApkInstaller
+import com.worddrill.app.util.AutoBackup
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.ReviewReminder
 import com.worddrill.app.util.Settings
@@ -76,6 +77,7 @@ class SettingsActivity : BaseActivity() {
 
         binding.btnExport.setOnClickListener { startExport() }
         binding.btnImport.setOnClickListener { startImport() }
+        binding.btnRestoreAuto.setOnClickListener { restoreAutoBackup() }
         binding.btnCheckUpdate.setOnClickListener { Updater.check(this, manual = true) }
         binding.btnSmartParseUrl.setOnClickListener { editSmartParseUrl() }
         binding.btnAbout.setOnClickListener { AboutDialog.show(this) }
@@ -96,6 +98,7 @@ class SettingsActivity : BaseActivity() {
         }
 
         refreshSmartParseUrl()
+        refreshAutoBackupTime()
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
     }
 
@@ -156,8 +159,42 @@ class SettingsActivity : BaseActivity() {
         exportLauncher.launch("worddrill-backup-$stamp.json")
     }
 
-    private fun refreshSmartParseUrl() {
-        val current = Settings.smartParseUrl(this)
+    private fun refreshAutoBackupTime() {
+        val at = AutoBackup.latestTime(this)
+        binding.tvAutoBackupTime.text = if (at > 0L) {
+            val stamp = SimpleDateFormat("MM-dd HH:mm", Locale.US).format(Date(at))
+            getString(R.string.settings_auto_backup_time, stamp)
+        } else {
+            getString(R.string.settings_auto_backup_none)
+        }
+    }
+
+    /** 从本地自动快照恢复，用于闪退/数据异常后找回进度。 */
+    private fun restoreAutoBackup() {
+        val text = AutoBackup.latest(this)
+        if (text == null) {
+            toast("还没有自动备份")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.settings_restore_auto)
+            .setMessage("会把自动备份里的词库、错题、星标、打卡、练习进度合并回本机，不会删除现有内容。")
+            .setPositiveButton("恢复") { _, _ ->
+                Bg.run({ repo.importBackupJson(text) }) { result ->
+                    result.onSuccess { summary ->
+                        AlertDialog.Builder(this)
+                            .setTitle("恢复完成")
+                            .setMessage(summary)
+                            .setPositiveButton("好", null)
+                            .show()
+                    }.onFailure { toast("恢复失败：${it.message}") }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun refreshSmartParseUrl() {        val current = Settings.smartParseUrl(this)
         val isDefault = current == BuildConfig.SMART_PARSE_URL
         binding.tvSmartParseUrl.text =
             if (isDefault) "默认：$current" else "$current（已自定义）"

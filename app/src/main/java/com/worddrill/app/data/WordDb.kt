@@ -17,6 +17,22 @@ class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) 
         db.setForeignKeyConstraintsEnabled(true)
     }
 
+    /**
+     * 数据库被判定损坏时，默认实现是直接删库重建——所有进度就没了。
+     * 这里先把原文件复制一份留证，再交给默认逻辑重建，至少还能人工抢救。
+     */
+    override fun onCorruption(db: SQLiteDatabase) {
+        runCatching {
+            val file = java.io.File(db.path)
+            if (file.exists()) {
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                    .format(java.util.Date())
+                file.copyTo(java.io.File(file.parentFile, "${file.name}.corrupt-$stamp"), overwrite = true)
+            }
+        }
+        super.onCorruption(db)
+    }
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """

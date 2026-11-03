@@ -16,6 +16,7 @@ import com.worddrill.app.databinding.ActivityMainBinding
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.ApkInstaller
+import com.worddrill.app.util.AutoBackup
 import com.worddrill.app.util.ReviewReminder
 import com.worddrill.app.util.Updater
 import com.worddrill.app.util.WidgetUpdater
@@ -103,6 +104,8 @@ class MainActivity : BaseActivity() {
         ApkInstaller.onActivityResume(this)
         loadBooks()
         WidgetUpdater.refresh(this)
+        // 每 6 小时留一份本地快照，防止闪退/数据库异常导致进度全丢
+        AutoBackup.maybeRun(this)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

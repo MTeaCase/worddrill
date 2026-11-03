@@ -89,6 +89,9 @@
     <string name="settings_export_desc">非默认词库、错题本、星标、打卡记录、练习进度</string>
     <string name="settings_import">导入备份</string>
     <string name="settings_import_desc">与手机上的数据合并，不会覆盖已有内容</string>
+    <string name="settings_restore_auto">从自动备份恢复</string>
+    <string name="settings_auto_backup_none">还没有自动备份（每次打开应用，6 小时内最多存一份）</string>
+    <string name="settings_auto_backup_time">最近一次自动备份：%1$s</string>
     <string name="settings_smart_parse">智能解析服务地址</string>
     <string name="settings_smart_parse_desc">导入页「AI 智能解析」调用的接口，默认用内置地址</string>
     <string name="privacy_title">隐私政策</string>
