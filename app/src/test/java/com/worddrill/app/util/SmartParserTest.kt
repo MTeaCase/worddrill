@@ -85,4 +85,28 @@ class SmartParserTest {
             SmartParser.parseResponse("<html>502 Bad Gateway</html>")
         }
     }
+
+    @Test
+    fun splitsLongTextIntoBoundedChunks() {
+        val text = (1..200).joinToString("\n") { "word$it 释义$it" }
+        val chunks = SmartParser.splitChunks(text, limit = 200)
+        assertTrue("应该切成多块", chunks.size > 1)
+        assertTrue("每块都不能超限", chunks.all { it.length <= 200 })
+        val lines = chunks.sumOf { chunk -> chunk.lines().count { it.isNotBlank() } }
+        assertEquals(200, lines)
+    }
+
+    @Test
+    fun keepsShortTextAsSingleChunk() {
+        val chunks = SmartParser.splitChunks("apple 苹果\npear 梨", limit = 200)
+        assertEquals(1, chunks.size)
+    }
+
+    @Test
+    fun hardSplitsOverlongSingleLine() {
+        val long = "x".repeat(500) + " 释义"
+        val chunks = SmartParser.splitChunks(long, limit = 200)
+        assertTrue(chunks.size >= 3)
+        assertTrue(chunks.all { it.length <= 200 })
+    }
 }

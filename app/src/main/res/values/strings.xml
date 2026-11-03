@@ -80,6 +80,7 @@
     <!-- 智能解析 -->
     <string name="import_ai_parse">AI 智能解析</string>
     <string name="import_ai_running">AI 正在整理，请稍候…</string>
+    <string name="import_ai_progress">AI 正在整理第 %1$d/%2$d 段…</string>
     <string name="import_ai_start">开始整理</string>
     <string name="import_ai_done">已整理 %1$d 条，确认无误后点「保存」导入</string>
     <string name="import_ai_confirm">会把这段内容发送到 AI 服务（商汤日日新）整理成表格，只用于本次转换，不会保存在手机上。\n\n服务地址：%1$s</string>

@@ -127,12 +127,24 @@ class ImportActivity : BaseActivity() {
 
     private fun runSmartParse(url: String, text: String) {
         setBusy(true)
-        // 单独开线程：AI 推理可能十几秒，不能占用数据库线程
+        binding.tvAiProgress.text = getString(R.string.import_ai_running)
+        // 单独开线程：AI 推理可能要几十秒，不能占用数据库线程
         Thread({
-            val result = runCatching { SmartParser.request(url, text) }
+            val result = runCatching {
+                SmartParser.request(url, text) { done, total ->
+                    if (total > 1) {
+                        Bg.post {
+                            if (!isFinishing && !isDestroyed) {
+                                binding.tvAiProgress.text = getString(R.string.import_ai_progress, done, total)
+                            }
+                        }
+                    }
+                }
+            }
             Bg.post {
                 if (isFinishing || isDestroyed) return@post
                 setBusy(false)
+                binding.tvAiProgress.text = getString(R.string.import_ai_running)
                 result.onSuccess { r ->
                     binding.etMarkdown.setText(r.markdown)
                     binding.tvFileName.visibility = View.GONE

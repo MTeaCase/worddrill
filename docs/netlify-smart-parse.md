@@ -4,57 +4,58 @@
 `| 英文 | 词性 | 汉语 |` 表格再返回。这样 API Key 只存在服务端，不会被打包进 APK。
 
 ```
-App ──POST /api/smart-parse──▶ Netlify Function ──▶ api.sensenova.cn（SenseChat-5）
+App ──POST /api/smart-parse──▶ Netlify Function ──▶ token.sensenova.cn（sensenova-6.8-flash-lite）
                                     │
                             清洗成 Markdown 表格
                                     │
 App ◀──────{ ok, markdown, count }──┘
 ```
 
-## 1. 准备商汤 API Key
+## 1. 准备 API Key
 
-1. 打开商汤大装置控制台 <https://console.sensecore.cn/aistudio/management/api-key>
-2. 新建一个 API Key，复制出来（形如 `sk-...`）
+- 接口地址：`https://token.sensenova.cn/v1/chat/completions`
+- 模型：`sensenova-6.8-flash-lite`（小模型，够用且便宜）
+- 鉴权：`Authorization: Bearer sk-...`
+
+可用模型可以用 `GET https://token.sensenova.cn/v1/models` 列出来确认。
 
 ## 2. 部署到 Netlify
 
-### 方式 A：网页拖拽（最快）
-
-1. 打开 <https://app.netlify.com>，**Add new site → Deploy manually**
-2. 把仓库里的 `netlify/public` 目录拖进去（先让站点建起来）
-3. 进入 **Site configuration → Build & deploy → Build settings**，确认：
-   - Base directory：留空（仓库根）
-   - Build command：留空
-   - Publish directory：`netlify/public`
-   - Functions directory：`netlify/functions`
-
-> 拖拽部署只会上传静态文件，不会带函数。函数必须用下面的方式 B / C 部署。
-
-### 方式 B：Netlify CLI（推荐）
+### 方式 A：命令行（推荐）
 
 ```bash
 npm i -g netlify-cli
 netlify login
 cd /path/to/worddrill
-netlify init            # 关联或新建站点
-netlify deploy --prod   # 会上传 netlify/public 并打包 netlify/functions
+netlify init                      # Create & configure a new site，站点名建议 worddrill-ai
+netlify env:set SENSENOVA_API_KEY "sk-你的key"
+netlify deploy --prod
 ```
 
-`netlify.toml` 已经配好 publish 与 functions 目录，不用额外指定。
+`netlify.toml` 已经配好发布目录和函数目录，不用额外指定。
 
-### 方式 C：Git 集成
+### 方式 B：Git 集成
 
-在 Netlify 里连上本仓库，构建设置同上（Build command 留空），之后每次 push 自动部署。
+Netlify 后台 → Add new site → Import an existing project → 选本仓库：
 
-## 3. 配置环境变量
+| 设置 | 值 |
+|---|---|
+| Build command | 留空 |
+| Publish directory | `netlify/public` |
+| Functions directory | `netlify/functions` |
 
-**Site configuration → Environment variables → Add a variable**
+再到 Site configuration → Environment variables 添加变量，然后 Trigger deploy。
 
-| 变量 | 必填 | 说明 |
+> 注意：网页上"拖拽文件夹"只能部署静态文件，**函数传不上去**，必须走 A 或 B。
+
+## 3. 环境变量
+
+| 变量 | 必填 | 默认值 |
 |---|---|---|
-| `SENSENOVA_API_KEY` | ✅ | 商汤 API Key |
-| `SENSENOVA_MODEL` | ❌ | 默认 `SenseChat-5`，想省钱可改 `SenseChat-Turbo` |
-| `ALLOWED_ORIGIN` | ❌ | CORS 白名单，默认 `*`（App 请求不受 CORS 限制） |
+| `SENSENOVA_API_KEY` | ✅ | — |
+| `SENSENOVA_MODEL` | ❌ | `sensenova-6.8-flash-lite` |
+| `SENSENOVA_BASE_URL` | ❌ | `https://token.sensenova.cn/v1/chat/completions` |
+| `ALLOWED_ORIGIN` | ❌ | `*` |
 
 改完变量要 **Trigger deploy** 一次才生效。
 
@@ -62,7 +63,7 @@ netlify deploy --prod   # 会上传 netlify/public 并打包 netlify/functions
 
 ```bash
 curl -X POST https://你的站点.netlify.app/api/smart-parse \
-  -H 'content-type: application/json' \
+  -H "content-type: application/json" \
   -d '{"text":"abandon 放弃\nability 能力"}'
 ```
 
@@ -72,29 +73,34 @@ curl -X POST https://你的站点.netlify.app/api/smart-parse \
 {"ok":true,"markdown":"| 英文 | 词性 | 汉语 |\n| --- | --- | --- |\n| abandon | v. | 放弃 |\n| ability | n. | 能力 |","count":2}
 ```
 
-失败时返回 `{"ok":false,"error":"具体原因"}`，HTTP 状态码对应：
-`400` 参数问题、`413` 内容过长、`422` 没整理出词条、`502` 商汤接口异常。
+失败时返回 `{"ok":false,"error":"具体原因"}`：
+
+| 状态码 | 含义 |
+|---|---|
+| 400 | 请求体问题 |
+| 413 | 这一段太长（>3000 字） |
+| 422 | 没整理出词条 |
+| 429 | 模型接口限流 / 额度不足 |
+| 502 | 模型接口报错或超时 |
 
 ## 5. App 端配置
 
-内置默认地址写在 `app/build.gradle.kts` 的 `SMART_PARSE_URL`：
+默认地址在 `app/build.gradle.kts` 的 `SMART_PARSE_URL`。但**通常不用重新打包**——
+App 的「设置 → 智能解析服务地址」可以直接改，改完立刻生效。
 
-```kotlin
-buildConfigField("String", "SMART_PARSE_URL", "\"https://你的站点.netlify.app/api/smart-parse\"")
-```
+## 6. 为什么要切块
 
-**通常不用重新打包**——App 里「设置 → 智能解析服务地址」可以直接改，存在本机
-SharedPreferences 里，改完立刻生效。
+`sensenova-6.8-flash-lite` 默认会先"思考"再回答，几十个词就要十几秒，会直接撞上
+Netlify 函数 10 秒超时。所以：
 
-## 限制与开销
+- 服务端显式传 `reasoning_effort: "none"` + `thinking: {"type":"disabled"}` 关掉思考，同样的活从 10.6 秒降到 1.4 秒
+- App 端按行把长文本切成 ≤1200 字的小块，顺序请求再拼成一张表，界面上显示"第 2/5 段"
+- 服务端单块上限 3000 字，超了返回 413
 
-- 单次输入上限 12000 字符（约 3000 个词条），超了会返回 413，建议分批
-- Netlify Functions 免费额度：每月 12.5 万次调用、100 小时运行时间，个人用远远够
-- 商汤按 token 计费，SenseChat-5 输入 0.008 元/千 tokens；整理 100 个词大约几分钱
-- 函数默认 10 秒超时上限，Netlify 免费版可到 10s，长文本可能超时——所以限制在 12000 字
+实测 30 个词约 4.7 秒，100 个词分成 2~3 段也在可接受范围内。
 
-## 隐私
+## 7. 隐私
 
-- 用户点「AI 智能解析」并确认后，**当次文本**才会发到 Netlify，再转给商汤
-- 服务端不做持久化，不写日志（Netlify 函数日志只记录调用元信息）
-- 不点这个按钮，App 不会发出任何内容；日常使用仍然是离线的
+- 只有用户点「AI 智能解析」并确认后，**当次文本**才会发到 Netlify，再转给模型接口
+- 服务端不落盘、不写内容日志
+- 不点这个按钮，App 不会发出任何内容
