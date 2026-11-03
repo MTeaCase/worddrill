@@ -118,20 +118,29 @@ class DictionaryActivity : BaseActivity() {
     private fun extraFor(word: Word): String? = bookNames[word.bookId]
 
     private fun showDetail(word: Word) {
-        val message = buildString {
-            append(word.meaningWithPos)
-            if (word.hasExample) {
-                append("\n\n").append(word.exampleEn)
-                if (word.exampleZh.isNotBlank()) append("\n").append(word.exampleZh)
-            }
-        }
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(word.text)
-            .setMessage(message)
+            .setMessage(buildDetailText(word))
             .setPositiveButton(R.string.action_pronounce) { _, _ -> speakWord(word.text) }
             .setNeutralButton("更多") { _, _ -> showMore(word) }
             .setNegativeButton("关闭", null)
-            .show()
+            .create()
+        dialog.show()
+        // 没有例句就直接后台生成，弹窗先开，例句好了就地替换，不用干等
+        if (!word.hasExample) generateInto(dialog, word)
+    }
+
+    private fun buildDetailText(word: Word, busy: Boolean = false): String = buildString {
+        append(word.meaningWithPos)
+        when {
+            word.hasExample -> {
+                append("\n\n").append(word.exampleEn)
+                if (word.exampleZh.isNotBlank()) append("\n").append(word.exampleZh)
+            }
+
+            busy -> append("\n\n正在生成例句…")
+            else -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
+        }
     }
 
     private fun showMore(word: Word) {
@@ -141,7 +150,7 @@ class DictionaryActivity : BaseActivity() {
             .setItems(actions.toTypedArray()) { _, which ->
                 when (which) {
                     0 -> practiceWord(word)
-                    else -> generateExample(word)
+                    else -> showDetail(word.copy(example = ""))
                 }
             }
             .show()
@@ -158,30 +167,34 @@ class DictionaryActivity : BaseActivity() {
         )
     }
 
-    /** 让自建服务生成例句，成功后写进本地数据库，同一个词不再请求。 */
-    private fun generateExample(word: Word) {
-        val progress = MaterialAlertDialogBuilder(this)
-            .setTitle("生成例句")
-            .setMessage("AI 正在造句，请稍候…")
-            .setCancelable(false)
-            .create()
-        progress.show()
-
+    /** 让自建服务生成例句，成功后写进本地数据库并就地刷新弹窗。 */
+    private fun generateInto(dialog: AlertDialog, word: Word) {
+        dialog.setMessage(buildDetailText(word, busy = true))
         Thread({
             val result = runCatching {
                 ExampleClient.fetch(Settings.smartParseUrl(this), word.text, word.meaning)
             }
             Bg.post {
                 if (isFinishing || isDestroyed) return@post
-                progress.dismiss()
                 result.onSuccess { example ->
                     Bg.run({ repo.setExample(word.id, example.en, example.zh) }) { saved ->
                         saved.onSuccess {
-                            toast("例句已保存")
-                            showDetail(word.copy(example = example.en + Word.EXAMPLE_SEP + example.zh))
+                            val updated = word.copy(
+                                example = example.en + Word.EXAMPLE_SEP + example.zh,
+                            )
+                            items = items.map { if (it.id == word.id) updated else it }
+                            adapter.submit(items)
+                            if (dialog.isShowing) dialog.setMessage(buildDetailText(updated))
                         }.onFailure { toast("保存失败：${it.message}") }
                     }
-                }.onFailure { toast("生成失败：${it.message ?: "未知错误"}") }
+                }.onFailure { error ->
+                    if (dialog.isShowing) {
+                        dialog.setMessage(
+                            buildDetailText(word) +
+                                "\n\n生成失败：${error.message ?: "未知错误"}（可以稍后再试）",
+                        )
+                    }
+                }
             }
         }, "worddrill-example").apply { isDaemon = true }.start()
     }

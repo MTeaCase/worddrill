@@ -8,16 +8,9 @@
 
 const DEFAULT_ENDPOINT = 'https://token.sensenova.cn/v1/chat/completions';
 
-const SYSTEM_PROMPT = `你是英语例句生成器。给用户提供的单词写一句简单、地道、贴近高中水平的英文例句，并翻译成中文。
+const SYSTEM_PROMPT = `给单词写一句简单英文例句（6–16 词，包含该词或其变形）并翻译成中文。
 
-只输出一个 JSON 对象，不要解释，不要代码块：
-{"en":"英文例句","zh":"中文翻译"}
-
-要求：
-1. 例句必须包含该单词（可用其变形）。
-2. 长度 6–18 个单词。
-3. 中文翻译自然、简洁。
-4. 不要出现引号转义错误。`;
+只输出 JSON，不要解释：{"en":"...","zh":"..."}`;
 
 function reply(statusCode, body) {
   return {
@@ -77,7 +70,7 @@ exports.handler = async (event) => {
           { role: 'user', content: meaning ? `${word}（${meaning}）` : word },
         ],
         temperature: 0.6,
-        max_tokens: 300,
+        max_tokens: 160,
         stream: false,
         reasoning_effort: 'none',
         thinking: { type: 'disabled' },
