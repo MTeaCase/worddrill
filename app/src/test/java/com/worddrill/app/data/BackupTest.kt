@@ -40,6 +40,23 @@ class BackupTest {
         assertTrue(json.contains("\"starred\""))
         assertTrue(json.contains("\"daily\""))
         assertTrue(json.contains("\"review\""))
+        assertTrue(json.contains("\"practice\""))
+    }
+
+    @Test
+    fun importRestoresPracticedCount() {
+        val bookId = sampleBook()
+        val practicedBefore = repo.practicedCount(bookId)
+        assertTrue("样例数据里应该已经有练习记录", practicedBefore > 0)
+        val backup = repo.exportBackupJson()
+
+        // 模拟换机 / 清除数据后的状态
+        repo.clearPracticeLog()
+        assertEquals(0, repo.practicedCount(bookId))
+
+        val summary = repo.importBackupJson(backup)
+        assertTrue("摘要里应包含练习记录", summary.contains("练习记录"))
+        assertEquals("导入备份后已练词数应恢复", practicedBefore, repo.practicedCount(bookId))
     }
 
     @Test

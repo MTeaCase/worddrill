@@ -348,6 +348,25 @@ class WordRepository(context: Context) {
             }
         }
         root.put("review", review)
+
+        // 练习记录：首页「已练 N / M 词」和「不重复抽题」都依赖这张表，
+        // 之前漏了导出，导致导入备份后已练数变成 0。
+        val practice = org.json.JSONArray()
+        db.rawQuery(
+            "SELECT w.word, p.times, p.last_at FROM practice_log p JOIN words w ON w._id = p.word_id",
+            null,
+        ).use { c ->
+            while (c.moveToNext()) {
+                practice.put(
+                    org.json.JSONObject().apply {
+                        put("w", c.getString(0))
+                        put("times", c.getInt(1))
+                        put("lastAt", c.getLong(2))
+                    },
+                )
+            }
+        }
+        root.put("practice", practice)
         return root.toString()
     }
 
@@ -362,6 +381,7 @@ class WordRepository(context: Context) {
         var mergedMistakes = 0
         var mergedDays = 0
         var mergedReview = 0
+        var mergedPractice = 0
 
         db.beginTransaction()
         try {
@@ -502,13 +522,38 @@ class WordRepository(context: Context) {
                     mergedReview++
                 }
             }
+
+            (root.optJSONArray("practice") ?: org.json.JSONArray()).let { practice ->
+                for (i in 0 until practice.length()) {
+                    val p = practice.getJSONObject(i)
+                    val key = p.optString("w").trim()
+                    if (key.isEmpty()) continue
+                    val times = p.optInt("times", 0)
+                    val lastAt = p.optLong("lastAt", System.currentTimeMillis())
+                    val ids = ArrayList<Long>()
+                    db.rawQuery("SELECT _id FROM words WHERE lower(word) = lower(?)", arrayOf(key)).use { c ->
+                        while (c.moveToNext()) ids.add(c.getLong(0))
+                    }
+                    for (id in ids) {
+                        val current = db.rawQuery(
+                            "SELECT times, last_at FROM practice_log WHERE word_id = ?",
+                            arrayOf(id.toString()),
+                        ).use { if (it.moveToFirst()) it.getInt(0) to it.getLong(1) else 0 to 0L }
+                        db.execSQL(
+                            "INSERT OR REPLACE INTO practice_log(word_id, times, last_at) VALUES(?,?,?)",
+                            arrayOf<Any>(id, maxOf(current.first, times), maxOf(current.second, lastAt)),
+                        )
+                        mergedPractice++
+                    }
+                }
+            }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
 
         return "导入完成：新增词库 $addedBooks 个、单词 $addedWords 个；合并星标 $mergedStars 个、" +
-            "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条"
+            "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条、练习记录 $mergedPractice 条"
     }
 
     // ---------- 复习（间隔重复） ----------
