@@ -30,6 +30,7 @@ class LayoutInflateTest {
         R.layout.activity_dictionary,
         R.layout.activity_report,
         R.layout.activity_settings,
+        R.layout.activity_privacy,
         R.layout.widget_worddrill,
         R.layout.item_word,
         R.layout.item_book,

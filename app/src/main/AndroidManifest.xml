@@ -67,6 +67,8 @@
 
         <activity android:name=".ui.SettingsActivity" />
 
+        <activity android:name=".ui.PrivacyActivity" />
+
         <activity android:name=".ui.BookManageActivity" />
 
         <activity

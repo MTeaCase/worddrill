@@ -91,6 +91,9 @@
     <string name="settings_import_desc">与手机上的数据合并，不会覆盖已有内容</string>
     <string name="settings_smart_parse">智能解析服务地址</string>
     <string name="settings_smart_parse_desc">导入页「AI 智能解析」调用的接口，默认用内置地址</string>
+    <string name="privacy_title">隐私政策</string>
+    <string name="settings_privacy">隐私政策</string>
+    <string name="settings_privacy_desc">本应用收集哪些信息、什么时候联网</string>
 
     <!-- 智能解析 -->
     <string name="import_ai_parse">AI 智能解析</string>
