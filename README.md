@@ -3,11 +3,13 @@
 Android 单词练习 App：**英译汉 / 汉译英 / 单词默写**三种模式，内置高中 3500 词，也可以导入自己的词汇表。
 无广告、无账号，词库与进度全部保存在本机；只有「检查更新」和「AI 智能解析」会联网。
 
+**当前版本 1.2.1**（versionCode 6） · 隐私说明见 [PRIVACY.md](PRIVACY.md)
+
 目前1.0版本已经部署到web： [1.0](https://wordrill.zzlltt.xyz/) ，1.2移植工作紧张进行中。
 
 Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 
-## 1.0截图（现在已经1.1了）
+## 截图
 
 | 首页 | 英译汉 |
 |---|---|
@@ -35,7 +37,7 @@ Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 - **内置词库**：高中 3500 词，3793 条，含词性与释义。
 - **自组词库**：直接选择 Markdown 文件导入（自动识别 UTF-8 / GBK），也可粘贴表格；导入后可继续追加单词。
 - **AI 智能解析**（1.2.1 起）：导入页可把随便一段文字（单词列表、CSV、OCR 结果、带音标的词汇表）交给自建 AI 服务
-  整理成标准表格再导入。服务端是 `netlify/functions/smart-parse.mjs`，背后接商汤日日新，
+  整理成标准表格再导入。服务端是 `netlify/functions/smart-parse.js`，背后接商汤日日新，
   部署方式见 [docs/netlify-smart-parse.md](docs/netlify-smart-parse.md)。
 - **屏蔽单词**：长按词表中的单词即可屏蔽，被屏蔽的词不参与抽题，剩余单词索引自动重排，可随时恢复。
 - **星标与错题**：练习页、词表都能加星标；答错自动进错题本，答对自动移出，支持只练星标、重练错题。
@@ -65,6 +67,15 @@ APK 也可以直接从 [Releases](https://github.com/SpeakerC/worddrill/releases
 
 单元测试覆盖：出题逻辑、SQLite 数据层（Robolectric 实际运行）、Markdown 词表解析与编码识别、
 间隔重复曲线、复习队列、词典搜索、每日统计、备份合并、更新清单解析、智能解析返回值清洗、界面渲染。
+
+## 隐私
+
+- 不注册、不收集个人信息；词库、错题、打卡、进度只存在本机，卸载即删除
+- 联网只有三处：检查更新、下载更新包、你主动使用「AI 智能解析」
+- AI 解析只在你点击并确认后发送当次文本，服务端不保存；不用它时 App 完全离线可用
+- 权限只有 `INTERNET` 和 `REQUEST_INSTALL_PACKAGES`，没有存储、位置、相机、通讯录、通知权限
+
+完整说明（含第三方服务、代码审计入口）见 **[PRIVACY.md](PRIVACY.md)**。
 
 ## 协议
 
