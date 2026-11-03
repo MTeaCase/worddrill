@@ -85,7 +85,7 @@ class AboutConfigTest {
         val info = AboutConfig.load(context, "7.7.7")
 
         assertEquals("单词练习", info.name)
-        assertEquals("1.3.3", info.version)
+        assertEquals("1.3.4", info.version)
         assertEquals("zlt mtc", info.developer)
         assertEquals(2, info.rows.size)
         assertEquals("词库", info.rows[0].label)
