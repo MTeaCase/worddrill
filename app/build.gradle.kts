@@ -11,8 +11,8 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.3.2"
+        versionCode = 11
+        versionName = "1.3.3"
 
         // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
         // 支持用英文逗号分隔配多个镜像，会按顺序尝试，第一个可用即返回，例如：
@@ -23,12 +23,12 @@ android {
             "\"https://worddrill-update.pages.dev/update.json\"",
         )
 
-        // 智能解析服务（Netlify Function → 商汤日日新）。部署完把真实地址填这里，
+        // 智能解析服务（Vercel → 商汤日日新）。部署代码见 vercel/，换地址填这里即可，
         // 也可以在 App 的「设置 → 智能解析服务地址」里临时改，不用重新打包。
         buildConfigField(
             "String",
             "SMART_PARSE_URL",
-            "\"https://worddrill-ai.netlify.app/api/smart-parse\"",
+            "\"https://worddrill-vercel.vercel.app/api/smart-parse\"",
         )
     }
 
