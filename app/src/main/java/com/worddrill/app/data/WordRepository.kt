@@ -172,6 +172,58 @@ class WordRepository(context: Context) {
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
+    /** 掌握度：按复习等级把词分成「新词 / 学习中 / 已掌握」三档。[bookId] 为 null 时统计全部词库。 */
+    fun masteryStats(bookId: Long? = null): MasteryStats {
+        val where = if (bookId == null) "w.blocked = 0" else "w.book_id = ? AND w.blocked = 0"
+        val args = if (bookId == null) emptyArray<String>() else arrayOf(bookId.toString())
+        val sql =
+            """
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN r.word_id IS NULL OR r.level = 0 THEN 1 ELSE 0 END) AS fresh,
+                   SUM(CASE WHEN r.level BETWEEN 1 AND 4 THEN 1 ELSE 0 END) AS learning,
+                   SUM(CASE WHEN r.level >= 5 THEN 1 ELSE 0 END) AS mastered
+            FROM words w LEFT JOIN review r ON r.word_id = w._id
+            WHERE $where
+            """.trimIndent()
+        return db.rawQuery(sql, args).use { c ->
+            if (!c.moveToFirst()) {
+                MasteryStats(0, 0, 0, 0)
+            } else {
+                MasteryStats(c.getInt(0), c.getInt(1), c.getInt(2), c.getInt(3))
+            }
+        }
+    }
+
+    /** 错得最多的词，用于报告页的「最该复习的词」。 */
+    fun topWrongWords(bookId: Long? = null, limit: Int = 8): List<MistakeItem> {
+        val sql = StringBuilder(
+            """
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, m.wrong
+            FROM mistakes m JOIN words w ON w._id = m.word_id
+            WHERE w.blocked = 0
+            """.trimIndent(),
+        )
+        val args = mutableListOf<String>()
+        if (bookId != null) {
+            sql.append(" AND w.book_id = ?")
+            args.add(bookId.toString())
+        }
+        sql.append(" ORDER BY m.wrong DESC, m.last_at DESC LIMIT $limit")
+        return db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
+            buildList {
+                while (c.moveToNext()) add(MistakeItem(c.toWord(), c.getInt(8)))
+            }
+        }
+    }
+
+    /** 随机取一个未屏蔽的词，给桌面小组件用。 */
+    fun randomWord(): Word? {
+        val sql =
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words " +
+                "WHERE blocked = 0 ORDER BY RANDOM() LIMIT 1"
+        return db.rawQuery(sql, null).use { c -> if (c.moveToFirst()) c.toWord() else null }
+    }
+
     // ---------- 词典 ----------
 
     /**

@@ -14,16 +14,44 @@ object WidgetUpdater {
     const val KEY_TODAY = "today"
     const val KEY_GOAL = "goal"
     const val KEY_STREAK = "streak"
+    const val KEY_DUE = "due"
+    const val KEY_WORD = "word"
+    const val KEY_WORD_MEANING = "word_meaning"
+
+    private data class WidgetData(
+        val today: Int,
+        val goal: Int,
+        val streak: Int,
+        val due: Int,
+        val word: String,
+        val meaning: String,
+    )
 
     fun refresh(context: Context) {
         val app = context.applicationContext
         val goal = Settings.dailyGoal(app)
-        Bg.run({ WordRepository(app).studySummary(7, goal) }) { result ->
-            result.onSuccess { summary ->
+        Bg.run({
+            val repo = WordRepository(app)
+            val summary = repo.studySummary(7, goal)
+            val due = repo.dueReviewCount()
+            val word = repo.randomWord()
+            WidgetData(
+                today = summary.todayAnswered,
+                goal = summary.dailyGoal,
+                streak = summary.streak,
+                due = due,
+                word = word?.text.orEmpty(),
+                meaning = word?.meaningWithPos.orEmpty(),
+            )
+        }) { result ->
+            result.onSuccess { data ->
                 app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                    .putInt(KEY_TODAY, summary.todayAnswered)
-                    .putInt(KEY_GOAL, summary.dailyGoal)
-                    .putInt(KEY_STREAK, summary.streak)
+                    .putInt(KEY_TODAY, data.today)
+                    .putInt(KEY_GOAL, data.goal)
+                    .putInt(KEY_STREAK, data.streak)
+                    .putInt(KEY_DUE, data.due)
+                    .putString(KEY_WORD, data.word)
+                    .putString(KEY_WORD_MEANING, data.meaning)
                     .apply()
                 WordDrillWidget.updateAll(app)
             }

@@ -53,6 +53,20 @@ data class MistakeItem(
     val wrongCount: Int,
 )
 
+/** 掌握度分布：新词（还没进复习队列或刚答错归零）、学习中、已掌握（复习等级 ≥ 5）。 */
+data class MasteryStats(
+    val total: Int,
+    val fresh: Int,
+    val learning: Int,
+    val mastered: Int,
+) {
+    val masteredPercent: Int
+        get() = if (total <= 0) 0 else mastered * 100 / total
+
+    val learningPercent: Int
+        get() = if (total <= 0) 0 else learning * 100 / total
+}
+
 data class ImportResult(
     val bookId: Long,
     val added: Int,

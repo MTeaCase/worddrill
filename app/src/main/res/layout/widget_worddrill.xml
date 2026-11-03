@@ -44,4 +44,24 @@
         android:text="今天开始打卡"
         android:textColor="#5B6172"
         android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tvWidgetDue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="待复习 0"
+        android:textColor="#3F5BD9"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvWidgetWord"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="#7A83A6"
+        android:textSize="11sp" />
 </LinearLayout>

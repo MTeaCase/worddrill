@@ -37,6 +37,9 @@ class WordDrillWidget : AppWidgetProvider() {
             val today = prefs.getInt(WidgetUpdater.KEY_TODAY, 0)
             val goal = prefs.getInt(WidgetUpdater.KEY_GOAL, Settings.DEFAULT_GOAL).coerceAtLeast(1)
             val streak = prefs.getInt(WidgetUpdater.KEY_STREAK, 0)
+            val due = prefs.getInt(WidgetUpdater.KEY_DUE, 0)
+            val word = prefs.getString(WidgetUpdater.KEY_WORD, "").orEmpty()
+            val meaning = prefs.getString(WidgetUpdater.KEY_WORD_MEANING, "").orEmpty()
 
             val views = RemoteViews(context.packageName, R.layout.widget_worddrill)
             views.setTextViewText(R.id.tvWidgetProgress, "$today / $goal")
@@ -44,6 +47,14 @@ class WordDrillWidget : AppWidgetProvider() {
             views.setTextViewText(
                 R.id.tvWidgetStreak,
                 if (streak > 0) "连续 $streak 天" else "今天开始打卡",
+            )
+            views.setTextViewText(
+                R.id.tvWidgetDue,
+                if (due > 0) "待复习 $due 词" else "今天没有到期复习",
+            )
+            views.setTextViewText(
+                R.id.tvWidgetWord,
+                if (word.isNotBlank()) "今日一词：$word  $meaning" else "",
             )
 
             val intent = Intent(context, MainActivity::class.java)

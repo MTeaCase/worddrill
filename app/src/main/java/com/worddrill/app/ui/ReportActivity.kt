@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import com.worddrill.app.R
+import com.worddrill.app.data.MasteryStats
+import com.worddrill.app.data.MistakeItem
 import com.worddrill.app.data.StudySummary
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityReportBinding
@@ -48,11 +50,34 @@ class ReportActivity : BaseActivity() {
 
     private fun load() {
         val goal = Settings.dailyGoal(this)
-        Bg.run({ repo.studySummary(DAYS, goal) }) { result ->
-            result.onSuccess { summary ->
+        Bg.run({
+            val summary = repo.studySummary(DAYS, goal)
+            val mastery = repo.masteryStats(null)
+            val wrong = repo.topWrongWords(null, 8)
+            Triple(summary, mastery, wrong)
+        }) { result ->
+            result.onSuccess { (summary, mastery, wrong) ->
                 if (isFinishing || isDestroyed) return@onSuccess
                 render(summary)
+                renderMastery(mastery, wrong)
             }.onFailure { toast("读取统计失败：${it.message}") }
+        }
+    }
+
+    private fun renderMastery(mastery: MasteryStats, wrong: List<MistakeItem>) {
+        binding.tvMasteryTitle.text =
+            "已掌握 ${mastery.mastered} / ${mastery.total} 词（${mastery.masteredPercent}%）"
+        binding.pbMastery.setProgressCompat(mastery.masteredPercent, true)
+        binding.tvMasteryDetail.text = buildString {
+            append("新词 ${mastery.fresh} · 学习中 ${mastery.learning} · 已掌握 ${mastery.mastered}")
+            append("\n复习等级到 5 级（约 30 天）算掌握；答错会归零重来")
+        }
+        binding.tvTopWrong.text = if (wrong.isEmpty()) {
+            "还没有错题，继续保持"
+        } else {
+            wrong.joinToString("\n") { item ->
+                "· ${item.word.text}  ${item.word.meaningWithPos}  · 错 ${item.wrongCount} 次"
+            }
         }
     }
 

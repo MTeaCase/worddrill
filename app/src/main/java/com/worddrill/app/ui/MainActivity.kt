@@ -16,6 +16,7 @@ import com.worddrill.app.databinding.ActivityMainBinding
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.ApkInstaller
+import com.worddrill.app.util.ReviewReminder
 import com.worddrill.app.util.Updater
 import com.worddrill.app.util.WidgetUpdater
 
@@ -29,6 +30,7 @@ class MainActivity : BaseActivity() {
     private var lastAppliedBookId = -1L
     private var mode: PracticeMode = PracticeMode.EN_ZH
     private var ordRange: IntRange? = null
+    private var pendingOpenReview = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +92,8 @@ class MainActivity : BaseActivity() {
 
         selectMode(mode)
         Updater.autoCheck(this)
+        // 从复习提醒的通知点进来时，加载完词库直接弹复习模式选择
+        pendingOpenReview = intent?.getBooleanExtra(ReviewReminder.EXTRA_OPEN_REVIEW, false) == true
     }
 
     override fun onResume() {
@@ -231,6 +235,10 @@ class MainActivity : BaseActivity() {
                     val startNow = binding.etStart.text?.toString()?.toIntOrNull() ?: 1
                     val endNow = binding.etEnd.text?.toString()?.toIntOrNull() ?: max
                     if (startNow > endNow) binding.etStart.setText("1")
+                }
+                if (pendingOpenReview) {
+                    pendingOpenReview = false
+                    startReview()
                 }
             }.onFailure { toast("读取词库信息失败：${it.message}") }
         }

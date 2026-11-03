@@ -10,10 +10,13 @@ object Settings {
     private const val KEY_GOAL = "daily_goal"
     private const val KEY_TTS = "tts_enabled"
     private const val KEY_SMART_URL = "smart_parse_url"
+    private const val KEY_REMINDER = "review_reminder"
+    private const val KEY_REMINDER_HOUR = "review_reminder_hour"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
     const val MAX_GOAL = 200
+    const val DEFAULT_REMINDER_HOUR = 20
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -38,5 +41,20 @@ object Settings {
 
     fun setSmartParseUrl(context: Context, url: String) {
         prefs(context).edit().putString(KEY_SMART_URL, url.trim()).apply()
+    }
+
+    /** 每日复习提醒。默认关闭，开启后由 WorkManager 每天固定时间检查一次。 */
+    fun reminderEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_REMINDER, false)
+
+    fun setReminderEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_REMINDER, enabled).apply()
+    }
+
+    /** 提醒时间（小时，0–23），默认晚上 8 点。 */
+    fun reminderHour(context: Context): Int =
+        prefs(context).getInt(KEY_REMINDER_HOUR, DEFAULT_REMINDER_HOUR).coerceIn(0, 23)
+
+    fun setReminderHour(context: Context, hour: Int) {
+        prefs(context).edit().putInt(KEY_REMINDER_HOUR, hour.coerceIn(0, 23)).apply()
     }
 }

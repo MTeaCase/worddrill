@@ -1,8 +1,11 @@
 package com.worddrill.app.ui
 
+import android.Manifest
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.widget.EditText
@@ -17,6 +20,7 @@ import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivitySettingsBinding
 import com.worddrill.app.util.ApkInstaller
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.ReviewReminder
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.Tts
 import com.worddrill.app.util.Updater
@@ -29,6 +33,21 @@ class SettingsActivity : BaseActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var repo: WordRepository
+    private var suppressSwitchEvent = false
+
+    private val notifyPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            Settings.setReminderEnabled(this, granted)
+            if (granted) {
+                ReviewReminder.schedule(this)
+            } else {
+                toast("没有通知权限，无法提醒")
+            }
+            suppressSwitchEvent = true
+            binding.swReminder.isChecked = granted
+            suppressSwitchEvent = false
+            refreshReminderText()
+        }
 
     private val exportLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -61,9 +80,63 @@ class SettingsActivity : BaseActivity() {
         binding.btnSmartParseUrl.setOnClickListener { editSmartParseUrl() }
         binding.btnAbout.setOnClickListener { AboutDialog.show(this) }
 
+        binding.swReminder.isChecked = Settings.reminderEnabled(this)
+        refreshReminderText()
+        binding.swReminder.setOnCheckedChangeListener { _, checked ->
+            if (suppressSwitchEvent) return@setOnCheckedChangeListener
+            onReminderToggled(checked)
+        }
+        binding.tvReminderTime.setOnClickListener { pickReminderTime() }
+
         refreshSmartParseUrl()
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
     }
+
+    private fun onReminderToggled(enabled: Boolean) {
+        if (enabled && !ReviewReminder.canNotify(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                toast("系统里关掉了本应用的通知，去设置里打开后才能提醒")
+                suppressSwitchEvent = true
+                binding.swReminder.isChecked = false
+                suppressSwitchEvent = false
+                Settings.setReminderEnabled(this, false)
+            }
+            return
+        }
+        Settings.setReminderEnabled(this, enabled)
+        if (enabled) {
+            ReviewReminder.schedule(this)
+            toast("已开启，每天 ${hourLabel()} 提醒")
+        } else {
+            ReviewReminder.cancel(this)
+        }
+        refreshReminderText()
+    }
+
+    private fun pickReminderTime() {
+        if (!Settings.reminderEnabled(this)) {
+            toast("先打开上面的开关")
+            return
+        }
+        val hour = Settings.reminderHour(this)
+        TimePickerDialog(this, { _, picked, _ ->
+            Settings.setReminderHour(this, picked)
+            ReviewReminder.schedule(this)
+            refreshReminderText()
+        }, hour, 0, true).show()
+    }
+
+    private fun refreshReminderText() {
+        binding.tvReminderTime.text = if (Settings.reminderEnabled(this)) {
+            getString(R.string.settings_reminder_on, hourLabel())
+        } else {
+            getString(R.string.settings_reminder_off)
+        }
+    }
+
+    private fun hourLabel(): String = String.format(Locale.US, "%02d:00", Settings.reminderHour(this))
 
     override fun onResume() {
         super.onResume()
