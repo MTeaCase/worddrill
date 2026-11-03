@@ -1,8 +1,8 @@
 {
-  "versionCode": 11,
-  "versionName": "1.3.3",
-  "content": "1. 修复：AI 智能解析经常超时的问题——服务迁到 Vercel，超时上限从 10 秒提到 60 秒\n2. 实测 20 个词 5.8 秒完成，以前直接失败\n3. 默认服务地址已切换，无需手动配置\n4. 例句生成也一起迁过去，4.6 秒返回",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.3.3/WordDrill-1.3.3.apk",
-  "size": 6725993,
-  "md5": "cbd5d1a82606465b86f8b200d6ab0b43"
+  "versionCode": 12,
+  "versionName": "1.3.4",
+  "content": "1. 更新检查和 AI 接口都改成双源，一个被墙自动换另一个\n2. 新增崩溃日志：闪退时记录设备信息和堆栈\n3. 本次为稳定性更新，功能无变化",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.3.4/WordDrill-1.3.4.apk",
+  "size": 6730457,
+  "md5": "7f25fb0171dbd8d192c848910f257ff0"
 }
