@@ -109,4 +109,18 @@ class SmartParserTest {
         assertTrue(chunks.size >= 3)
         assertTrue(chunks.all { it.length <= 200 })
     }
+
+    @Test
+    fun splitsChunkInHalfForRetry() {
+        val chunk = (1..10).joinToString("\n") { "word$it 释义$it" }
+        val halves = SmartParser.splitInHalf(chunk)
+        assertEquals(2, halves.size)
+        assertEquals(5, halves[0].lines().count { it.isNotBlank() })
+        assertEquals(5, halves[1].lines().count { it.isNotBlank() })
+    }
+
+    @Test
+    fun singleLineChunkCannotBeSplit() {
+        assertTrue(SmartParser.splitInHalf("only one line").isEmpty())
+    }
 }

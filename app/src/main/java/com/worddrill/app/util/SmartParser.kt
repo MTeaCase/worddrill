@@ -19,10 +19,13 @@ object SmartParser {
     private const val READ_TIMEOUT = 30000
 
     /**
-     * 单块字符上限。实测 30 个词走一趟 Netlify 约 7 秒，函数上限是 10 秒，
-     * 所以按 600 字（约 40 个词）切，留足余量。
+     * 单块字符上限。模型本身 5–9 秒才返回，函数 10 秒就超时，
+     * 所以先按 300 字（约 20 个词）切；万一还是超时，[parseWithFallback] 会再对半拆。
      */
-    internal const val MAX_CHUNK_CHARS = 600
+    internal const val MAX_CHUNK_CHARS = 300
+
+    /** 最多拆几层，防止极端情况下无限二分。 */
+    private const val MAX_SPLIT_DEPTH = 3
 
     private val separatorRegex = Regex("^\\|[\\s:|-]+\\|$")
 
@@ -46,14 +49,47 @@ object SmartParser {
         val chunks = splitChunks(text)
         val rows = mutableListOf<String>()
         var header = "| 英文 | 词性 | 汉语 |"
+        var lastError: Exception? = null
         chunks.forEachIndexed { index, chunk ->
             onProgress(index + 1, chunks.size)
-            val part = requestOnce(url, chunk)
-            header = part.header
-            rows += part.rows
+            val parts = runCatching { parseWithFallback(url, chunk, 0) }
+                .onFailure { lastError = it as? Exception }
+                .getOrNull() ?: return@forEachIndexed
+            parts.forEach {
+                header = it.header
+                rows += it.rows
+            }
         }
-        if (rows.isEmpty()) throw IllegalStateException("AI 没有返回可用的词条")
+        if (rows.isEmpty()) {
+            throw IllegalStateException(lastError?.message ?: "AI 没有返回可用的词条")
+        }
+        // 有部分块失败时，这里仍然返回已解析到的内容，界面上会提示条数
         return Result(joinTable(header, rows), rows.size)
+    }
+
+    /**
+     * 请求一段；失败且这段还有多行时，对半拆开分别重试。
+     * 模型慢的时候，这是唯一能在 10 秒函数超时下跑通的办法。
+     */
+    private fun parseWithFallback(url: String, chunk: String, depth: Int): List<Part> {
+        return try {
+            listOf(requestOnce(url, chunk))
+        } catch (error: Exception) {
+            val halves = splitInHalf(chunk)
+            if (depth >= MAX_SPLIT_DEPTH || halves.size < 2) throw error
+            halves.flatMap { parseWithFallback(url, it, depth + 1) }
+        }
+    }
+
+    /** 按行对半拆；单行文本没法拆，返回空表示放弃。 */
+    internal fun splitInHalf(chunk: String): List<String> {
+        val lines = chunk.lines().filter { it.isNotBlank() }
+        if (lines.size < 2) return emptyList()
+        val mid = lines.size / 2
+        return listOf(
+            lines.subList(0, mid).joinToString("\n"),
+            lines.subList(mid, lines.size).joinToString("\n"),
+        ).filter { it.isNotBlank() }
     }
 
     private data class Part(
