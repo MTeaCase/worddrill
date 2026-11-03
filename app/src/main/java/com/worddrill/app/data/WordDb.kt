@@ -9,28 +9,31 @@ import org.json.JSONArray
  * SQLite 存储。首次创建时把 assets/words3500.json 导入内置词库。
  * 所有调用都应发生在后台线程（仓库层已保证）。
  */
-class WordDb(context: Context) : SQLiteOpenHelper(context, NAME, null, VERSION) {
-
-    private val appContext = context.applicationContext
-
-    override fun onConfigure(db: SQLiteDatabase) {
-        db.setForeignKeyConstraintsEnabled(true)
-    }
-
-    /**
-     * 数据库被判定损坏时，默认实现是直接删库重建——所有进度就没了。
-     * 这里先把原文件复制一份留证，再交给默认逻辑重建，至少还能人工抢救。
-     */
-    override fun onCorruption(db: SQLiteDatabase) {
+class WordDb(context: Context) : SQLiteOpenHelper(
+    context,
+    NAME,
+    null,
+    VERSION,
+    // 数据库被判定损坏时，默认处理是直接删库重建，所有进度就没了。
+    // 这里先把原文件复制一份留证，再交给默认逻辑重建，至少还能人工抢救。
+    android.database.DatabaseErrorHandler { db ->
         runCatching {
-            val file = java.io.File(db.path)
+            val path = db.path ?: return@runCatching
+            val file = java.io.File(path)
             if (file.exists()) {
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
                     .format(java.util.Date())
                 file.copyTo(java.io.File(file.parentFile, "${file.name}.corrupt-$stamp"), overwrite = true)
             }
         }
-        super.onCorruption(db)
+        android.database.DefaultDatabaseErrorHandler().onCorruption(db)
+    },
+) {
+
+    private val appContext = context.applicationContext
+
+    override fun onConfigure(db: SQLiteDatabase) {
+        db.setForeignKeyConstraintsEnabled(true)
     }
 
     override fun onCreate(db: SQLiteDatabase) {
