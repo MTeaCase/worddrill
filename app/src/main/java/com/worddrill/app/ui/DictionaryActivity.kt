@@ -126,8 +126,8 @@ class DictionaryActivity : BaseActivity() {
             .setNegativeButton("关闭", null)
             .create()
         dialog.show()
-        // 没有例句就直接后台生成，弹窗先开，例句好了就地替换，不用干等
-        if (!word.hasExample) generateInto(dialog, word)
+        // 没有例句且开关打开时，后台生成；弹窗先开，例句好了就地替换
+        if (!word.hasExample && Settings.exampleAiEnabled(this)) generateInto(dialog, word)
     }
 
     private fun buildDetailText(word: Word, busy: Boolean = false): String = buildString {
@@ -139,17 +139,27 @@ class DictionaryActivity : BaseActivity() {
             }
 
             busy -> append("\n\n正在生成例句…")
-            else -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
+            Settings.exampleAiEnabled(this) -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
+            else -> append("\n\n例句：未开启（设置 → AI 例句生成）")
         }
     }
 
     private fun showMore(word: Word) {
-        val actions = listOf("练这个词", if (word.hasExample) "重新生成例句" else "生成例句")
+        val canGenerate = Settings.exampleAiEnabled(this)
+        val actions = buildList {
+            add("练这个词")
+            when {
+                !canGenerate -> add("去设置里开启 AI 例句")
+                word.hasExample -> add("重新生成例句")
+                else -> add("生成例句")
+            }
+        }
         AlertDialog.Builder(this)
             .setTitle(word.text)
             .setItems(actions.toTypedArray()) { _, which ->
-                when (which) {
-                    0 -> practiceWord(word)
+                when {
+                    which == 0 -> practiceWord(word)
+                    !canGenerate -> startActivity(SettingsActivity.intent(this))
                     else -> showDetail(word.copy(example = ""))
                 }
             }

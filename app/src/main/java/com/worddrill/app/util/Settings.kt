@@ -12,6 +12,7 @@ object Settings {
     private const val KEY_SMART_URL = "smart_parse_url"
     private const val KEY_REMINDER = "review_reminder"
     private const val KEY_REMINDER_HOUR = "review_reminder_hour"
+    private const val KEY_EXAMPLE_AI = "example_ai_enabled"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
@@ -56,5 +57,12 @@ object Settings {
 
     fun setReminderHour(context: Context, hour: Int) {
         prefs(context).edit().putInt(KEY_REMINDER_HOUR, hour.coerceIn(0, 23)).apply()
+    }
+
+    /** AI 例句生成。默认关闭，开启后词典里打开没有例句的词才会去请求。 */
+    fun exampleAiEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_EXAMPLE_AI, false)
+
+    fun setExampleAiEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_EXAMPLE_AI, enabled).apply()
     }
 }

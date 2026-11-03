@@ -77,6 +77,8 @@
     <string name="settings_reminder">复习提醒</string>
     <string name="settings_reminder_on">每天 %1$s 提醒（点这里改时间）</string>
     <string name="settings_reminder_off">开启后每天固定时间提醒你复习到期的单词</string>
+    <string name="settings_example_ai">AI 例句生成</string>
+    <string name="settings_example_ai_desc">开启后，词典里打开没有例句的单词会自动生成英中例句并缓存在本机；关闭时完全不联网</string>
     <string name="settings_about">关于</string>
     <string name="settings_check_update">检查更新</string>
     <string name="settings_update_desc">启动时自动检查；有新版本可在应用内直接下载并安装</string>

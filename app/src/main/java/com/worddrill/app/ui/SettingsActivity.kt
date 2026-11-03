@@ -88,6 +88,12 @@ class SettingsActivity : BaseActivity() {
         }
         binding.tvReminderTime.setOnClickListener { pickReminderTime() }
 
+        binding.swExampleAi.isChecked = Settings.exampleAiEnabled(this)
+        binding.swExampleAi.setOnCheckedChangeListener { _, checked ->
+            Settings.setExampleAiEnabled(this, checked)
+            toast(if (checked) "已开启，打开词条时会自动生成例句" else "已关闭，不再请求例句")
+        }
+
         refreshSmartParseUrl()
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
     }
