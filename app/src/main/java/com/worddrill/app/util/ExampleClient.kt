@@ -28,8 +28,20 @@ object ExampleClient {
     }
 
     /** 阻塞调用，必须在后台线程执行。 */
-    fun fetch(base: String, word: String, meaning: String): Example {
-        val target = url(base)
+    fun fetch(bases: List<String>, word: String, meaning: String): Example {
+        if (bases.isEmpty()) throw IllegalStateException("没有配置智能解析服务地址")
+        var lastError: Exception? = null
+        for (base in bases) {
+            try {
+                return fetchOnce(url(base), word, meaning)
+            } catch (error: Exception) {
+                lastError = error
+            }
+        }
+        throw lastError ?: IllegalStateException("没有可用的服务地址")
+    }
+
+    private fun fetchOnce(target: String, word: String, meaning: String): Example {
         if (target.isBlank()) throw IllegalStateException("没有配置智能解析服务地址")
         val payload = JSONObject().put("word", word).put("meaning", meaning).toString()
         val conn = (URL(target).openConnection() as HttpURLConnection).apply {

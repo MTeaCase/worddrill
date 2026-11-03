@@ -28,7 +28,7 @@ android {
         buildConfigField(
             "String",
             "SMART_PARSE_URL",
-            "\"https://worddrill-vercel.vercel.app/api/smart-parse\"",
+            "\"https://worddrill-vercel.vercel.app/api/smart-parse,https://worddrill-ai.netlify.app/api/smart-parse\"",
         )
     }
 

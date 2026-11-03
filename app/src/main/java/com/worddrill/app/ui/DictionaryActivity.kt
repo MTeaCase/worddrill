@@ -182,7 +182,7 @@ class DictionaryActivity : BaseActivity() {
         dialog.setMessage(buildDetailText(word, busy = true))
         Thread({
             val result = runCatching {
-                ExampleClient.fetch(Settings.smartParseUrl(this), word.text, word.meaning)
+                ExampleClient.fetch(Settings.smartParseUrls(this), word.text, word.meaning)
             }
             Bg.post {
                 if (isFinishing || isDestroyed) return@post

@@ -40,6 +40,12 @@ object Settings {
         prefs(context).getString(KEY_SMART_URL, null)?.takeIf { it.isNotBlank() }
             ?: BuildConfig.SMART_PARSE_URL
 
+    /** 拆成地址列表，按顺序回退。 */
+    fun smartParseUrls(context: Context): List<String> = smartParseUrl(context)
+        .split(',', ';', '\n')
+        .map { it.trim() }
+        .filter { it.startsWith("http") }
+
     fun setSmartParseUrl(context: Context, url: String) {
         prefs(context).edit().putString(KEY_SMART_URL, url.trim()).apply()
     }

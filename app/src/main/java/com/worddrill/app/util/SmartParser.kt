@@ -39,20 +39,21 @@ object SmartParser {
      * [onProgress] 回调（已完成的块，总块数），用于显示进度。
      */
     fun request(
-        url: String,
+        urls: List<String>,
         text: String,
         onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
     ): Result {
-        if (url.isBlank()) throw IllegalStateException("没有配置智能解析服务地址")
+        if (urls.isEmpty()) throw IllegalStateException("没有配置智能解析服务地址")
         if (text.isBlank()) throw IllegalStateException("内容为空")
 
+        val picker = HostPicker(urls)
         val chunks = splitChunks(text)
         val rows = mutableListOf<String>()
         var header = "| 英文 | 词性 | 汉语 |"
         var lastError: Exception? = null
         chunks.forEachIndexed { index, chunk ->
             onProgress(index + 1, chunks.size)
-            val parts = runCatching { parseWithFallback(url, chunk, 0) }
+            val parts = runCatching { parseWithFallback(picker, chunk, 0) }
                 .onFailure { lastError = it as? Exception }
                 .getOrNull() ?: return@forEachIndexed
             parts.forEach {
@@ -67,17 +68,37 @@ object SmartParser {
         return Result(joinTable(header, rows), rows.size)
     }
 
+    /** 轮流尝试多个服务地址，成功一次之后优先用这个。 */
+    private class HostPicker(private val urls: List<String>) {
+        private var index = 0
+
+        fun <T> withHost(block: (String) -> T): T {
+            var lastError: Exception? = null
+            for (offset in urls.indices) {
+                val at = (index + offset) % urls.size
+                try {
+                    val value = block(urls[at])
+                    index = at
+                    return value
+                } catch (error: Exception) {
+                    lastError = error
+                }
+            }
+            throw lastError ?: IllegalStateException("没有可用的服务地址")
+        }
+    }
+
     /**
      * 请求一段；失败且这段还有多行时，对半拆开分别重试。
      * 模型慢的时候，这是唯一能在 10 秒函数超时下跑通的办法。
      */
-    private fun parseWithFallback(url: String, chunk: String, depth: Int): List<Part> {
+    private fun parseWithFallback(picker: HostPicker, chunk: String, depth: Int): List<Part> {
         return try {
-            listOf(requestOnce(url, chunk))
+            listOf(picker.withHost { url -> requestOnce(url, chunk) })
         } catch (error: Exception) {
             val halves = splitInHalf(chunk)
             if (depth >= MAX_SPLIT_DEPTH || halves.size < 2) throw error
-            halves.flatMap { parseWithFallback(url, it, depth + 1) }
+            halves.flatMap { parseWithFallback(picker, it, depth + 1) }
         }
     }
 

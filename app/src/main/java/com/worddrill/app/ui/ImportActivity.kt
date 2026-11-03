@@ -131,7 +131,7 @@ class ImportActivity : BaseActivity() {
         // 单独开线程：AI 推理可能要几十秒，不能占用数据库线程
         Thread({
             val result = runCatching {
-                SmartParser.request(url, text) { done, total ->
+                SmartParser.request(Settings.smartParseUrls(this), text) { done, total ->
                     if (total > 1) {
                         Bg.post {
                             if (!isFinishing && !isDestroyed) {
