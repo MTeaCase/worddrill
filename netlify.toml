@@ -1,4 +1,4 @@
-# Netlify 配置：只部署一个静态说明页 + 一个函数，不构建 Android 工程
+# Netlify 配置：只部署一个静态说明页 + 两个函数，不构建 Android 工程
 [build]
   publish = "netlify/public"
   functions = "netlify/functions"
@@ -6,9 +6,15 @@
 [functions]
   node_bundler = "esbuild"
 
-# 函数在代码里声明了 config.path = /api/smart-parse，这里再兜一层
+# 对外路径统一走 /api/*，内部转发到 /.netlify/functions/*
 [[redirects]]
   from = "/api/smart-parse"
   to = "/.netlify/functions/smart-parse"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/example"
+  to = "/.netlify/functions/example"
   status = 200
   force = true

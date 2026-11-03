@@ -13,10 +13,25 @@ data class Word(
     val meaning: String,
     val starred: Boolean,
     val blocked: Boolean = false,
+    /** 例句缓存，格式「英文例句||中文翻译」；没有则为空串。 */
+    val example: String = "",
 ) {
     /** 展示用释义：词性 + 中文。 */
     val meaningWithPos: String
         get() = if (pos.isBlank()) meaning else "$pos $meaning"
+
+    val exampleEn: String
+        get() = example.substringBefore(EXAMPLE_SEP).trim()
+
+    val exampleZh: String
+        get() = example.substringAfter(EXAMPLE_SEP, "").trim()
+
+    val hasExample: Boolean
+        get() = exampleEn.isNotEmpty()
+
+    companion object {
+        const val EXAMPLE_SEP = "||"
+    }
 }
 
 /** 某一天的练习统计。date 为 yyyy-MM-dd。 */
@@ -77,6 +92,7 @@ enum class PracticeMode(val label: String, val subtitle: String) {
     EN_ZH("英译汉", "看英文，从四个中文释义中选"),
     ZH_EN("汉译英", "看中文，从四个英文单词中选"),
     ZH_EN_SPELL("单词默写", "看中文，自己拼写英文"),
+    LISTEN_SPELL("听音拼写", "听发音，自己拼出英文单词"),
 }
 
 enum class WordFilter {

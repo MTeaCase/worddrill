@@ -47,6 +47,14 @@ object QuizEngine {
             spell = true,
         )
 
+        // 听音拼写：不显示中文，靠发音回忆拼写；题面只放一句提示
+        PracticeMode.LISTEN_SPELL -> QuizItem(
+            word = word,
+            prompt = "点这里再听一遍",
+            answer = word.text,
+            spell = true,
+        )
+
         PracticeMode.EN_ZH -> {
             val correct = word.meaningWithPos
             val options = buildOptions(correct, allWords, random) { it.meaningWithPos }

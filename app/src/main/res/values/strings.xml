@@ -11,6 +11,16 @@
     <string name="mode_en_zh">英译汉</string>
     <string name="mode_zh_en">汉译英</string>
     <string name="mode_spell">单词默写</string>
+    <string name="mode_listen">听音拼写</string>
+    <string name="mode_listen_desc">听发音，自己拼出英文单词</string>
+
+    <!-- 桌面快捷方式 -->
+    <string name="shortcut_review">今日复习</string>
+    <string name="shortcut_review_long">复习今天到期的单词</string>
+    <string name="shortcut_dict">词典</string>
+    <string name="shortcut_dict_long">查词、听发音</string>
+    <string name="shortcut_report">学习报告</string>
+    <string name="shortcut_report_long">看打卡和掌握度</string>
 
     <string name="mode_en_zh_desc">看英文，从四个中文释义中选</string>
     <string name="mode_zh_en_desc">看中文，从四个英文单词中选</string>

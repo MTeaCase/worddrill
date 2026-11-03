@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -23,6 +25,7 @@ import com.worddrill.app.util.Bg
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.Tts
 import com.worddrill.app.util.WidgetUpdater
+import kotlin.math.abs
 
 class PracticeActivity : BaseActivity() {
 
@@ -37,6 +40,7 @@ class PracticeActivity : BaseActivity() {
     private val records = mutableListOf<AnswerRecord>()
     private var pendingNext: Runnable? = null
     private var ttsWarned = false
+    private lateinit var gestureDetector: GestureDetector
 
     private val optionRows get() = listOf(binding.option1, binding.option2, binding.option3, binding.option4)
     private val optionTexts
@@ -75,6 +79,29 @@ class PracticeActivity : BaseActivity() {
         }
         binding.btnDontKnow.setOnClickListener { markUnknown() }
         binding.btnStar.setOnClickListener { toggleStar() }
+
+        // 手势：左滑 = 我不会，长按 = 收藏/取消收藏
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(start: MotionEvent?, end: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (start == null) return false
+                val dx = end.x - start.x
+                val dy = end.y - start.y
+                val threshold = 110 * resources.displayMetrics.density
+                if (abs(dx) > abs(dy) * 1.5f && abs(dx) > threshold && dx < 0) {
+                    markUnknown()
+                    return true
+                }
+                return false
+            }
+
+            override fun onLongPress(event: MotionEvent) {
+                if (items.isNotEmpty()) toggleStar()
+            }
+        })
+        binding.root.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            false
+        }
         binding.btnSubmit.setOnClickListener { submitSpelling() }
         binding.btnNext.setOnClickListener { advance() }
         binding.etAnswer.setOnEditorActionListener { _, _, _ ->
@@ -169,14 +196,20 @@ class PracticeActivity : BaseActivity() {
         binding.tvProgress.text = "第 ${index + 1} 题 / 共 ${items.size} 题"
         binding.progressBar.max = items.size
         binding.progressBar.setProgressCompat(index, true)
-        binding.tvPromptLabel.text = if (mode == PracticeMode.EN_ZH) "英 文" else "中 文 释 义"
+        val isListen = mode == PracticeMode.LISTEN_SPELL
+        val canHear = mode == PracticeMode.EN_ZH || isListen
+        binding.tvPromptLabel.text = when {
+            isListen -> "听 发 音"
+            mode == PracticeMode.EN_ZH -> "英 文"
+            else -> "中 文 释 义"
+        }
         binding.tvPrompt.text = item.prompt
-        binding.btnSpeak.isVisible = mode == PracticeMode.EN_ZH
+        binding.btnSpeak.isVisible = canHear
         binding.btnDontKnow.isEnabled = true
         binding.tvPrompt.setOnClickListener {
-            if (mode == PracticeMode.EN_ZH) speakWord(item.word.text)
+            if (canHear) speakWord(item.word.text)
         }
-        if (mode == PracticeMode.EN_ZH && Settings.ttsEnabled(this)) {
+        if (canHear && Settings.ttsEnabled(this)) {
             speakWord(item.word.text)
         }
         binding.feedbackCard.visibility = View.GONE

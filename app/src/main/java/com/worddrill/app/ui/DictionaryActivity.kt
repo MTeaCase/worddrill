@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.worddrill.app.R
 import com.worddrill.app.data.Book
 import com.worddrill.app.data.Word
@@ -17,6 +18,8 @@ import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityDictionaryBinding
 import com.worddrill.app.ui.adapter.WordAdapter
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.ExampleClient
+import com.worddrill.app.util.Settings
 import com.worddrill.app.util.Tts
 
 /**
@@ -115,22 +118,72 @@ class DictionaryActivity : BaseActivity() {
     private fun extraFor(word: Word): String? = bookNames[word.bookId]
 
     private fun showDetail(word: Word) {
+        val message = buildString {
+            append(word.meaningWithPos)
+            if (word.hasExample) {
+                append("\n\n").append(word.exampleEn)
+                if (word.exampleZh.isNotBlank()) append("\n").append(word.exampleZh)
+            }
+        }
         AlertDialog.Builder(this)
             .setTitle(word.text)
-            .setMessage(word.meaningWithPos)
+            .setMessage(message)
             .setPositiveButton(R.string.action_pronounce) { _, _ -> speakWord(word.text) }
-            .setNeutralButton(R.string.action_practice_this) { _, _ ->
-                startActivity(
-                    PracticeActivity.retryIntent(
-                        context = this,
-                        mode = com.worddrill.app.data.PracticeMode.EN_ZH,
-                        bookName = bookNames[word.bookId].orEmpty(),
-                        wordIds = longArrayOf(word.id),
-                    ),
-                )
-            }
+            .setNeutralButton("更多") { _, _ -> showMore(word) }
             .setNegativeButton("关闭", null)
             .show()
+    }
+
+    private fun showMore(word: Word) {
+        val actions = listOf("练这个词", if (word.hasExample) "重新生成例句" else "生成例句")
+        AlertDialog.Builder(this)
+            .setTitle(word.text)
+            .setItems(actions.toTypedArray()) { _, which ->
+                when (which) {
+                    0 -> practiceWord(word)
+                    else -> generateExample(word)
+                }
+            }
+            .show()
+    }
+
+    private fun practiceWord(word: Word) {
+        startActivity(
+            PracticeActivity.retryIntent(
+                context = this,
+                mode = com.worddrill.app.data.PracticeMode.EN_ZH,
+                bookName = bookNames[word.bookId].orEmpty(),
+                wordIds = longArrayOf(word.id),
+            ),
+        )
+    }
+
+    /** 让自建服务生成例句，成功后写进本地数据库，同一个词不再请求。 */
+    private fun generateExample(word: Word) {
+        val progress = MaterialAlertDialogBuilder(this)
+            .setTitle("生成例句")
+            .setMessage("AI 正在造句，请稍候…")
+            .setCancelable(false)
+            .create()
+        progress.show()
+
+        Thread({
+            val result = runCatching {
+                ExampleClient.fetch(Settings.smartParseUrl(this), word.text, word.meaning)
+            }
+            Bg.post {
+                if (isFinishing || isDestroyed) return@post
+                progress.dismiss()
+                result.onSuccess { example ->
+                    Bg.run({ repo.setExample(word.id, example.en, example.zh) }) { saved ->
+                        saved.onSuccess {
+                            toast("例句已保存")
+                            showDetail(word.copy(example = example.en + Word.EXAMPLE_SEP + example.zh))
+                        }.onFailure { toast("保存失败：${it.message}") }
+                    }
+                }.onFailure { toast("生成失败：${it.message ?: "未知错误"}") }
+            }
+        }, "worddrill-example").apply { isDaemon = true }.start()
     }
 
     private fun toggleStar(word: Word) {

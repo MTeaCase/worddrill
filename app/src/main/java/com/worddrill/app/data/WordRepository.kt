@@ -99,7 +99,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM words w
             """.trimIndent(),
         )
@@ -130,7 +130,7 @@ class WordRepository(context: Context) {
         if (ids.isEmpty()) return emptyList()
         val placeholders = ids.joinToString(",") { "?" }
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
         val byId = db.rawQuery(sql, ids.map { it.toString() }.toTypedArray()).use { c ->
             c.toWords().associateBy { it.id }
         }
@@ -140,7 +140,7 @@ class WordRepository(context: Context) {
     fun mistakes(bookId: Long? = null): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, m.wrong
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
             FROM mistakes m JOIN words w ON w._id = m.word_id
             WHERE w.blocked = 0
             """.trimIndent(),
@@ -154,7 +154,7 @@ class WordRepository(context: Context) {
         val items = db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
                 while (c.moveToNext()) {
-                    add(MistakeItem(c.toWord(), c.getInt(8)))
+                    add(MistakeItem(c.toWord(), c.getInt(9)))
                 }
             }
         }
@@ -168,7 +168,7 @@ class WordRepository(context: Context) {
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
     fun allWords(limit: Int = 5000): List<Word> {
-        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words WHERE blocked = 0 LIMIT $limit"
+        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
@@ -198,7 +198,7 @@ class WordRepository(context: Context) {
     fun topWrongWords(bookId: Long? = null, limit: Int = 8): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, m.wrong
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
             FROM mistakes m JOIN words w ON w._id = m.word_id
             WHERE w.blocked = 0
             """.trimIndent(),
@@ -211,7 +211,7 @@ class WordRepository(context: Context) {
         sql.append(" ORDER BY m.wrong DESC, m.last_at DESC LIMIT $limit")
         return db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
-                while (c.moveToNext()) add(MistakeItem(c.toWord(), c.getInt(8)))
+                while (c.moveToNext()) add(MistakeItem(c.toWord(), c.getInt(9)))
             }
         }
     }
@@ -219,7 +219,7 @@ class WordRepository(context: Context) {
     /** 随机取一个未屏蔽的词，给桌面小组件用。 */
     fun randomWord(): Word? {
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked FROM words " +
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words " +
                 "WHERE blocked = 0 ORDER BY RANDOM() LIMIT 1"
         return db.rawQuery(sql, null).use { c -> if (c.moveToFirst()) c.toWord() else null }
     }
@@ -237,7 +237,7 @@ class WordRepository(context: Context) {
         val prefix = "$q%"
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM words w
             WHERE w.blocked = 0 AND (w.word LIKE ? OR w.meaning LIKE ?)
             ORDER BY CASE
@@ -326,7 +326,7 @@ class WordRepository(context: Context) {
             entry.put("name", book.name)
             val wordArray = org.json.JSONArray()
             db.rawQuery(
-                "SELECT word, pos, meaning, starred, blocked FROM words WHERE book_id = ? ORDER BY ord",
+                "SELECT word, pos, meaning, starred, blocked, example FROM words WHERE book_id = ? ORDER BY ord",
                 arrayOf(book.id.toString()),
             ).use { c ->
                 while (c.moveToNext()) {
@@ -336,6 +336,7 @@ class WordRepository(context: Context) {
                     item.put("m", c.getString(2) ?: "")
                     item.put("star", c.getInt(3) == 1)
                     item.put("block", c.getInt(4) == 1)
+                    item.put("ex", c.getString(5) ?: "")
                     wordArray.put(item)
                 }
             }
@@ -473,6 +474,7 @@ class WordRepository(context: Context) {
                             put("word", text2)
                             put("pos", w.optString("pos", ""))
                             put("meaning", w.optString("m", ""))
+                            put("example", w.optString("ex", ""))
                             put("starred", 0)
                             put("blocked", 0)
                             put("created_at", System.currentTimeMillis())
@@ -625,7 +627,7 @@ class WordRepository(context: Context) {
     fun dueReviewWords(limit: Int = 100, now: Long = System.currentTimeMillis()): List<Word> {
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM review r JOIN words w ON w._id = r.word_id
             WHERE r.due_at <= ? AND w.blocked = 0
             ORDER BY r.level ASC, r.due_at ASC
@@ -659,6 +661,12 @@ class WordRepository(context: Context) {
         db.update("words", cv, "_id = ?", arrayOf(wordId.toString()))
     }
 
+    /** 缓存 AI 生成的例句，格式「英文||中文」。 */
+    fun setExample(wordId: Long, en: String, zh: String) {
+        val value = if (en.isBlank()) "" else "$en${Word.EXAMPLE_SEP}$zh"
+        db.update("words", ContentValues().apply { put("example", value) }, "_id = ?", arrayOf(wordId.toString()))
+    }
+
     /** 屏蔽 / 恢复一个单词。屏蔽词不再出现在词表、抽题和错题里；恢复后回到原来的位置。 */
     fun setBlocked(wordId: Long, blocked: Boolean) {
         val cv = ContentValues().apply { put("blocked", if (blocked) 1 else 0) }
@@ -686,7 +694,7 @@ class WordRepository(context: Context) {
         val args = mutableListOf(bookId.toString())
         val sb = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
             FROM words w
             """.trimIndent(),
         )
@@ -876,6 +884,7 @@ class WordRepository(context: Context) {
         meaning = getString(5) ?: "",
         starred = getInt(6) == 1,
         blocked = getInt(7) == 1,
+        example = getString(8) ?: "",
     )
 
     private fun Cursor.toWords(): List<Word> = buildList {

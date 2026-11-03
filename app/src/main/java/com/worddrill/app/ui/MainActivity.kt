@@ -79,6 +79,7 @@ class MainActivity : BaseActivity() {
         binding.cardEnZh.setOnClickListener { selectMode(PracticeMode.EN_ZH) }
         binding.cardZhEn.setOnClickListener { selectMode(PracticeMode.ZH_EN) }
         binding.cardSpell.setOnClickListener { selectMode(PracticeMode.ZH_EN_SPELL) }
+        binding.cardListen.setOnClickListener { selectMode(PracticeMode.LISTEN_SPELL) }
 
         binding.btnStart.setOnClickListener { startPractice() }
         binding.btnReview.setOnClickListener { startReview() }
@@ -112,17 +113,21 @@ class MainActivity : BaseActivity() {
 
     private fun selectMode(target: PracticeMode) {
         mode = target
-        val cards = listOf(binding.cardEnZh, binding.cardZhEn, binding.cardSpell)
-        val checks = listOf(binding.ivCheckEnZh, binding.ivCheckZhEn, binding.ivCheckSpell)
-        cards.forEachIndexed { index, card ->
-            val selected = index == target.ordinal
+        val rows = listOf(
+            Triple(PracticeMode.EN_ZH, binding.cardEnZh, binding.ivCheckEnZh),
+            Triple(PracticeMode.ZH_EN, binding.cardZhEn, binding.ivCheckZhEn),
+            Triple(PracticeMode.ZH_EN_SPELL, binding.cardSpell, binding.ivCheckSpell),
+            Triple(PracticeMode.LISTEN_SPELL, binding.cardListen, binding.ivCheckListen),
+        )
+        rows.forEach { (rowMode, card, check) ->
+            val selected = rowMode == target
             card.strokeWidth = dp(if (selected) 2 else 1)
             card.strokeColor = color(if (selected) R.color.brand else R.color.divider)
             card.setCardBackgroundColor(color(if (selected) R.color.brand_soft else R.color.surface))
-            checks[index].setImageResource(
+            check.setImageResource(
                 if (selected) R.drawable.ic_check_circle else R.drawable.ic_radio_unchecked,
             )
-            checks[index].imageTintList =
+            check.imageTintList =
                 ColorStateList.valueOf(color(if (selected) R.color.brand else R.color.text_hint))
         }
     }
