@@ -23,7 +23,7 @@
         style="@style/Widget.Material3.BottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:itemActiveIndicatorColor="@color/brand_soft"
+        app:itemActiveIndicatorStyle="@style/Widget.WordDrill.BottomNav.ActiveIndicator"
         app:itemIconTint="@color/nav_item"
         app:itemTextColor="@color/nav_item"
         app:labelVisibilityMode="labeled"

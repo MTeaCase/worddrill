@@ -21,6 +21,11 @@
         <item name="navigationIconTint">@color/text_primary</item>
     </style>
 
+    <!-- 底部导航选中态的胶囊底色（默认是 Material 的淡紫，和品牌蓝不搭） -->
+    <style name="Widget.WordDrill.BottomNav.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/brand_soft</item>
+    </style>
+
     <style name="Text.SectionLabel" parent="">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/text_secondary</item>
