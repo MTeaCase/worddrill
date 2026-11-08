@@ -40,7 +40,40 @@ class ScreenshotTest {
     @Test
     fun renderMainScreen() {
         val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
-        // 等内置词库播种完成（后台线程 + 主线程回调）
+        waitForBooks(activity)
+        capture(activity.window.decorView, "main.png")
+        capture(activity.window.decorView, "tab_practice.png")
+    }
+
+    @Test
+    fun renderMainTabs() {
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        waitForBooks(activity)
+
+        switchTab(activity, R.id.tab_review, "tab_review.png")
+        switchTab(activity, R.id.tab_library, "tab_library.png")
+        switchTab(activity, R.id.tab_mine, "tab_mine.png")
+    }
+
+    /** 切到底部某个页签，等布局跑完再截图。 */
+    private fun switchTab(activity: MainActivity, itemId: Int, name: String) {
+        activity.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(
+            R.id.bottomNav,
+        )?.selectedItemId = itemId
+        val deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(60)
+            if (activity.findViewById<android.view.View>(R.id.fragmentContainer)?.childCount ?: 0 > 0) break
+        }
+        shadowOf(Looper.getMainLooper()).idle()
+        Thread.sleep(300)
+        shadowOf(Looper.getMainLooper()).idle()
+        capture(activity.window.decorView, name)
+    }
+
+    /** 等内置词库播种完成、练习页的词库下拉填上数据。 */
+    private fun waitForBooks(activity: MainActivity) {
         val deadline = System.currentTimeMillis() + 15_000
         while (System.currentTimeMillis() < deadline) {
             shadowOf(Looper.getMainLooper()).idle()
@@ -53,7 +86,6 @@ class ScreenshotTest {
         shadowOf(Looper.getMainLooper()).idle()
         Thread.sleep(300)
         shadowOf(Looper.getMainLooper()).idle()
-        capture(activity.window.decorView, "main.png")
     }
 
     @Test

@@ -42,3 +42,12 @@ jobs:
           name: WordDrill-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Robolectric 渲染出来的界面图，README 里用；只在大版本更新时取下来替换
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/build/screenshots
+          if-no-files-found: warn
