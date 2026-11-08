@@ -3,7 +3,7 @@
 Android 单词练习 App：**英译汉 / 汉译英 / 单词默写 / 听音拼写**四种模式，内置高中 3500 词，也可以导入自己的词汇表。
 无广告、无账号，词库与进度全部保存在本机；只有「检查更新」和「AI 智能解析 / AI 例句」会联网。
 
-**当前版本 1.4.2**（versionCode 16） · 隐私说明见 [PRIVACY.md](PRIVACY.md)
+**当前版本 1.4.3**（versionCode 17） · 隐私说明见 [PRIVACY.md](PRIVACY.md)
 
 目前1.0版本已经部署到web： [1.0](https://wordrill.zzlltt.xyz/) ，1.2移植工作紧张进行中。
 
