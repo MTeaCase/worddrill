@@ -11,8 +11,8 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.4.1"
+        versionCode = 16
+        versionName = "1.4.2"
 
         // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
         // 支持用英文逗号分隔配多个镜像，会按顺序尝试，第一个可用即返回，例如：
