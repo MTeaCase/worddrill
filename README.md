@@ -11,19 +11,27 @@ Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 
 ## 截图
 
-| 首页 | 英译汉 |
+| 练习 | 复习 |
 |---|---|
-| ![首页](screenshots/main.png) | ![英译汉](screenshots/practice.png) |
+| ![练习](screenshots/tab_practice.png) | ![复习](screenshots/tab_review.png) |
 
-| 单词默写 | 练习结果 |
+| 词库 | 我的 |
 |---|---|
-| ![默写](screenshots/practice_spell.png) | ![结果](screenshots/result_perfect.png) |
+| ![词库](screenshots/tab_library.png) | ![我的](screenshots/tab_mine.png) |
 
-| 词表 | 导入词汇表 |
+| 英译汉 | 单词默写 |
 |---|---|
-| ![词表](screenshots/word_list.png) | ![导入](screenshots/import.png) |
+| ![英译汉](screenshots/practice.png) | ![默写](screenshots/practice_spell.png) |
 
-> 截图由 Robolectric 原生渲染生成，与真机显示基本一致。
+| 练习结果 | 词表 |
+|---|---|
+| ![结果](screenshots/result_perfect.png) | ![词表](screenshots/word_list.png) |
+
+| 导入词汇表 | 关于 |
+|---|---|
+| ![导入](screenshots/import.png) | ![关于](screenshots/about.png) |
+
+> 截图由 Robolectric 原生渲染生成，与真机显示基本一致；只在大版本更新（如 1.3 → 1.4）时重新生成。
 
 ## 功能
 
