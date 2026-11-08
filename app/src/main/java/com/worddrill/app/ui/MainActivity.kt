@@ -119,14 +119,15 @@ class MainActivity : BaseActivity() {
     }
 
     /**
-     * 状态栏由外壳处理；底部安全区加在 bottomBar 这层容器上，
-     * 导航条自己保持固定高度，三键导航和手势导航下都不会被压扁。
+     * 状态栏由外壳处理；底部安全区直接加在导航条上——
+     * 导航条高度是 wrap_content，内边距只会把它撑高，不会压缩内容，
+     * 背景色也跟着铺到屏幕最底边。
      */
     private fun applyOuterInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(bars.left, bars.top, bars.right, 0)
-            binding.bottomBar.updatePadding(bottom = bars.bottom)
+            binding.bottomNav.updatePadding(bottom = bars.bottom)
             insets
         }
         ViewCompat.requestApplyInsets(binding.root)
