@@ -24,7 +24,6 @@ import com.worddrill.app.databinding.FragmentMineBinding
 import com.worddrill.app.ui.AboutDialog
 import com.worddrill.app.ui.DictionaryActivity
 import com.worddrill.app.ui.PrivacyActivity
-import com.worddrill.app.ui.ReportActivity
 import com.worddrill.app.util.AutoBackup
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.ReviewReminder
@@ -84,10 +83,6 @@ class MineFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         repo = WordRepository(requireContext())
 
-        binding.cardSummary.setOnClickListener {
-            startActivity(ReportActivity.intent(requireContext()))
-        }
-
         binding.swTts.setOnCheckedChangeListener { _, checked ->
             Settings.setTtsEnabled(requireContext(), checked)
             if (checked) Tts.speak(requireContext(), "hello")
@@ -121,7 +116,6 @@ class MineFragment : Fragment() {
         refreshSwitches()
         refreshSmartParseUrl()
         refreshAutoBackupTime()
-        loadSummary()
     }
 
     override fun onResume() {
@@ -144,7 +138,6 @@ class MineFragment : Fragment() {
         refreshReminderText()
         refreshAutoBackupTime()
         refreshSmartParseUrl()
-        loadSummary()
     }
 
     private fun activity(): AppCompatActivity = requireActivity() as AppCompatActivity
@@ -307,7 +300,6 @@ class MineFragment : Fragment() {
                 Bg.run({ repo.clearPracticeLog() }) { result ->
                     result.onSuccess {
                         toast("已清空练习记录")
-                        loadSummary()
                     }.onFailure { toast("清空失败：${it.message}") }
                 }
             }
@@ -352,27 +344,5 @@ class MineFragment : Fragment() {
             }
             .setNegativeButton("取消", null)
             .show()
-    }
-
-    private fun loadSummary() {
-        if (_binding == null) return
-        val goal = Settings.dailyGoal(requireContext())
-        Bg.run({ repo.studySummary(7, goal) }) { result ->
-            result.onSuccess { summary ->
-                if (_binding == null || !isAdded) return@onSuccess
-                binding.tvToday.text = "${summary.todayAnswered} / ${summary.dailyGoal} 题"
-                binding.pbToday.max = summary.dailyGoal
-                binding.pbToday.setProgressCompat(summary.todayAnswered.coerceAtMost(summary.dailyGoal), true)
-                val accuracy = if (summary.totalAnswered == 0) {
-                    0
-                } else {
-                    summary.totalCorrect * 100 / summary.totalAnswered
-                }
-                binding.tvSummarySub.text =
-                    "连续 ${summary.streak} 天 · 累计正确率 $accuracy% · 待复习 ${summary.dueReview} 词"
-            }.onFailure {
-                if (_binding != null) toast("读取统计失败：${it.message}")
-            }
-        }
     }
 }

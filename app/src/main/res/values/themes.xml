@@ -21,6 +21,11 @@
         <item name="navigationIconTint">@color/text_primary</item>
     </style>
 
+    <!-- 底部导航的标签，默认偏大，压到 10sp 让整条更矮 -->
+    <style name="TextAppearance.WordDrill.NavLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">10sp</item>
+    </style>
+
     <!-- 底部导航选中态的胶囊底色（默认是 Material 的淡紫，和品牌蓝不搭） -->
     <style name="Widget.WordDrill.BottomNav.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/brand_soft</item>

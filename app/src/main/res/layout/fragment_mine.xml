@@ -31,65 +31,11 @@
             android:paddingEnd="16dp"
             android:paddingBottom="24dp">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardSummary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/brand"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.1"
-                        android:text="@string/report_today"
-                        android:textColor="#B9C4FF"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/tvToday"
-                        style="@style/Text.Hero"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="0 / 0 题" />
-
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
-                        android:id="@+id/pbToday"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        app:indicatorColor="@color/white"
-                        app:trackColor="#33FFFFFF"
-                        app:trackCornerRadius="3dp"
-                        app:trackStopIndicatorSize="0dp"
-                        app:trackThickness="6dp" />
-
-                    <TextView
-                        android:id="@+id/tvSummarySub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="#B9C4FF"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
             <TextView
                 style="@style/Text.SectionLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginStart="4dp"
                 android:text="@string/settings_section_study" />
 
