@@ -159,7 +159,7 @@ class DictionaryActivity : BaseActivity() {
             .setItems(actions.toTypedArray()) { _, which ->
                 when {
                     which == 0 -> practiceWord(word)
-                    !canGenerate -> startActivity(SettingsActivity.intent(this))
+                    !canGenerate -> toast("到「我的 → AI 例句生成」里开启后才行")
                     else -> showDetail(word.copy(example = ""))
                 }
             }

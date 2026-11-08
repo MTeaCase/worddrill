@@ -66,8 +66,6 @@
 
         <activity android:name=".ui.ReportActivity" />
 
-        <activity android:name=".ui.SettingsActivity" />
-
         <activity android:name=".ui.PrivacyActivity" />
 
         <activity

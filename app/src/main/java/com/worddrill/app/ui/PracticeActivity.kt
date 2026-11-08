@@ -70,15 +70,6 @@ class PracticeActivity : BaseActivity() {
 
         binding.toolbar.title = "${mode.label} · $bookName"
         binding.toolbar.setNavigationOnClickListener { confirmExit() }
-        binding.toolbar.inflateMenu(R.menu.menu_practice)
-        binding.toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_settings) {
-                startActivity(Intent(this, SettingsActivity::class.java))
-                true
-            } else {
-                false
-            }
-        }
         binding.btnSpeak.setOnClickListener {
             items.getOrNull(index)?.let { speakWord(it.word.text) }
         }

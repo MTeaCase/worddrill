@@ -193,6 +193,7 @@
     <string name="setting_tts">练习时自动发音</string>
     <string name="action_test_tts">测试发音</string>
     <string name="action_clear_log">清空练习记录</string>
+    <string name="settings_clear_log_desc">清空后所有单词重新算「没练过」，星标和错题不受影响</string>
 
     <!-- 桌面小组件 -->
     <string name="widget_description">今日练习进度与连续打卡天数</string>
