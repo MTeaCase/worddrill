@@ -72,7 +72,7 @@ class ResultActivity : BaseActivity() {
                     context = this,
                     mode = mode,
                     bookName = bookName,
-                    wordIds = wrong.map { it.wordId }.toLongArray(),
+                    wordIds = wrong.map { it.wordId }.distinct().toLongArray(),
                 ),
             )
             finish()
