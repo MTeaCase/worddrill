@@ -13,6 +13,7 @@ object Settings {
     private const val KEY_REMINDER = "review_reminder"
     private const val KEY_REMINDER_HOUR = "review_reminder_hour"
     private const val KEY_EXAMPLE_AI = "example_ai_enabled"
+    private const val KEY_BOOK = "selected_book"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
@@ -70,5 +71,12 @@ object Settings {
 
     fun setExampleAiEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_EXAMPLE_AI, enabled).apply()
+    }
+
+    /** 当前选中的词库。底部导航切页面时靠它保持选择一致，进程被杀也能恢复。 */
+    fun selectedBookId(context: Context): Long = prefs(context).getLong(KEY_BOOK, -1L)
+
+    fun setSelectedBookId(context: Context, bookId: Long) {
+        prefs(context).edit().putLong(KEY_BOOK, bookId).apply()
     }
 }

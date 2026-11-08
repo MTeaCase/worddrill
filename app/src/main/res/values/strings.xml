@@ -3,6 +3,15 @@
     <string name="app_name">单词练习</string>
 
     <string name="title_main">单词练习</string>
+    <string name="tab_practice">练习</string>
+    <string name="tab_review">复习</string>
+    <string name="tab_library">词库</string>
+    <string name="tab_mine">我的</string>
+    <string name="search_bar_hint">搜索单词或释义</string>
+    <string name="library_section">我的词库</string>
+    <string name="mine_section_study">学习</string>
+    <string name="mine_section_data">数据</string>
+    <string name="mine_section_other">其他</string>
     <string name="title_practice">练习</string>
     <string name="title_result">练习结果</string>
     <string name="title_books">词库管理</string>
@@ -56,6 +65,7 @@
     <string name="label_book">词库</string>
     <string name="label_mode">练习方式</string>
     <string name="label_count">每次题量</string>
+    <string name="label_count_range">题量与范围</string>
     <string name="label_range">练习范围（词库索引）</string>
     <string name="range_start">起始</string>
     <string name="range_end">结束</string>
@@ -173,6 +183,7 @@
     <string name="report_week">近 7 天练习量</string>
     <string name="report_forecast">未来 7 天复习量</string>
     <string name="report_forecast_empty">还没有排上复习的单词</string>
+    <string name="review_today_label">今天到期</string>
     <string name="report_mastery">掌握度</string>
     <string name="report_top_wrong">最该复习的词</string>
     <string name="action_set_goal">设置每日目标</string>

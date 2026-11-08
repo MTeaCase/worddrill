@@ -88,6 +88,23 @@ class WordRepository(context: Context) {
             arrayOf(bookId.toString()),
         ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
 
+    /** 星标词数量，给复习页的入口卡片用。 */
+    fun starredCount(bookId: Long): Int =
+        db.rawQuery(
+            "SELECT COUNT(*) FROM words WHERE book_id = ? AND blocked = 0 AND starred = 1",
+            arrayOf(bookId.toString()),
+        ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+
+    /** 错题数量。 */
+    fun mistakeCount(bookId: Long): Int =
+        db.rawQuery(
+            """
+            SELECT COUNT(*) FROM mistakes m JOIN words w ON w._id = m.word_id
+            WHERE w.book_id = ? AND w.blocked = 0
+            """.trimIndent(),
+            arrayOf(bookId.toString()),
+        ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+
     // ---------- 单词 ----------
 
     fun words(

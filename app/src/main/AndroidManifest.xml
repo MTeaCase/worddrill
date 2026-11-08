@@ -70,8 +70,6 @@
 
         <activity android:name=".ui.PrivacyActivity" />
 
-        <activity android:name=".ui.BookManageActivity" />
-
         <activity
             android:name=".ui.ImportActivity"
             android:windowSoftInputMode="adjustResize" />
