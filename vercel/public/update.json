@@ -1,8 +1,8 @@
 {
-  "versionCode": 13,
-  "versionName": "1.3.5",
-  "content": "1. 新增「已学过」页面：看当前词库练过的词，可按还没掌握 / 已掌握 / 易忘筛选\n2. 错题本改成连续答对 2 次才移出，支持搜索、三种排序、长按移出、一键清空\n3. 复习按当前词库统计，可选题量；答错的词本轮末尾会再练一次\n4. 报告页新增未来 7 天复习量，掌握度改成四档\n5. 结果页显示这批词的下次复习时间",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.3.5/WordDrill-1.3.5.apk",
-  "size": 6760056,
-  "md5": "44f1c67025580b241e2194d6d54da3a4"
+  "versionCode": 14,
+  "versionName": "1.4.0",
+  "content": "1. 界面重构：底部四个页签 练习 / 复习 / 词库 / 我的，不再全堆在首页\n2. 练习页：模式改 2x2 网格，题量与范围收进折叠区\n3. 复习页：今日到期、未来 7 天复习量、已学过/错题本/星标入口\n4. 词库页：新增词典搜索条，词库管理并入此页\n5. 选中的词库会记住；非练习页按返回先回练习页",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.0/WordDrill-1.4.0.apk",
+  "size": 6801572,
+  "md5": "d2e7f7174df8905fc6c9f5e96cb67cd1"
 }
