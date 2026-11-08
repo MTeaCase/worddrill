@@ -51,47 +51,79 @@
                     android:textSize="16sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardProgress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/brand"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp">
 
-                <TextView
-                    android:id="@+id/tvBookProgress"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnOpenList"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="0dp"
-                    android:minHeight="40dp"
-                    android:paddingStart="10dp"
+                    android:orientation="vertical"
+                    android:paddingStart="18dp"
+                    android:paddingTop="14dp"
                     android:paddingEnd="10dp"
-                    android:text="@string/label_word_list"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                    android:paddingBottom="14dp">
 
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/pbBook"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:max="100"
-                app:indicatorColor="@color/brand"
-                app:trackColor="@color/divider"
-                app:trackCornerRadius="3dp"
-                app:trackStopIndicatorSize="0dp"
-                app:trackThickness="6dp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvHeroTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="已练 0 / 0 词"
+                            android:textColor="@color/white"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnOpenList"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:minWidth="0dp"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:text="@string/label_word_list"
+                            android:textColor="@color/white"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/pbHero"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:max="100"
+                        app:indicatorColor="@color/white"
+                        app:trackColor="#33FFFFFF"
+                        app:trackCornerRadius="3dp"
+                        app:trackStopIndicatorSize="0dp"
+                        app:trackThickness="6dp" />
+
+                    <TextView
+                        android:id="@+id/tvHeroSub"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:textColor="#B9C4FF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 style="@style/Text.SectionLabel"
@@ -127,7 +159,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="10dp">
 
                         <TextView
                             style="@style/Text.CardTitle"
@@ -140,7 +172,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:maxLines="2"
+                            android:maxLines="1"
                             android:text="@string/mode_en_zh_desc" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -164,7 +196,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="10dp">
 
                         <TextView
                             style="@style/Text.CardTitle"
@@ -177,7 +209,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:maxLines="2"
+                            android:maxLines="1"
                             android:text="@string/mode_zh_en_desc" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -209,7 +241,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="10dp">
 
                         <TextView
                             style="@style/Text.CardTitle"
@@ -222,7 +254,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:maxLines="2"
+                            android:maxLines="1"
                             android:text="@string/mode_spell_desc" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -246,7 +278,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="10dp">
 
                         <TextView
                             style="@style/Text.CardTitle"
@@ -259,7 +291,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:maxLines="2"
+                            android:maxLines="1"
                             android:text="@string/mode_listen_desc" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

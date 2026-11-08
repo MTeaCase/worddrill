@@ -5,6 +5,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.worddrill.app.R
 import com.worddrill.app.databinding.ActivityMainBinding
 import com.worddrill.app.ui.library.LibraryFragment

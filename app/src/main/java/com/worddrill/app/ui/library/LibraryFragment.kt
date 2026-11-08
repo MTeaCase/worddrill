@@ -65,6 +65,11 @@ class LibraryFragment : Fragment() {
         if (_binding != null) load()
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && _binding != null) load()
+    }
+
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()

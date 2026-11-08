@@ -60,6 +60,14 @@ class MineFragment : Fragment() {
         }
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && _binding != null) {
+            buildRows()
+            loadSummary()
+        }
+    }
+
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()

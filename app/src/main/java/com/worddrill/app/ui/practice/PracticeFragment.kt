@@ -63,7 +63,9 @@ class PracticeFragment : Fragment() {
         binding.etEnd.doAfterTextChanged { refreshSettingsSummary() }
 
         binding.btnStart.setOnClickListener { startPractice() }
-        binding.btnOpenList.setOnClickListener { openList() }
+        binding.btnOpenList.setOnClickListener { openList(WordFilter.ALL) }
+        // 进度卡也是「已学过」的入口，和复习页那张卡是同一个页面
+        binding.cardProgress.setOnClickListener { openList(WordFilter.LEARNED) }
 
         selectMode(mode)
         setExpanded(false)
@@ -73,6 +75,12 @@ class PracticeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (_binding != null) loadBooks()
+    }
+
+    /** 从别的 tab 切回来时 onResume 不会再走一遍，这里补上刷新。 */
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && _binding != null) loadBooks()
     }
 
     override fun onDestroyView() {
@@ -112,7 +120,8 @@ class PracticeFragment : Fragment() {
                 if (_binding == null || !isAdded) return@onSuccess
                 books = list
                 if (list.isEmpty()) {
-                    binding.tvBookProgress.text = "还没有词库"
+                    binding.tvHeroTitle.text = "还没有词库"
+                    binding.tvHeroSub.text = "去「词库」页导入自组词汇库"
                     binding.btnStart.isEnabled = false
                     return@onSuccess
                 }
@@ -145,12 +154,14 @@ class PracticeFragment : Fragment() {
     }
 
     private fun applyBook(book: Book, resetRange: Boolean) {
+        val goal = Settings.dailyGoal(requireContext())
         Bg.run({
             BookStats(
                 range = repo.ordRange(book.id),
                 practiced = repo.practicedCount(book.id),
                 blocked = repo.blockedCount(book.id),
                 total = book.wordCount,
+                summary = repo.studySummary(7, goal, book.id),
             )
         }) { result ->
             result.onSuccess { stats ->
@@ -158,9 +169,12 @@ class PracticeFragment : Fragment() {
                 ordRange = stats.range
                 val max = stats.range?.last ?: 0
                 val percent = if (stats.total > 0) stats.practiced * 100 / stats.total else 0
-                binding.pbBook.setProgressCompat(percent.coerceIn(0, 100), true)
-                binding.tvBookProgress.text = buildString {
-                    append("已练 ${stats.practiced} / ${stats.total} 词")
+                binding.pbHero.setProgressCompat(percent.coerceIn(0, 100), true)
+                binding.tvHeroTitle.text = "已练 ${stats.practiced} / ${stats.total} 词"
+                binding.tvHeroSub.text = buildString {
+                    append("今日 ${stats.summary.todayAnswered}/${stats.summary.dailyGoal} 题")
+                    if (stats.summary.streak > 0) append(" · 连续 ${stats.summary.streak} 天")
+                    if (stats.summary.dueReview > 0) append(" · 待复习 ${stats.summary.dueReview} 词")
                     if (stats.blocked > 0) append(" · 屏蔽 ${stats.blocked}")
                     if (max == 0) append(" · 没有可练习的单词")
                 }
@@ -204,13 +218,13 @@ class PracticeFragment : Fragment() {
         binding.tvSettingsSummary.text = "$countLabel · $rangeLabel"
     }
 
-    private fun openList() {
+    private fun openList(filter: WordFilter) {
         val book = books.firstOrNull { it.id == selectedBookId }
         if (book == null) {
             toast("还没有可用的词库")
             return
         }
-        startActivity(WordListActivity.intent(requireContext(), book.id, book.name, WordFilter.ALL))
+        startActivity(WordListActivity.intent(requireContext(), book.id, book.name, filter))
     }
 
     private fun startPractice() {
@@ -270,5 +284,6 @@ class PracticeFragment : Fragment() {
         val practiced: Int,
         val blocked: Int,
         val total: Int,
+        val summary: com.worddrill.app.data.StudySummary,
     )
 }
