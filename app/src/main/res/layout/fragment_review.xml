@@ -81,7 +81,7 @@
                         android:backgroundTint="@color/white"
                         android:text="@string/action_review"
                         android:textColor="@color/brand"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         app:cornerRadius="14dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -293,7 +293,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
