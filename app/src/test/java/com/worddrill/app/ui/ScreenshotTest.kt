@@ -64,7 +64,8 @@ class ScreenshotTest {
         while (System.currentTimeMillis() < deadline) {
             shadowOf(Looper.getMainLooper()).idle()
             Thread.sleep(60)
-            if (activity.findViewById<android.view.View>(R.id.fragmentContainer)?.childCount ?: 0 > 0) break
+            val container = activity.findViewById<android.view.ViewGroup>(R.id.fragmentContainer)
+            if ((container?.childCount ?: 0) > 0) break
         }
         shadowOf(Looper.getMainLooper()).idle()
         Thread.sleep(300)
