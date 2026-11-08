@@ -117,11 +117,15 @@ class MainActivity : BaseActivity() {
         else -> R.id.tab_practice
     }
 
-    /** 状态栏和手势条由外壳处理，里面的 Fragment 就不必各自算了。 */
+    /**
+     * 状态栏由外壳处理；底部导航栏自己吃手势条 inset，
+     * 这样导航条背景能一直铺到屏幕底边，不会像浮在空中。
+     */
     private fun applyOuterInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            view.setPadding(bars.left, bars.top, bars.right, 0)
+            binding.bottomNav.updatePadding(bottom = bars.bottom)
             insets
         }
         ViewCompat.requestApplyInsets(binding.root)

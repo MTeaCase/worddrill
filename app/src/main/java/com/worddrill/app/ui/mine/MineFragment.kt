@@ -108,6 +108,9 @@ class MineFragment : Fragment() {
         addRow(binding.otherRows, getString(R.string.settings_privacy), getString(R.string.settings_privacy_desc)) {
             startActivity(PrivacyActivity.intent(requireContext()))
         }
+        addRow(binding.otherRows, getString(R.string.settings_license), getString(R.string.settings_license_desc)) {
+            startActivity(PrivacyActivity.licenseIntent(requireContext()))
+        }
         addRow(binding.otherRows, getString(R.string.about), getString(R.string.about_version, BuildConfig.VERSION_NAME)) {
             AboutDialog.show(settings())
         }

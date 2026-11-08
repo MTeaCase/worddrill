@@ -2,19 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_sort_recent"
-        android:title="@string/mistake_sort_recent"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_sort_wrong"
-        android:title="@string/mistake_sort_wrong"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_sort_due"
-        android:title="@string/mistake_sort_due"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_clear_mistakes"
-        android:title="@string/action_clear_mistakes"
-        app:showAsAction="never" />
+        android:id="@+id/action_sort"
+        android:icon="@drawable/ic_menu"
+        android:title="@string/mistake_sort_label"
+        app:showAsAction="always" />
 </menu>

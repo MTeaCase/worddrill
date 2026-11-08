@@ -3,7 +3,7 @@
 Android 单词练习 App：**英译汉 / 汉译英 / 单词默写 / 听音拼写**四种模式，内置高中 3500 词，也可以导入自己的词汇表。
 无广告、无账号，词库与进度全部保存在本机；只有「检查更新」和「AI 智能解析 / AI 例句」会联网。
 
-**当前版本 1.4.0**（versionCode 14） · 隐私说明见 [PRIVACY.md](PRIVACY.md)
+**当前版本 1.4.1**（versionCode 15） · 隐私说明见 [PRIVACY.md](PRIVACY.md)
 
 目前1.0版本已经部署到web： [1.0](https://wordrill.zzlltt.xyz/) ，1.2移植工作紧张进行中。
 
@@ -49,7 +49,7 @@ Kotlin · 原生 View · SQLite · Material 3 · minSdk 24 / targetSdk 36
 - **打卡与目标**：每日目标题量、连续打卡天数、近 7 天练习量柱状图、未来 7 天复习量预测（学习报告页）。
 - **桌面小组件**：显示今日进度与连续打卡天数，点击进入首页。
 - **抽题设置**：每轮 1–200 题，可按词库索引区间抽题，可开关「允许重复抽到已练过的词」。
-- **内置词库**：高中 3500 词，3793 条，含词性与释义。
+- **内置词库**：高中 3500 词（3793 条）+ 大学英语四级（4543 条），含词性与释义；默认使用高中 3500 词。
 - **自组词库**：直接选择 Markdown 文件导入（自动识别 UTF-8 / GBK），也可粘贴表格；导入后可继续追加单词。
 - **AI 智能解析**（1.2.1 起）：导入页可把随便一段文字（单词列表、CSV、OCR 结果、带音标的词汇表）交给自建 AI 服务
   整理成标准表格再导入。服务端是 `netlify/functions/smart-parse.js`，背后接商汤日日新，
@@ -98,5 +98,6 @@ APK 也可以直接从 [Releases](https://github.com/SpeakerC/worddrill/releases
 
 发布出去的 APK 对应的完整源代码即本仓库，可按 GPLv3 自由使用、修改、再分发。
 
-内置词库来自 [pluto0x0/word3500](https://github.com/pluto0x0/word3500)（MIT；MIT 与 GPLv3 兼容），第三方组件与数据说明见
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+内置词库来自 [pluto0x0/word3500](https://github.com/pluto0x0/word3500)（MIT；MIT 与 GPLv3 兼容）
+与 [KyleBing/english-vocabulary](https://github.com/KyleBing/english-vocabulary)（BSD 3-Clause；同样与 GPLv3 兼容），
+第三方组件与数据说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。

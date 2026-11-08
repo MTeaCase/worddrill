@@ -104,20 +104,27 @@ data class WordProgress(
 data class LearnedStats(
     val learned: Int,
     val total: Int,
+    /** 复习等级 1–4 级。 */
+    val learning: Int,
+    /** 复习等级 ≥ 5 级。 */
     val mastered: Int,
+    /** 属于「易忘」：答错过，或复习时归零（lapses）≥ 2 次。 */
     val weak: Int,
-) {
-    val unmastered: Int
-        get() = (learned - mastered - weak).coerceAtLeast(0)
-}
+)
 
-/** 掌握度分布：没学过、学习中、已掌握（复习等级 ≥ 5）、易忘（归零 ≥ 2 次）。 */
+/** 掌握度分布：按复习等级分四档，另附「从没练过」的数量。 */
 data class MasteryStats(
     val total: Int,
+    /** 0 级。 */
     val fresh: Int,
+    /** 1–2 级。 */
     val learning: Int,
-    val mastered: Int,
-    val weak: Int = 0,
+    /** 3–4 级。 */
+    val familiar: Int = 0,
+    /** ≥ 5 级。 */
+    val mastered: Int = 0,
+    /** 没有任何练习记录的词。 */
+    val untouched: Int = 0,
 ) {
     val masteredPercent: Int
         get() = if (total <= 0) 0 else mastered * 100 / total
@@ -128,14 +135,17 @@ data class MasteryStats(
 
 /** 错题本的排序方式。 */
 enum class MistakeSort {
-    /** 最近错的排前面。 */
+    /** 最近答错的排前面。 */
     RECENT,
 
     /** 错得最多的排前面。 */
     WRONG,
 
-    /** 最快到期（最该复习）的排前面。 */
+    /** 最该复习（最快到期）的排前面。 */
     DUE,
+
+    /** 按字母顺序。 */
+    ALPHABET,
 }
 
 data class ImportResult(

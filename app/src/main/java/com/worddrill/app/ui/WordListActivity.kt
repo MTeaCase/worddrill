@@ -103,6 +103,11 @@ class WordListActivity : BaseActivity() {
                 WordFilter.MISTAKES -> { word -> askRemoveMistake(word) }
                 else -> null
             },
+            onRemove = if (filter == WordFilter.MISTAKES) {
+                { word -> askRemoveMistake(word) }
+            } else {
+                null
+            },
         )
 
         binding.recycler.layoutManager = LinearLayoutManager(this)
@@ -142,32 +147,36 @@ class WordListActivity : BaseActivity() {
 
     private fun setupMistakeMenu() {
         setupMenu(R.menu.menu_word_list) { item ->
-            when (item.itemId) {
-                R.id.action_sort_recent -> {
-                    setMistakeSort(MistakeSort.RECENT)
-                    true
-                }
-
-                R.id.action_sort_wrong -> {
-                    setMistakeSort(MistakeSort.WRONG)
-                    true
-                }
-
-                R.id.action_sort_due -> {
-                    setMistakeSort(MistakeSort.DUE)
-                    true
-                }
-
-                R.id.action_clear_mistakes -> {
-                    confirmClearMistakes()
-                    true
-                }
-
-                else -> false
+            if (item.itemId == R.id.action_sort) {
+                showSortDialog()
+                true
+            } else {
+                false
             }
         }
         binding.tvHint.isVisible = true
         binding.tvHint.text = getString(R.string.mistake_cleared_after_two)
+        binding.btnClearMistakes.isVisible = true
+        binding.btnClearMistakes.setOnClickListener { confirmClearMistakes() }
+    }
+
+    /** 汉堡按钮：选排序方式，当前用的那种会打勾。 */
+    private fun showSortDialog() {
+        val sorts = listOf(
+            MistakeSort.RECENT to getString(R.string.mistake_sort_recent),
+            MistakeSort.WRONG to getString(R.string.mistake_sort_wrong),
+            MistakeSort.DUE to getString(R.string.mistake_sort_due),
+            MistakeSort.ALPHABET to getString(R.string.mistake_sort_alphabet),
+        )
+        val labels = sorts.map { it.second }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.mistake_sort_label)
+            .setSingleChoiceItems(labels, sorts.indexOfFirst { it.first == mistakeSort }) { dialog, which ->
+                setMistakeSort(sorts[which].first)
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun setupLearnedChrome(custom: Boolean) {
@@ -264,7 +273,7 @@ class WordListActivity : BaseActivity() {
     private fun refreshChipLabels() {
         val stats = learnedStats ?: return
         binding.chipAll.text = "${getString(R.string.learned_scope_all)} ${stats.learned}"
-        binding.chipLearning.text = "${getString(R.string.learned_scope_learning)} ${stats.unmastered}"
+        binding.chipLearning.text = "${getString(R.string.learned_scope_learning)} ${stats.learning}"
         binding.chipMastered.text = "${getString(R.string.learned_scope_mastered)} ${stats.mastered}"
         binding.chipWeak.text = "${getString(R.string.learned_scope_weak)} ${stats.weak}"
     }
@@ -276,8 +285,9 @@ class WordListActivity : BaseActivity() {
                 when (learnedScope) {
                     LearnedScope.ALL -> true
                     LearnedScope.MASTERED -> p.level >= 5
-                    LearnedScope.LEARNING -> p.level < 5 && p.lapses < 2
-                    LearnedScope.WEAK -> p.level < 5 && p.lapses >= 2
+                    LearnedScope.LEARNING -> p.level in 1..4
+                    // 易忘：答错过，或者复习时归零过 2 次以上
+                    LearnedScope.WEAK -> p.wrong > 0 || p.lapses >= 2
                 }
             }
         } else {
@@ -354,9 +364,9 @@ class WordListActivity : BaseActivity() {
                 null
             } else {
                 val parts = mutableListOf<String>()
-                if (p.level >= 5) parts.add("已掌握") else parts.add("练过 ${p.times} 次")
+                parts.add("${p.level} 级")
+                parts.add("练过 ${p.times} 次")
                 if (p.wrong > 0) parts.add("错 ${p.wrong} 次")
-                if (p.lapses >= 2 && p.level < 5) parts.add("易忘")
                 parts.add(dueLabel(p.dueAt))
                 parts.joinToString(" · ")
             }

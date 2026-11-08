@@ -56,6 +56,18 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRemove"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:minWidth="0dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="@string/action_remove_mistake"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
     <ImageButton
         android:id="@+id/btnStar"
         android:layout_width="44dp"

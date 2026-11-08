@@ -76,10 +76,12 @@ class WordDbMigrationTest {
         }
 
         val repo = WordRepository(context)
-        val book = repo.books().single()
+        val book = repo.books().first { it.name == "旧词库" }
         assertEquals("旧词库", book.name)
         assertFalse(book.builtin)
         assertEquals(1, book.wordCount)
+        // v7 升级时补进来的内置四级词库
+        assertTrue(repo.books().any { it.name == "大学英语四级" && it.builtin })
 
         val word = repo.words(book.id).single()
         assertEquals("legacy", word.text)

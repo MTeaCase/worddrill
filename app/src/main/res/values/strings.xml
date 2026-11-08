@@ -54,6 +54,7 @@
     <string name="mistake_sort_recent">最近错的</string>
     <string name="mistake_sort_wrong">错得最多</string>
     <string name="mistake_sort_due">最该复习</string>
+    <string name="mistake_sort_alphabet">按字母</string>
     <string name="mistake_sort_label">排序</string>
     <string name="action_remove_mistake">移出错题本</string>
     <string name="action_clear_mistakes">清空错题本</string>
@@ -128,6 +129,8 @@
     <string name="privacy_title">隐私政策</string>
     <string name="settings_privacy">隐私政策</string>
     <string name="settings_privacy_desc">本应用收集哪些信息、什么时候联网</string>
+    <string name="settings_license">开放源代码许可</string>
+    <string name="settings_license_desc">本应用的 GPLv3 协议与内置词库的来源说明</string>
 
     <!-- 智能解析 -->
     <string name="import_ai_parse">AI 智能解析</string>

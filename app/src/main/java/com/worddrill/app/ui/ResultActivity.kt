@@ -100,27 +100,33 @@ class ResultActivity : BaseActivity() {
         val now = System.currentTimeMillis()
         var today = 0
         var tomorrow = 0
-        var soon = 0
         var later = 0
+        var earliest = Long.MAX_VALUE
         progress.forEach { item ->
-            val days = ((item.dueAt - now) / ReviewScheduler.DAY_MS).toInt()
-            when {
-                item.dueAt <= now -> today++
-                days <= 1 -> tomorrow++
-                days <= 3 -> soon++
+            if (item.dueAt in 1 until earliest) earliest = item.dueAt
+            when (dayOffset(item.dueAt, now)) {
+                0 -> today++
+                1 -> tomorrow++
                 else -> later++
             }
         }
-        return buildString {
-            append("复习安排：")
-            val parts = mutableListOf<String>()
-            if (today > 0) parts.add("今天 $today 个")
-            if (tomorrow > 0) parts.add("明天 $tomorrow 个")
-            if (soon > 0) parts.add("3 天内 $soon 个")
-            if (later > 0) parts.add("更久以后 $later 个")
-            if (parts.isEmpty()) return ""
-            append(parts.joinToString(" · "))
+        val parts = mutableListOf<String>()
+        if (earliest != Long.MAX_VALUE) {
+            val days = dayOffset(earliest, now)
+            parts.add(if (days <= 0) "最早今天复习" else "最早 $days 天后复习")
         }
+        if (today > 0) parts.add("今天 $today 个")
+        if (tomorrow > 0) parts.add("明天 $tomorrow 个")
+        if (later > 0) parts.add("更久 $later 个")
+        if (parts.isEmpty()) return ""
+        return parts.joinToString(" · ")
+    }
+
+    /** 距今天还有几天：已到期算 0，不足一天按一天算。 */
+    private fun dayOffset(dueAt: Long, now: Long): Int {
+        val diff = dueAt - now
+        if (diff <= 0L) return 0
+        return ((diff + ReviewScheduler.DAY_MS - 1) / ReviewScheduler.DAY_MS).toInt()
     }
 
     companion object {

@@ -139,6 +139,7 @@ class WordRepository(context: Context) {
                     MistakeSort.RECENT -> " ORDER BY m.last_at DESC"
                     MistakeSort.WRONG -> " ORDER BY m.wrong DESC, m.last_at DESC"
                     MistakeSort.DUE -> " ORDER BY COALESCE(r.due_at, 0) ASC"
+                    MistakeSort.ALPHABET -> " ORDER BY w.word COLLATE NOCASE ASC"
                 }
 
                 WordFilter.LEARNED -> " ORDER BY p.last_at DESC"
@@ -187,6 +188,7 @@ class WordRepository(context: Context) {
                 MistakeSort.RECENT -> " ORDER BY m.last_at DESC"
                 MistakeSort.WRONG -> " ORDER BY m.wrong DESC, m.last_at DESC"
                 MistakeSort.DUE -> " ORDER BY COALESCE(r.due_at, 0) ASC"
+                MistakeSort.ALPHABET -> " ORDER BY w.word COLLATE NOCASE ASC"
             },
         )
         val items = db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
@@ -209,8 +211,8 @@ class WordRepository(context: Context) {
     }
 
     /**
-     * 掌握度：按练习与复习记录把词分成四档——
-     * 没学过（没有练习记录）、学习中、易忘（答错归零 ≥ 2 次）、已掌握（复习等级 ≥ 5）。
+     * 掌握度：按复习等级分四档（0 级 / 1–2 级 / 3–4 级 / 5 级以上），
+     * 另外单独统计「从没练过」的词数——0 级里混着这两种，分开看更准。
      */
     fun masteryStats(bookId: Long? = null): MasteryStats {
         val where = if (bookId == null) "w.blocked = 0" else "w.book_id = ? AND w.blocked = 0"
@@ -218,14 +220,11 @@ class WordRepository(context: Context) {
         val sql =
             """
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN p.word_id IS NULL THEN 1 ELSE 0 END) AS fresh,
-                   SUM(CASE WHEN p.word_id IS NOT NULL
-                             AND COALESCE(r.lapses, 0) >= 2
-                             AND COALESCE(r.level, 0) < 5 THEN 1 ELSE 0 END) AS weak,
-                   SUM(CASE WHEN p.word_id IS NOT NULL
-                             AND COALESCE(r.level, 0) < 5
-                             AND COALESCE(r.lapses, 0) < 2 THEN 1 ELSE 0 END) AS learning,
-                   SUM(CASE WHEN COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END) AS mastered
+                   SUM(CASE WHEN COALESCE(r.level, 0) = 0 THEN 1 ELSE 0 END) AS fresh,
+                   SUM(CASE WHEN r.level BETWEEN 1 AND 2 THEN 1 ELSE 0 END) AS learning,
+                   SUM(CASE WHEN r.level BETWEEN 3 AND 4 THEN 1 ELSE 0 END) AS familiar,
+                   SUM(CASE WHEN r.level >= 5 THEN 1 ELSE 0 END) AS mastered,
+                   SUM(CASE WHEN p.word_id IS NULL THEN 1 ELSE 0 END) AS untouched
             FROM words w
             LEFT JOIN review r ON r.word_id = w._id
             LEFT JOIN practice_log p ON p.word_id = w._id
@@ -233,37 +232,41 @@ class WordRepository(context: Context) {
             """.trimIndent()
         return db.rawQuery(sql, args).use { c ->
             if (!c.moveToFirst()) {
-                MasteryStats(0, 0, 0, 0, 0)
+                MasteryStats(0, 0, 0)
             } else {
                 MasteryStats(
                     total = c.getInt(0),
                     fresh = c.getInt(1),
-                    learning = c.getInt(3),
+                    learning = c.getInt(2),
+                    familiar = c.getInt(3),
                     mastered = c.getInt(4),
-                    weak = c.getInt(2),
+                    untouched = c.getInt(5),
                 )
             }
         }
     }
 
-    /** 「已学过」页面头部：练过的词数、其中已掌握 / 易忘各多少。 */
+    /** 「已学过」页面头部：练过的词里，1–4 级 / 5 级以上 / 易忘各多少。 */
     fun learnedStats(bookId: Long): LearnedStats {
         val total = wordCount(bookId)
         val sql =
             """
             SELECT COUNT(*),
+                   SUM(CASE WHEN COALESCE(r.level, 0) BETWEEN 1 AND 4 THEN 1 ELSE 0 END),
                    SUM(CASE WHEN COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN COALESCE(r.lapses, 0) >= 2 AND COALESCE(r.level, 0) < 5 THEN 1 ELSE 0 END)
+                   SUM(CASE WHEN COALESCE(m.wrong, 0) > 0 OR COALESCE(r.lapses, 0) >= 2
+                            THEN 1 ELSE 0 END)
             FROM practice_log p
             JOIN words w ON w._id = p.word_id
             LEFT JOIN review r ON r.word_id = p.word_id
+            LEFT JOIN mistakes m ON m.word_id = p.word_id
             WHERE w.book_id = ? AND w.blocked = 0
             """.trimIndent()
         return db.rawQuery(sql, arrayOf(bookId.toString())).use { c ->
             if (!c.moveToFirst()) {
-                LearnedStats(0, total, 0, 0)
+                LearnedStats(0, total, 0, 0, 0)
             } else {
-                LearnedStats(c.getInt(0), total, c.getInt(1), c.getInt(2))
+                LearnedStats(c.getInt(0), total, c.getInt(1), c.getInt(2), c.getInt(3))
             }
         }
     }

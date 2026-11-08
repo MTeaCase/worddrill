@@ -133,8 +133,8 @@ class ReviewFragment : Fragment() {
             "已掌握 ${mastery.mastered} / ${mastery.total} 词（${mastery.masteredPercent}%）"
         binding.pbMastery.setProgressCompat(mastery.masteredPercent, true)
         binding.tvMasteryDetail.text = buildString {
-            append("没学过 ${mastery.fresh} · 学习中 ${mastery.learning} · 已掌握 ${mastery.mastered}")
-            if (mastery.weak > 0) append(" · 易忘 ${mastery.weak}")
+            append("新词 ${mastery.fresh} · 学习中 ${mastery.learning} · 较熟 ${mastery.familiar} · 已掌握 ${mastery.mastered}")
+            append("\n其中还没练过 ${mastery.untouched} 词")
             append("\n复习等级到 5 级（约 30 天）算掌握；答对升级，答错归零重来")
         }
     }

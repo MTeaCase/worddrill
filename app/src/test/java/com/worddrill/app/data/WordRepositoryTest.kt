@@ -21,11 +21,17 @@ class WordRepositoryTest {
     @Test
     fun builtinBookIsSeededWith3500Words() {
         val books = repo.books()
-        assertEquals(1, books.size)
+        assertEquals(2, books.size)
         val builtin = books.first()
         assertTrue(builtin.builtin)
+        assertEquals("高中 3500 词", builtin.name)
         assertTrue("词数=${builtin.wordCount}", builtin.wordCount > 3500)
         assertEquals(1..builtin.wordCount, repo.ordRange(builtin.id))
+
+        // v7 新增的内置四级词库，默认仍排在高中的后面（不影响默认选中）
+        val cet4 = books.first { it.name == "大学英语四级" }
+        assertTrue(cet4.builtin)
+        assertTrue("词数=${cet4.wordCount}", cet4.wordCount > 4000)
     }
 
     @Test

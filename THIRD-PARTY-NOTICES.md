@@ -13,7 +13,17 @@
 - MIT 与 GPLv3 兼容：词库数据本身仍按 MIT 分发，本项目整体按 GPLv3 发布；
   MIT 协议全文见 <https://github.com/pluto0x0/word3500/blob/main/LICENSE>。
 
-## 2. Android 与 Kotlin 组件
+## 2. 大学英语四级（CET-4）词库
+
+- 来源：[KyleBing/english-vocabulary](https://github.com/KyleBing/english-vocabulary)
+- 协议：BSD 3-Clause License，Copyright (c) 2022-2026, KyleBing
+- 本项目对原始数据做的修改：
+  - 取其中的「四级」词表（`3 四级-乱序.txt`，7508 行）；
+  - 按单词去重合并，得到 4543 条词条，写入 `app/src/main/assets/words_cet4.json`；
+  - 只保留英文单词与中文释义，未包含词组、音标、例句等字段。
+- BSD 3-Clause 与 GPLv3 兼容：词库数据本身仍按 BSD 3-Clause 分发，本项目整体按 GPLv3 发布。
+
+## 3. Android 与 Kotlin 组件
 
 以下依赖由 Gradle 引入，均按其各自协议分发：
 
@@ -28,7 +38,7 @@
 
 完整协议文本见各组件仓库或其 LICENSE 文件。
 
-## 3. 图标
+## 4. 图标
 
 `app/src/main/res/mipmap-*`、`drawable/ic_launcher_*`、`drawable/ic_logo.xml` 为本项目自制，
 由 `tools/make_icon.py` 与同名矢量图生成，随本项目 GPLv3 协议发布。

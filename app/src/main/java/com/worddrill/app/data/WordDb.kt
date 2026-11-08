@@ -160,16 +160,25 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 db.execSQL("ALTER TABLE mistakes ADD COLUMN streak INTEGER NOT NULL DEFAULT 0")
             }
         }
+        if (oldVersion < 7) {
+            // v7：新增内置「大学英语四级」词库。老用户升级时补进来，不动原有数据。
+            runCatching { seedBookIfAbsent(db, CET4_NAME, ASSET_CET4) }
+        }
     }
 
     private fun seedBuiltin(db: SQLiteDatabase) {
+        seedBook(db, BUILTIN_NAME, ASSET_3500)
+        seedBook(db, CET4_NAME, ASSET_CET4)
+    }
+
+    private fun seedBook(db: SQLiteDatabase, name: String, asset: String) {
         val now = System.currentTimeMillis()
         val bookId = db.insertOrThrow("books", null, android.content.ContentValues().apply {
-            put("name", BUILTIN_NAME)
+            put("name", name)
             put("builtin", 1)
             put("created_at", now)
         })
-        val json = appContext.assets.open(ASSET_NAME).bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val json = appContext.assets.open(asset).bufferedReader(Charsets.UTF_8).use { it.readText() }
         val arr = JSONArray(json)
         db.beginTransaction()
         try {
@@ -193,10 +202,21 @@ class WordDb(context: Context) : SQLiteOpenHelper(
         }
     }
 
+    /** 升级时补一个内置词库；已经存在（同名内置词库）就不重复导入。 */
+    private fun seedBookIfAbsent(db: SQLiteDatabase, name: String, asset: String) {
+        val exists = db.rawQuery(
+            "SELECT COUNT(*) FROM books WHERE name = ? AND builtin = 1",
+            arrayOf(name),
+        ).use { if (it.moveToFirst()) it.getInt(0) > 0 else false }
+        if (!exists) seedBook(db, name, asset)
+    }
+
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 6
+        const val VERSION = 7
         const val BUILTIN_NAME = "高中 3500 词"
-        private const val ASSET_NAME = "words3500.json"
+        const val CET4_NAME = "大学英语四级"
+        private const val ASSET_3500 = "words3500.json"
+        private const val ASSET_CET4 = "words_cet4.json"
     }
 }

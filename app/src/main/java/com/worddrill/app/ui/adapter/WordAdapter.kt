@@ -15,6 +15,8 @@ class WordAdapter(
     private val showIndex: Boolean = true,
     private val onClick: ((Word) -> Unit)? = null,
     private val onLongClick: ((Word) -> Unit)? = null,
+    /** 传入后每行右侧会多一个「移出」按钮（错题本用）。 */
+    private val onRemove: ((Word) -> Unit)? = null,
 ) : RecyclerView.Adapter<WordAdapter.VH>() {
 
     class VH(val binding: ItemWordBinding) : RecyclerView.ViewHolder(binding.root)
@@ -45,6 +47,12 @@ class WordAdapter(
         }
         b.btnStar.setImageResource(if (word.starred) R.drawable.ic_star_filled else R.drawable.ic_star_outline)
         b.btnStar.setOnClickListener { onStar(word) }
+        if (onRemove == null) {
+            b.btnRemove.visibility = View.GONE
+        } else {
+            b.btnRemove.visibility = View.VISIBLE
+            b.btnRemove.setOnClickListener { onRemove.invoke(word) }
+        }
         b.root.setOnClickListener(onClick?.let { callback -> View.OnClickListener { callback(word) } })
         b.root.setOnLongClickListener(
             onLongClick?.let { callback ->

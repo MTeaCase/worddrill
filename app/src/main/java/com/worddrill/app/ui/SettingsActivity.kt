@@ -82,6 +82,7 @@ class SettingsActivity : BaseActivity() {
         binding.btnSmartParseUrl.setOnClickListener { editSmartParseUrl() }
         binding.btnAbout.setOnClickListener { AboutDialog.show(this) }
         binding.btnPrivacy.setOnClickListener { startActivity(PrivacyActivity.intent(this)) }
+        binding.btnLicense.setOnClickListener { startActivity(PrivacyActivity.licenseIntent(this)) }
 
         binding.swReminder.isChecked = Settings.reminderEnabled(this)
         refreshReminderText()
