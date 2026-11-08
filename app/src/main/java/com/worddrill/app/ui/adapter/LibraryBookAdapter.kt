@@ -34,9 +34,14 @@ class LibraryBookAdapter(
         val book = item.book
         val b = holder.binding
         b.tvName.text = book.name
-        b.tvBadge.text = if (book.builtin) "内置" else "自组"
         b.ivSelected.visibility = if (item.selected) View.VISIBLE else View.GONE
-        b.tvMeta.text = "${book.wordCount} 词 · 已练 ${item.practiced}"
+        b.tvMeta.text = buildString {
+            append(book.wordCount)
+            append(" 词 · ")
+            append(if (book.builtin) "内置" else "自组")
+            append(" · 已练 ")
+            append(item.practiced)
+        }
         b.root.strokeColor = if (item.selected) {
             b.root.context.getColor(com.worddrill.app.R.color.brand)
         } else {

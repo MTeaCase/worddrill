@@ -297,6 +297,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:max="100"
+                        app:indicatorColor="@color/brand"
+                        app:trackColor="@color/divider"
                         app:trackCornerRadius="4dp"
                         app:trackStopIndicatorSize="0dp"
                         app:trackThickness="10dp" />

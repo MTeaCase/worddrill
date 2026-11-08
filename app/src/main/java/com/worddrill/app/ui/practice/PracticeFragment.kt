@@ -122,6 +122,7 @@ class PracticeFragment : Fragment() {
                 val saved = Settings.selectedBookId(requireContext())
                 val index = list.indexOfFirst { it.id == saved }.takeIf { it >= 0 } ?: 0
                 val book = list[index]
+                if (book.id != saved) Settings.setSelectedBookId(requireContext(), book.id)
                 val changed = book.id != loadedBookId
                 selectedBookId = book.id
                 loadedBookId = book.id
