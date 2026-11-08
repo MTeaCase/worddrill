@@ -1,8 +1,8 @@
 {
-  "versionCode": 15,
-  "versionName": "1.4.1",
-  "content": "1. 新增内置词库「大学英语四级」（4543 词），默认仍是高中 3500 词\n2. 错题本排序加「按字母」，顶部汉堡按钮切换；行内新增「移出」，清空挪到页面顶部\n3. 已学过每行显示复习等级；筛选改为 1–4 级 / 5 级以上 / 易忘\n4. 掌握度按等级分四档，并显示其中还没练过多少词\n5. 设置并入「我的」页，开关就地生效，不再跳回旧设置页\n6. 练习页加回进度卡、模式卡收窄；修切换词库后练习页不刷新",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.1/WordDrill-1.4.1.apk",
-  "size": 6916169,
-  "md5": "fa62d47e3701116af2bb7ce683e6623c"
+  "versionCode": 16,
+  "versionName": "1.4.2",
+  "content": "1. 界面按 Material 3 规范统一：圆角、分区间距 24dp、卡片间距 16dp、正文字号、48dp 触控区\n2. 练习页：今日进度卡置顶，有到期复习时直接显示复习入口\n3. 复习页：无到期词时不显示假按钮，无排期时不画空图表\n4. 我的页：设置全部并入，开关就地生效，旧设置页删除\n5. 错题本：四种排序 + 行内「移出」+ 顶部清空\n6. 新增内置「大学英语四级」词库（4543 词），默认仍是高中 3500",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.2/WordDrill-1.4.2.apk",
+  "size": 6915169,
+  "md5": "5113aa5fb88beffc7081e4a4122da5db"
 }
