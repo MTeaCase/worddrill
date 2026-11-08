@@ -1,8 +1,8 @@
 {
-  "versionCode": 17,
-  "versionName": "1.4.3",
-  "content": "1. 桌面小组件从 1 个扩到 4 个：今日进度 / 今日一词 / 待复习 / 连续打卡\n2. 修复三键导航设备上底部导航条被压扁的问题\n3. 小组件点击直达对应页面（词典 / 复习 / 首页）",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.3/WordDrill-1.4.3.apk",
-  "size": 6925633,
-  "md5": "d1defccf8e3b0eeb79b42acf5f114f16"
+  "versionCode": 18,
+  "versionName": "1.4.4",
+  "content": "1. 修复三键导航设备上底部导航条被压扁：高度改为按内容自适应，安全区只撑高不压缩\n2. 导航条背景铺到屏幕最底边，安全区不再出现空白缝隙\n3. 图标和文字尺寸在手势导航 / 三键导航下保持一致",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.4/WordDrill-1.4.4.apk",
+  "size": 6925421,
+  "md5": "8d5890f0ee78ecba83042b8d96831762"
 }
