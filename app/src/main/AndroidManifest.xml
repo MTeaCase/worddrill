@@ -82,6 +82,39 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_worddrill_info" />
         </receiver>
+
+        <receiver
+            android:name=".ui.widget.DailyWordWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_word_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.DueReviewWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_due_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.StreakWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_streak_info" />
+        </receiver>
     </application>
 
 </manifest>

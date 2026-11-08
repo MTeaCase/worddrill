@@ -2,7 +2,7 @@ package com.worddrill.app.util
 
 import android.content.Context
 import com.worddrill.app.data.WordRepository
-import com.worddrill.app.ui.widget.WordDrillWidget
+import com.worddrill.app.ui.widget.Widgets
 
 /**
  * 把首页统计缓存到 SharedPreferences 并刷新桌面小组件。
@@ -53,7 +53,7 @@ object WidgetUpdater {
                     .putString(KEY_WORD, data.word)
                     .putString(KEY_WORD_MEANING, data.meaning)
                     .apply()
-                WordDrillWidget.updateAll(app)
+                Widgets.updateAll(app)
             }
         }
     }

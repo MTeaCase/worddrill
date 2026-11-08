@@ -197,6 +197,12 @@
 
     <!-- 桌面小组件 -->
     <string name="widget_description">今日练习进度与连续打卡天数</string>
+    <string name="widget_word_label">今日一词</string>
+    <string name="widget_word_description">显示一个单词和释义，点击进词典</string>
+    <string name="widget_due_label">待复习</string>
+    <string name="widget_due_description">显示今天到期的复习数量，点击进复习</string>
+    <string name="widget_streak_label">连续打卡</string>
+    <string name="widget_streak_description">显示连续打卡天数，点击进 App</string>
 
     <!-- 关于 -->
     <string name="about">关于</string>
