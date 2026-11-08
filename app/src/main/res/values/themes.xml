@@ -23,7 +23,7 @@
 
     <!-- 底部导航的标签，默认偏大，压到 10sp 让整条更矮 -->
     <style name="TextAppearance.WordDrill.NavLabel" parent="TextAppearance.Material3.LabelMedium">
-        <item name="android:textSize">10sp</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <!-- 底部导航选中态的胶囊底色（默认是 Material 的淡紫，和品牌蓝不搭） -->
