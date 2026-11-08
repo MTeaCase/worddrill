@@ -90,5 +90,14 @@ class WordDbMigrationTest {
         repo.setBlocked(word.id, true)
         assertEquals(1, repo.blockedCount(book.id))
         assertEquals(0, repo.wordCount(book.id))
+
+        // v6 加的 streak 列：升级后的库也能正常走「连续答对两次才移出错题本」
+        repo.setBlocked(word.id, false)
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = false)
+        assertEquals(1, repo.mistakes(book.id).size)
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
+        assertEquals(1, repo.mistakes(book.id).size)
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
+        assertTrue(repo.mistakes(book.id).isEmpty())
     }
 }

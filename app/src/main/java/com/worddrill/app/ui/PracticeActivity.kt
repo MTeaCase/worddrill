@@ -42,6 +42,11 @@ class PracticeActivity : BaseActivity() {
     private var ttsWarned = false
     private lateinit var gestureDetector: GestureDetector
 
+    /** 本轮原始题量，用来限制「错题补练」最多追加多少。 */
+    private var baseSize = 0
+    private val retried = mutableSetOf<Long>()
+    private var retryHintShown = false
+
     private val optionRows get() = listOf(binding.option1, binding.option2, binding.option3, binding.option4)
     private val optionTexts
         get() = listOf(
@@ -152,6 +157,7 @@ class PracticeActivity : BaseActivity() {
                     return@onSuccess
                 }
                 items = quiz
+                baseSize = quiz.size
                 index = 0
                 render()
                 if (quiz.size < requested) {
@@ -342,6 +348,21 @@ class PracticeActivity : BaseActivity() {
             ),
         )
         Bg.run({ repo.recordAnswer(item.word.id, mode, correct) }) { }
+        if (!correct) requeueForRetry(item)
+    }
+
+    /**
+     * 答错的词本轮末尾再出现一次，不用等到第二天。
+     * 同一个词只补一次，追加总量不超过原题量，避免一直错一直加。
+     */
+    private fun requeueForRetry(item: QuizItem) {
+        if (!retried.add(item.word.id)) return
+        if (baseSize <= 0 || items.size >= baseSize * 2) return
+        items = items + item
+        if (!retryHintShown) {
+            retryHintShown = true
+            toast("答错的词会在本轮末尾再出现一次")
+        }
     }
 
     private fun scheduleAdvance(delay: Long) {

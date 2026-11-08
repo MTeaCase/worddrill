@@ -62,6 +62,16 @@
                 app:trackCornerRadius="3dp"
                 app:trackStopIndicatorSize="0dp"
                 app:trackThickness="6dp" />
+
+            <TextView
+                android:id="@+id/tvNextReview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"
+                android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

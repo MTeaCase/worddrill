@@ -31,6 +31,27 @@
     <string name="review_none">今天没有待复习的单词</string>
     <string name="starred_words">星标词汇</string>
     <string name="mistake_book">错题本</string>
+    <string name="learned_words">已学过</string>
+    <string name="title_learned">已学过</string>
+    <string name="learned_summary">已学过 %1$d / %2$d 词 · 已掌握 %3$d · 易忘 %4$d</string>
+    <string name="learned_empty">这个词库还没有练过的单词</string>
+    <string name="learned_scope_all">全部</string>
+    <string name="learned_scope_learning">还没掌握</string>
+    <string name="learned_scope_mastered">已掌握</string>
+    <string name="learned_scope_weak">易忘</string>
+    <string name="learned_hint">按最近练过的时间排序。长按可屏蔽；点「练习这些」直接练这批词</string>
+
+    <!-- 错题本 -->
+    <string name="mistake_sort_recent">最近错的</string>
+    <string name="mistake_sort_wrong">错得最多</string>
+    <string name="mistake_sort_due">最该复习</string>
+    <string name="mistake_sort_label">排序</string>
+    <string name="action_remove_mistake">移出错题本</string>
+    <string name="action_clear_mistakes">清空错题本</string>
+    <string name="mistake_empty">还没有错题</string>
+    <string name="mistake_clear_confirm">会把当前词库的错题记录全部删除，单词和复习进度不受影响。</string>
+    <string name="mistake_remove_confirm">移出后这个词不再出现在错题本，复习安排不变。</string>
+    <string name="mistake_cleared_after_two">答对 2 次后自动移出</string>
 
     <string name="label_book">词库</string>
     <string name="label_mode">练习方式</string>
@@ -150,6 +171,8 @@
     <string name="report_streak">连续打卡</string>
     <string name="report_total">累计答题</string>
     <string name="report_week">近 7 天练习量</string>
+    <string name="report_forecast">未来 7 天复习量</string>
+    <string name="report_forecast_empty">还没有排上复习的单词</string>
     <string name="report_mastery">掌握度</string>
     <string name="report_top_wrong">最该复习的词</string>
     <string name="action_set_goal">设置每日目标</string>

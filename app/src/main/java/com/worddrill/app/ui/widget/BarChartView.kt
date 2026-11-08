@@ -20,7 +20,8 @@ class BarChartView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
 
-    private var data: List<DailyStat> = emptyList()
+    private var values: List<Int> = emptyList()
+    private var labels: List<String> = emptyList()
     private var goal: Int = 0
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -50,38 +51,55 @@ class BarChartView @JvmOverloads constructor(
     }
 
     fun setStats(stats: List<DailyStat>, dailyGoal: Int) {
-        data = stats
+        values = stats.map { it.answered }
+        labels = stats.map { weekdayLabel(it.date) }
         goal = dailyGoal
+        invalidate()
+    }
+
+    /** 复习量预测：不画目标线，达标高亮也没有意义。 */
+    fun setForecast(counts: List<Int>) {
+        values = counts
+        labels = counts.indices.map { index ->
+            when (index) {
+                0 -> "今"
+                1 -> "明"
+                else -> "${index + 1}天"
+            }
+        }
+        goal = 0
         invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (data.isEmpty()) return
+        if (values.isEmpty()) return
 
         val paddingBottom = 18f * resources.displayMetrics.density
         val paddingTop = 16f * resources.displayMetrics.density
         val usableHeight = height - paddingBottom - paddingTop
-        val slot = width.toFloat() / data.size
+        val slot = width.toFloat() / values.size
         val barWidth = slot * 0.52f
 
-        val maxValue = maxOf(data.maxOf { it.answered }, goal, 1)
+        val maxValue = maxOf(values.max(), goal, 1)
         val goalY = paddingTop + usableHeight * (1f - goal.toFloat() / maxValue)
 
-        data.forEachIndexed { index, stat ->
+        values.forEachIndexed { index, value ->
             val cx = slot * index + slot / 2f
-            val ratio = stat.answered.toFloat() / maxValue
+            val ratio = value.toFloat() / maxValue
             val barHeight = usableHeight * ratio
             val top = paddingTop + usableHeight - barHeight
             val rect = RectF(cx - barWidth / 2f, top, cx + barWidth / 2f, paddingTop + usableHeight)
-            val paint = if (stat.answered >= goal && goal > 0) barPaint else barSoftPaint
+            val paint = if (goal > 0 && value >= goal) barPaint else barSoftPaint
             val radius = barWidth / 2f
             canvas.drawRoundRect(rect, radius, radius, paint)
 
-            if (stat.answered > 0) {
-                canvas.drawText(stat.answered.toString(), cx, top - 4f * resources.displayMetrics.density, valuePaint)
+            if (value > 0) {
+                canvas.drawText(value.toString(), cx, top - 4f * resources.displayMetrics.density, valuePaint)
             }
-            canvas.drawText(weekdayLabel(stat.date), cx, height - 4f * resources.displayMetrics.density, labelPaint)
+            labels.getOrNull(index)?.let { label ->
+                canvas.drawText(label, cx, height - 4f * resources.displayMetrics.density, labelPaint)
+            }
         }
 
         if (goal > 0) {

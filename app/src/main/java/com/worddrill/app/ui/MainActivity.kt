@@ -86,6 +86,7 @@ class MainActivity : BaseActivity() {
         binding.btnReview.setOnClickListener { startReview() }
         binding.cardHero.setOnClickListener { startActivity(ReportActivity.intent(this)) }
         binding.btnWordList.setOnClickListener { openList(WordFilter.ALL) }
+        binding.btnLearned.setOnClickListener { openList(WordFilter.LEARNED) }
         binding.btnStarred.setOnClickListener { openList(WordFilter.STARRED) }
         binding.btnMistakes.setOnClickListener { openList(WordFilter.MISTAKES) }
         binding.btnManageBooks.setOnClickListener {
@@ -176,7 +177,7 @@ class MainActivity : BaseActivity() {
             val range = repo.ordRange(book.id)
             val practiced = repo.practicedCount(book.id)
             val blocked = repo.blockedCount(book.id)
-            val summary = repo.studySummary(7, Settings.dailyGoal(this@MainActivity))
+            val summary = repo.studySummary(7, Settings.dailyGoal(this@MainActivity), book.id)
             BookStats(
                 range,
                 practiced,
@@ -297,9 +298,72 @@ class MainActivity : BaseActivity() {
         )
     }
 
-    /** 取出今天到期的单词，选个模式直接开练（间隔重复复习）。 */
+    /** 复习：先选范围（当前词库 / 全部词库），再选题量，最后选题型。 */
     private fun startReview() {
-        Bg.run({ repo.dueReviewWords(200) }) { result ->
+        val book = books.firstOrNull { it.id == selectedBookId }
+        Bg.run({
+            val bookCount = if (book != null) repo.dueReviewCount(bookId = book.id) else 0
+            bookCount to repo.dueReviewCount()
+        }) { result ->
+            result.onSuccess { (bookCount, allCount) ->
+                if (isFinishing || isDestroyed) return@onSuccess
+                if (allCount == 0) {
+                    toast(getString(R.string.review_none))
+                    loadBooks()
+                    return@onSuccess
+                }
+                if (book == null || books.size <= 1) {
+                    pickReviewCount(book?.name ?: "复习", allCount, null)
+                } else if (bookCount == allCount) {
+                    pickReviewCount(book.name, bookCount, book.id)
+                } else {
+                    val options = arrayOf(
+                        "${book.name}（${bookCount} 个）",
+                        "全部词库（${allCount} 个）",
+                    )
+                    AlertDialog.Builder(this)
+                        .setTitle("复习哪个词库？")
+                        .setItems(options) { _, which ->
+                            if (which == 0) {
+                                if (bookCount == 0) {
+                                    toast("这个词库今天没有待复习的单词")
+                                } else {
+                                    pickReviewCount(book.name, bookCount, book.id)
+                                }
+                            } else {
+                                pickReviewCount("复习", allCount, null)
+                            }
+                        }
+                        .setNegativeButton("取消", null)
+                        .show()
+                }
+            }.onFailure { toast("读取复习列表失败：${it.message}") }
+        }
+    }
+
+    private fun pickReviewCount(label: String?, count: Int, bookId: Long?) {
+        if (count <= 0) {
+            toast(getString(R.string.review_none))
+            return
+        }
+        val options = linkedMapOf(
+            "全部 $count 个" to count,
+            "只练 20 个" to minOf(20, count),
+            "只练 10 个" to minOf(10, count),
+        )
+        val labels = options.keys.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.action_review))
+            .setItems(labels) { _, which ->
+                val take = options[labels[which]] ?: return@setItems
+                pickReviewMode(label, take, bookId)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun pickReviewMode(label: String?, take: Int, bookId: Long?) {
+        Bg.run({ repo.dueReviewWords(limit = take, bookId = bookId) }) { result ->
             result.onSuccess { words ->
                 if (isFinishing || isDestroyed) return@onSuccess
                 if (words.isEmpty()) {
@@ -307,15 +371,15 @@ class MainActivity : BaseActivity() {
                     loadBooks()
                     return@onSuccess
                 }
-                val labels = PracticeMode.entries.map { it.label }.toTypedArray()
+                val modes = PracticeMode.entries.map { it.label }.toTypedArray()
                 AlertDialog.Builder(this)
                     .setTitle("复习 ${words.size} 个单词")
-                    .setItems(labels) { _, which ->
+                    .setItems(modes) { _, which ->
                         startActivity(
                             PracticeActivity.retryIntent(
                                 context = this,
                                 mode = PracticeMode.entries[which],
-                                bookName = "复习",
+                                bookName = label ?: "复习",
                                 wordIds = words.map { it.id }.toLongArray(),
                             ),
                         )

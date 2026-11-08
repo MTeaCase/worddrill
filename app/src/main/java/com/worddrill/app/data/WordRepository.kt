@@ -95,16 +95,17 @@ class WordRepository(context: Context) {
         filter: WordFilter = WordFilter.ALL,
         query: String = "",
         limit: Int = 5000,
+        mistakeSort: MistakeSort = MistakeSort.RECENT,
     ): List<Word> {
         val args = mutableListOf(bookId.toString())
-        val sb = StringBuilder(
-            """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
-            FROM words w
-            """.trimIndent(),
-        )
-        if (filter == WordFilter.MISTAKES) {
-            sb.append(" JOIN mistakes m ON m.word_id = w._id")
+        val sb = StringBuilder("SELECT $WORD_COLUMNS FROM words w")
+        when (filter) {
+            WordFilter.MISTAKES -> sb.append(" JOIN mistakes m ON m.word_id = w._id")
+            WordFilter.LEARNED -> sb.append(" JOIN practice_log p ON p.word_id = w._id")
+            else -> Unit
+        }
+        if (filter == WordFilter.MISTAKES || filter == WordFilter.LEARNED) {
+            sb.append(" LEFT JOIN review r ON r.word_id = w._id")
         }
         sb.append(" WHERE w.book_id = ?")
         sb.append(if (filter == WordFilter.BLOCKED) " AND w.blocked = 1" else " AND w.blocked = 0")
@@ -115,7 +116,18 @@ class WordRepository(context: Context) {
             args.add(like)
             args.add(like)
         }
-        sb.append(if (filter == WordFilter.MISTAKES) " ORDER BY m.last_at DESC" else " ORDER BY w.ord ASC")
+        sb.append(
+            when (filter) {
+                WordFilter.MISTAKES -> when (mistakeSort) {
+                    MistakeSort.RECENT -> " ORDER BY m.last_at DESC"
+                    MistakeSort.WRONG -> " ORDER BY m.wrong DESC, m.last_at DESC"
+                    MistakeSort.DUE -> " ORDER BY COALESCE(r.due_at, 0) ASC"
+                }
+
+                WordFilter.LEARNED -> " ORDER BY p.last_at DESC"
+                else -> " ORDER BY w.ord ASC"
+            },
+        )
         sb.append(" LIMIT $limit")
         val rows = db.rawQuery(sb.toString(), args.toTypedArray()).use { c -> c.toWords() }
         if (filter == WordFilter.BLOCKED) return rows
@@ -137,11 +149,14 @@ class WordRepository(context: Context) {
         return ids.toList().mapNotNull { byId[it] }
     }
 
-    fun mistakes(bookId: Long? = null): List<MistakeItem> {
+    fun mistakes(bookId: Long? = null, sort: MistakeSort = MistakeSort.RECENT): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
-            FROM mistakes m JOIN words w ON w._id = m.word_id
+            SELECT $WORD_COLUMNS, m.wrong, m.mode, m.last_at, m.streak,
+                   COALESCE(r.level, 0), COALESCE(r.due_at, 0), COALESCE(r.lapses, 0)
+            FROM mistakes m
+            JOIN words w ON w._id = m.word_id
+            LEFT JOIN review r ON r.word_id = w._id
             WHERE w.blocked = 0
             """.trimIndent(),
         )
@@ -150,12 +165,16 @@ class WordRepository(context: Context) {
             sql.append(" AND w.book_id = ?")
             args.add(bookId.toString())
         }
-        sql.append(" ORDER BY m.last_at DESC")
+        sql.append(
+            when (sort) {
+                MistakeSort.RECENT -> " ORDER BY m.last_at DESC"
+                MistakeSort.WRONG -> " ORDER BY m.wrong DESC, m.last_at DESC"
+                MistakeSort.DUE -> " ORDER BY COALESCE(r.due_at, 0) ASC"
+            },
+        )
         val items = db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
-                while (c.moveToNext()) {
-                    add(MistakeItem(c.toWord(), c.getInt(9)))
-                }
+                while (c.moveToNext()) add(c.toMistake())
             }
         }
         if (bookId == null) return items
@@ -172,25 +191,96 @@ class WordRepository(context: Context) {
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
-    /** 掌握度：按复习等级把词分成「新词 / 学习中 / 已掌握」三档。[bookId] 为 null 时统计全部词库。 */
+    /**
+     * 掌握度：按练习与复习记录把词分成四档——
+     * 没学过（没有练习记录）、学习中、易忘（答错归零 ≥ 2 次）、已掌握（复习等级 ≥ 5）。
+     */
     fun masteryStats(bookId: Long? = null): MasteryStats {
         val where = if (bookId == null) "w.blocked = 0" else "w.book_id = ? AND w.blocked = 0"
         val args = if (bookId == null) emptyArray<String>() else arrayOf(bookId.toString())
         val sql =
             """
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN r.word_id IS NULL OR r.level = 0 THEN 1 ELSE 0 END) AS fresh,
-                   SUM(CASE WHEN r.level BETWEEN 1 AND 4 THEN 1 ELSE 0 END) AS learning,
-                   SUM(CASE WHEN r.level >= 5 THEN 1 ELSE 0 END) AS mastered
-            FROM words w LEFT JOIN review r ON r.word_id = w._id
+                   SUM(CASE WHEN p.word_id IS NULL THEN 1 ELSE 0 END) AS fresh,
+                   SUM(CASE WHEN p.word_id IS NOT NULL
+                             AND COALESCE(r.lapses, 0) >= 2
+                             AND COALESCE(r.level, 0) < 5 THEN 1 ELSE 0 END) AS weak,
+                   SUM(CASE WHEN p.word_id IS NOT NULL
+                             AND COALESCE(r.level, 0) < 5
+                             AND COALESCE(r.lapses, 0) < 2 THEN 1 ELSE 0 END) AS learning,
+                   SUM(CASE WHEN COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END) AS mastered
+            FROM words w
+            LEFT JOIN review r ON r.word_id = w._id
+            LEFT JOIN practice_log p ON p.word_id = w._id
             WHERE $where
             """.trimIndent()
         return db.rawQuery(sql, args).use { c ->
             if (!c.moveToFirst()) {
-                MasteryStats(0, 0, 0, 0)
+                MasteryStats(0, 0, 0, 0, 0)
             } else {
-                MasteryStats(c.getInt(0), c.getInt(1), c.getInt(2), c.getInt(3))
+                MasteryStats(
+                    total = c.getInt(0),
+                    fresh = c.getInt(1),
+                    learning = c.getInt(3),
+                    mastered = c.getInt(4),
+                    weak = c.getInt(2),
+                )
             }
+        }
+    }
+
+    /** 「已学过」页面头部：练过的词数、其中已掌握 / 易忘各多少。 */
+    fun learnedStats(bookId: Long): LearnedStats {
+        val total = wordCount(bookId)
+        val sql =
+            """
+            SELECT COUNT(*),
+                   SUM(CASE WHEN COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(r.lapses, 0) >= 2 AND COALESCE(r.level, 0) < 5 THEN 1 ELSE 0 END)
+            FROM practice_log p
+            JOIN words w ON w._id = p.word_id
+            LEFT JOIN review r ON r.word_id = p.word_id
+            WHERE w.book_id = ? AND w.blocked = 0
+            """.trimIndent()
+        return db.rawQuery(sql, arrayOf(bookId.toString())).use { c ->
+            if (!c.moveToFirst()) {
+                LearnedStats(0, total, 0, 0)
+            } else {
+                LearnedStats(c.getInt(0), total, c.getInt(1), c.getInt(2))
+            }
+        }
+    }
+
+    /** 批量取单词的练习 / 复习进度，给列表的行内小字用。 */
+    fun progressFor(wordIds: LongArray): Map<Long, WordProgress> {
+        if (wordIds.isEmpty()) return emptyMap()
+        val placeholders = wordIds.joinToString(",") { "?" }
+        val sql =
+            """
+            SELECT p.word_id, p.times, p.last_at,
+                   COALESCE(r.level, 0), COALESCE(r.due_at, 0), COALESCE(r.lapses, 0),
+                   COALESCE(m.wrong, 0), COALESCE(m.mode, ''), COALESCE(m.streak, 0)
+            FROM practice_log p
+            LEFT JOIN review r ON r.word_id = p.word_id
+            LEFT JOIN mistakes m ON m.word_id = p.word_id
+            WHERE p.word_id IN ($placeholders)
+            """.trimIndent()
+        val args = wordIds.map { it.toString() }.toTypedArray()
+        return db.rawQuery(sql, args).use { c ->
+            val map = HashMap<Long, WordProgress>(wordIds.size)
+            while (c.moveToNext()) {
+                map[c.getLong(0)] = WordProgress(
+                    times = c.getInt(1),
+                    lastAt = c.getLong(2),
+                    level = c.getInt(3),
+                    dueAt = c.getLong(4),
+                    lapses = c.getInt(5),
+                    wrong = c.getInt(6),
+                    lastMode = c.getString(7) ?: "",
+                    streak = c.getInt(8),
+                )
+            }
+            map
         }
     }
 
@@ -198,8 +288,11 @@ class WordRepository(context: Context) {
     fun topWrongWords(bookId: Long? = null, limit: Int = 8): List<MistakeItem> {
         val sql = StringBuilder(
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, m.wrong
-            FROM mistakes m JOIN words w ON w._id = m.word_id
+            SELECT $WORD_COLUMNS, m.wrong, m.mode, m.last_at, m.streak,
+                   COALESCE(r.level, 0), COALESCE(r.due_at, 0), COALESCE(r.lapses, 0)
+            FROM mistakes m
+            JOIN words w ON w._id = m.word_id
+            LEFT JOIN review r ON r.word_id = w._id
             WHERE w.blocked = 0
             """.trimIndent(),
         )
@@ -211,7 +304,7 @@ class WordRepository(context: Context) {
         sql.append(" ORDER BY m.wrong DESC, m.last_at DESC LIMIT $limit")
         return db.rawQuery(sql.toString(), args.toTypedArray()).use { c ->
             buildList {
-                while (c.moveToNext()) add(MistakeItem(c.toWord(), c.getInt(9)))
+                while (c.moveToNext()) add(c.toMistake())
             }
         }
     }
@@ -279,7 +372,7 @@ class WordRepository(context: Context) {
         }
     }
 
-    fun studySummary(days: Int, dailyGoal: Int): StudySummary {
+    fun studySummary(days: Int, dailyGoal: Int, bookId: Long? = null): StudySummary {
         val stats = dailyStats(days)
         val studied: Set<String> = db.rawQuery(
             "SELECT date FROM daily WHERE answered > 0",
@@ -302,7 +395,7 @@ class WordRepository(context: Context) {
             streak = StreakCalc.current(today(), studied),
             totalAnswered = totals.first,
             totalCorrect = totals.second,
-            dueReview = dueReviewCount(),
+            dueReview = dueReviewCount(bookId = bookId),
             days = stats,
         )
     }
@@ -612,31 +705,43 @@ class WordRepository(context: Context) {
 
     // ---------- 复习（间隔重复） ----------
 
-    /** 今天到期、且没被屏蔽的单词数。 */
-    fun dueReviewCount(now: Long = System.currentTimeMillis()): Int =
-        db.rawQuery(
+    /** 今天到期、且没被屏蔽的单词数。[bookId] 不为空时只统计该词库。 */
+    fun dueReviewCount(
+        now: Long = System.currentTimeMillis(),
+        bookId: Long? = null,
+    ): Int {
+        val bookClause = if (bookId == null) "" else " AND w.book_id = ?"
+        val args = if (bookId == null) arrayOf(now.toString()) else arrayOf(now.toString(), bookId.toString())
+        return db.rawQuery(
             """
             SELECT COUNT(*) FROM review r
             JOIN words w ON w._id = r.word_id
-            WHERE r.due_at <= ? AND w.blocked = 0
+            WHERE r.due_at <= ? AND w.blocked = 0$bookClause
             """.trimIndent(),
-            arrayOf(now.toString()),
+            args,
         ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    }
 
     /** 到期单词，按「等级低（更不熟）优先、到期早优先」排序。 */
-    fun dueReviewWords(limit: Int = 100, now: Long = System.currentTimeMillis()): List<Word> {
+    fun dueReviewWords(
+        limit: Int = 100,
+        now: Long = System.currentTimeMillis(),
+        bookId: Long? = null,
+    ): List<Word> {
+        val bookClause = if (bookId == null) "" else " AND w.book_id = ?"
+        val args = if (bookId == null) arrayOf(now.toString()) else arrayOf(now.toString(), bookId.toString())
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT $WORD_COLUMNS
             FROM review r JOIN words w ON w._id = r.word_id
-            WHERE r.due_at <= ? AND w.blocked = 0
+            WHERE r.due_at <= ? AND w.blocked = 0$bookClause
             ORDER BY r.level ASC, r.due_at ASC
             LIMIT $limit
             """.trimIndent()
-        return db.rawQuery(sql, arrayOf(now.toString())).use { c -> c.toWords() }
+        return db.rawQuery(sql, args).use { c -> c.toWords() }
     }
 
-    /** 未来若干天每天到期的复习量，用于报告页提示。 */
+    /** 未来若干天每天到期的复习量（今天含已逾期的），用于报告页提示。 */
     fun reviewForecast(days: Int, now: Long = System.currentTimeMillis()): List<Int> {
         if (days <= 0) return emptyList()
         val counts = IntArray(days)
@@ -644,12 +749,13 @@ class WordRepository(context: Context) {
         db.rawQuery(
             """
             SELECT r.due_at FROM review r JOIN words w ON w._id = r.word_id
-            WHERE r.due_at > ? AND r.due_at <= ? AND w.blocked = 0
+            WHERE r.due_at <= ? AND w.blocked = 0
             """.trimIndent(),
-            arrayOf(now.toString(), end.toString()),
+            arrayOf(end.toString()),
         ).use { c ->
             while (c.moveToNext()) {
-                val index = ((c.getLong(0) - now) / ReviewScheduler.DAY_MS).toInt()
+                // 已经逾期的词也算今天的任务，否则「今天 0 个、明天 3 个」会很奇怪
+                val index = ((c.getLong(0) - now) / ReviewScheduler.DAY_MS).coerceAtLeast(0L).toInt()
                 if (index in 0 until days) counts[index]++
             }
         }
@@ -692,14 +798,11 @@ class WordRepository(context: Context) {
     ): List<Word> {
         if (count <= 0 || filter == WordFilter.BLOCKED) return emptyList()
         val args = mutableListOf(bookId.toString())
-        val sb = StringBuilder(
-            """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
-            FROM words w
-            """.trimIndent(),
-        )
-        if (filter == WordFilter.MISTAKES) {
-            sb.append(" JOIN mistakes m ON m.word_id = w._id")
+        val sb = StringBuilder("SELECT $WORD_COLUMNS FROM words w")
+        when (filter) {
+            WordFilter.MISTAKES -> sb.append(" JOIN mistakes m ON m.word_id = w._id")
+            WordFilter.LEARNED -> sb.append(" JOIN practice_log p ON p.word_id = w._id")
+            else -> Unit
         }
         sb.append(" WHERE w.book_id = ? AND w.blocked = 0")
         if (filter == WordFilter.STARRED) sb.append(" AND w.starred = 1")
@@ -727,12 +830,20 @@ class WordRepository(context: Context) {
         db.beginTransaction()
         try {
             if (correct) {
-                db.delete("mistakes", "word_id = ?", arrayOf(wordId.toString()))
+                // 连续答对够次数才移出错题本：蒙对一次不该把错题一笔勾销
+                db.execSQL(
+                    "UPDATE mistakes SET streak = streak + 1 WHERE word_id = ?",
+                    arrayOf<Any>(wordId),
+                )
+                db.execSQL(
+                    "DELETE FROM mistakes WHERE word_id = ? AND streak >= $MISTAKE_STREAK_TO_CLEAR",
+                    arrayOf<Any>(wordId),
+                )
             } else {
                 db.execSQL(
                     """
-                    INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at)
-                    VALUES(?, ?, COALESCE((SELECT wrong FROM mistakes WHERE word_id = ?), 0) + 1, ?)
+                    INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at, streak)
+                    VALUES(?, ?, COALESCE((SELECT wrong FROM mistakes WHERE word_id = ?), 0) + 1, ?, 0)
                     """.trimIndent(),
                     arrayOf<Any>(wordId, mode.name, wordId, now),
                 )
@@ -873,7 +984,24 @@ class WordRepository(context: Context) {
 
     private companion object {
         const val BACKUP_FORMAT = "worddrill-backup"
+
+        /** 答错后要连续答对几次才移出错题本。 */
+        const val MISTAKE_STREAK_TO_CLEAR = 2
+
+        const val WORD_COLUMNS =
+            "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example"
     }
+
+    private fun Cursor.toMistake(): MistakeItem = MistakeItem(
+        word = toWord(),
+        wrongCount = getInt(9),
+        mode = getString(10) ?: "",
+        lastAt = getLong(11),
+        streak = getInt(12),
+        level = getInt(13),
+        dueAt = getLong(14),
+        lapses = getInt(15),
+    )
 
     private fun Cursor.toWord(): Word = Word(
         id = getLong(0),

@@ -66,20 +66,76 @@ data class Book(
 data class MistakeItem(
     val word: Word,
     val wrongCount: Int,
+    /** 最近一次答错时的题型（PracticeMode.name）。 */
+    val mode: String = "",
+    /** 最近一次答错的时间。 */
+    val lastAt: Long = 0L,
+    /** 答错之后连续答对的次数，达到阈值会自动移出错题本。 */
+    val streak: Int = 0,
+    /** 当前复习等级。 */
+    val level: Int = 0,
+    /** 下次复习时间。 */
+    val dueAt: Long = 0L,
+    /** 累计遗忘（答错归零）次数。 */
+    val lapses: Int = 0,
 )
 
-/** 掌握度分布：新词（还没进复习队列或刚答错归零）、学习中、已掌握（复习等级 ≥ 5）。 */
+/** 单词的练习 / 复习进度，用于「已学过」和错题本的行内小字。 */
+data class WordProgress(
+    /** 练过几次。 */
+    val times: Int = 0,
+    /** 上次练习时间。 */
+    val lastAt: Long = 0L,
+    /** 复习等级 0–7。 */
+    val level: Int = 0,
+    /** 下次复习时间。 */
+    val dueAt: Long = 0L,
+    /** 答错归零次数。 */
+    val lapses: Int = 0,
+    /** 错过几次。 */
+    val wrong: Int = 0,
+    /** 最近一次答错时的题型（PracticeMode.name），没有错题记录时为空。 */
+    val lastMode: String = "",
+    /** 答错之后连续答对的次数。 */
+    val streak: Int = 0,
+)
+
+/** 「已学过」页面的头部统计。 */
+data class LearnedStats(
+    val learned: Int,
+    val total: Int,
+    val mastered: Int,
+    val weak: Int,
+) {
+    val unmastered: Int
+        get() = (learned - mastered - weak).coerceAtLeast(0)
+}
+
+/** 掌握度分布：没学过、学习中、已掌握（复习等级 ≥ 5）、易忘（归零 ≥ 2 次）。 */
 data class MasteryStats(
     val total: Int,
     val fresh: Int,
     val learning: Int,
     val mastered: Int,
+    val weak: Int = 0,
 ) {
     val masteredPercent: Int
         get() = if (total <= 0) 0 else mastered * 100 / total
 
     val learningPercent: Int
         get() = if (total <= 0) 0 else learning * 100 / total
+}
+
+/** 错题本的排序方式。 */
+enum class MistakeSort {
+    /** 最近错的排前面。 */
+    RECENT,
+
+    /** 错得最多的排前面。 */
+    WRONG,
+
+    /** 最快到期（最该复习）的排前面。 */
+    DUE,
 }
 
 data class ImportResult(
@@ -100,6 +156,9 @@ enum class WordFilter {
     STARRED,
     MISTAKES,
     BLOCKED,
+
+    /** 当前词库里练过至少一次的词。 */
+    LEARNED,
 }
 
 /** 一次答题的记录，练习结束后传给结果页。 */

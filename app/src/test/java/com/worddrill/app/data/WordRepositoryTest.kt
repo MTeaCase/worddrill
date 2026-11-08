@@ -65,7 +65,7 @@ class WordRepositoryTest {
     }
 
     @Test
-    fun wrongAnswerGoesToMistakesAndCorrectAnswerRemovesIt() {
+    fun wrongAnswerGoesToMistakesAndNeedsTwoCorrectAnswersToLeave() {
         val book = repo.books().first()
         val word = repo.words(book.id, limit = 1).first()
 
@@ -78,6 +78,10 @@ class WordRepositoryTest {
         repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = false)
         mistakes = repo.mistakes(book.id)
         assertEquals(2, mistakes.first().wrongCount)
+
+        // 蒙对一次还不够，要连续答对两次才移出
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
+        assertEquals(1, repo.mistakes(book.id).size)
 
         repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
         assertTrue(repo.mistakes(book.id).isEmpty())
@@ -206,5 +210,59 @@ class WordRepositoryTest {
         val builtin = repo.books().first { it.builtin }
         repo.deleteBook(builtin.id)
         assertTrue(repo.books().any { it.id == builtin.id })
+    }
+
+    @Test
+    fun learnedFilterOnlyReturnsPracticedWordsOfThatBook() {
+        val bookId = repo.importEntries(
+            null,
+            "已学过测试",
+            listOf(VocabEntry("alpha", "n.", "甲"), VocabEntry("beta", "n.", "乙")),
+        ).bookId
+        val words = repo.words(bookId)
+        repo.recordAnswer(words.first().id, PracticeMode.EN_ZH, correct = true)
+
+        val learned = repo.words(bookId, WordFilter.LEARNED)
+        assertEquals(1, learned.size)
+        assertEquals(words.first().id, learned.first().id)
+
+        val stats = repo.learnedStats(bookId)
+        assertEquals(1, stats.learned)
+        assertEquals(2, stats.total)
+        assertEquals(0, stats.mastered)
+    }
+
+    @Test
+    fun progressForAggregatesTimesWrongCountAndMode() {
+        val bookId = repo.importEntries(null, "进度测试", listOf(VocabEntry("gamma", "n.", "丙"))).bookId
+        val word = repo.words(bookId).single()
+        repo.recordAnswer(word.id, PracticeMode.ZH_EN_SPELL, correct = false)
+        repo.recordAnswer(word.id, PracticeMode.ZH_EN_SPELL, correct = true)
+
+        val progress = repo.progressFor(longArrayOf(word.id)).getValue(word.id)
+        assertEquals(2, progress.times)
+        assertEquals(1, progress.wrong)
+        assertEquals(PracticeMode.ZH_EN_SPELL.name, progress.lastMode)
+        assertEquals(1, progress.level)
+    }
+
+    @Test
+    fun dueReviewCanBeScopedToOneBook() {
+        val bookA = repo.importEntries(null, "复习A", listOf(VocabEntry("aa", "n.", "甲"))).bookId
+        val bookB = repo.importEntries(null, "复习B", listOf(VocabEntry("bb", "n.", "乙"))).bookId
+        repo.words(bookA).forEach { repo.recordAnswer(it.id, PracticeMode.EN_ZH, correct = false) }
+        repo.words(bookB).forEach { repo.recordAnswer(it.id, PracticeMode.EN_ZH, correct = false) }
+
+        val later = System.currentTimeMillis() + 2 * ReviewScheduler.DAY_MS
+        assertEquals(1, repo.dueReviewCount(now = later, bookId = bookA))
+        assertEquals(2, repo.dueReviewCount(now = later))
+
+        val dueA = repo.dueReviewWords(limit = 100, now = later, bookId = bookA)
+        assertEquals(listOf(bookA), dueA.map { it.bookId }.distinct())
+
+        // 等一天后到期的词应该落在 forecast 的第 1 天（下标 1）
+        val forecast = repo.reviewForecast(7)
+        assertEquals(7, forecast.size)
+        assertEquals(2, forecast[1])
     }
 }

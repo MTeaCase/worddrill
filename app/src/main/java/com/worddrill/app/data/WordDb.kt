@@ -74,7 +74,8 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 word_id INTEGER PRIMARY KEY REFERENCES words(_id) ON DELETE CASCADE,
                 mode TEXT NOT NULL,
                 wrong INTEGER NOT NULL DEFAULT 1,
-                last_at INTEGER NOT NULL
+                last_at INTEGER NOT NULL,
+                streak INTEGER NOT NULL DEFAULT 0
             )
             """.trimIndent(),
         )
@@ -153,6 +154,12 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 """.trimIndent(),
             )
         }
+        if (oldVersion < 6) {
+            // v6：错题本改成「连续答对 2 次才移出」，需要记录已连续答对几次。
+            runCatching {
+                db.execSQL("ALTER TABLE mistakes ADD COLUMN streak INTEGER NOT NULL DEFAULT 0")
+            }
+        }
     }
 
     private fun seedBuiltin(db: SQLiteDatabase) {
@@ -188,7 +195,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 5
+        const val VERSION = 6
         const val BUILTIN_NAME = "高中 3500 词"
         private const val ASSET_NAME = "words3500.json"
     }

@@ -51,16 +51,30 @@ class ReportActivity : BaseActivity() {
     private fun load() {
         val goal = Settings.dailyGoal(this)
         Bg.run({
-            val summary = repo.studySummary(DAYS, goal)
-            val mastery = repo.masteryStats(null)
-            val wrong = repo.topWrongWords(null, 8)
-            Triple(summary, mastery, wrong)
+            ReportData(
+                summary = repo.studySummary(DAYS, goal),
+                mastery = repo.masteryStats(null),
+                wrong = repo.topWrongWords(null, 8),
+                forecast = repo.reviewForecast(FORECAST_DAYS),
+            )
         }) { result ->
-            result.onSuccess { (summary, mastery, wrong) ->
+            result.onSuccess { data ->
                 if (isFinishing || isDestroyed) return@onSuccess
-                render(summary)
-                renderMastery(mastery, wrong)
+                render(data.summary)
+                renderMastery(data.mastery, data.wrong)
+                renderForecast(data.forecast)
             }.onFailure { toast("读取统计失败：${it.message}") }
+        }
+    }
+
+    private fun renderForecast(forecast: List<Int>) {
+        binding.chartForecast.setForecast(forecast)
+        val total = forecast.sum()
+        val today = forecast.getOrElse(0) { 0 }
+        binding.tvForecast.text = if (total == 0) {
+            getString(R.string.report_forecast_empty)
+        } else {
+            "未来 7 天共 $total 个复习任务，今天 $today 个（含逾期的）"
         }
     }
 
@@ -69,8 +83,9 @@ class ReportActivity : BaseActivity() {
             "已掌握 ${mastery.mastered} / ${mastery.total} 词（${mastery.masteredPercent}%）"
         binding.pbMastery.setProgressCompat(mastery.masteredPercent, true)
         binding.tvMasteryDetail.text = buildString {
-            append("新词 ${mastery.fresh} · 学习中 ${mastery.learning} · 已掌握 ${mastery.mastered}")
-            append("\n复习等级到 5 级（约 30 天）算掌握；答错会归零重来")
+            append("没学过 ${mastery.fresh} · 学习中 ${mastery.learning} · 已掌握 ${mastery.mastered}")
+            if (mastery.weak > 0) append(" · 易忘 ${mastery.weak}")
+            append("\n复习等级到 5 级（约 30 天）算掌握；答对升级，答错归零重来")
         }
         binding.tvTopWrong.text = if (wrong.isEmpty()) {
             "还没有错题，继续保持"
@@ -154,8 +169,16 @@ class ReportActivity : BaseActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    private data class ReportData(
+        val summary: StudySummary,
+        val mastery: MasteryStats,
+        val wrong: List<MistakeItem>,
+        val forecast: List<Int>,
+    )
+
     companion object {
         private const val DAYS = 7
+        private const val FORECAST_DAYS = 7
 
         fun intent(context: Context): Intent = Intent(context, ReportActivity::class.java)
     }

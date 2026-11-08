@@ -8,8 +8,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.worddrill.app.R
 import com.worddrill.app.data.AnswerRecord
 import com.worddrill.app.data.PracticeMode
+import com.worddrill.app.data.ReviewScheduler
+import com.worddrill.app.data.WordProgress
+import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityResultBinding
 import com.worddrill.app.ui.adapter.ResultAdapter
+import com.worddrill.app.util.Bg
 
 class ResultActivity : BaseActivity() {
 
@@ -18,6 +22,8 @@ class ResultActivity : BaseActivity() {
     private var mode: PracticeMode = PracticeMode.EN_ZH
     private var bookName: String = ""
     private var records: List<AnswerRecord> = emptyList()
+
+    private val repo by lazy { WordRepository(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +78,49 @@ class ResultActivity : BaseActivity() {
             finish()
         }
         binding.btnHome.setOnClickListener { finish() }
+
+        loadNextReview(records.map { it.wordId }.distinct().toLongArray())
+    }
+
+    /** 告诉用户这批词什么时候再来：复习算法一直在后台排期，不显示出来像个黑盒。 */
+    private fun loadNextReview(ids: LongArray) {
+        if (ids.isEmpty()) return
+        Bg.run({ repo.progressFor(ids) }) { result ->
+            result.onSuccess { progress ->
+                if (progress.isEmpty() || isFinishing || isDestroyed) return@onSuccess
+                val text = nextReviewText(progress.values)
+                if (text.isEmpty()) return@onSuccess
+                binding.tvNextReview.text = text
+                binding.tvNextReview.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun nextReviewText(progress: Collection<WordProgress>): String {
+        val now = System.currentTimeMillis()
+        var today = 0
+        var tomorrow = 0
+        var soon = 0
+        var later = 0
+        progress.forEach { item ->
+            val days = ((item.dueAt - now) / ReviewScheduler.DAY_MS).toInt()
+            when {
+                item.dueAt <= now -> today++
+                days <= 1 -> tomorrow++
+                days <= 3 -> soon++
+                else -> later++
+            }
+        }
+        return buildString {
+            append("复习安排：")
+            val parts = mutableListOf<String>()
+            if (today > 0) parts.add("今天 $today 个")
+            if (tomorrow > 0) parts.add("明天 $tomorrow 个")
+            if (soon > 0) parts.add("3 天内 $soon 个")
+            if (later > 0) parts.add("更久以后 $later 个")
+            if (parts.isEmpty()) return ""
+            append(parts.joinToString(" · "))
+        }
     }
 
     companion object {
