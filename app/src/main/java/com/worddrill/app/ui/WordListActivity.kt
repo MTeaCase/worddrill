@@ -327,7 +327,7 @@ class WordListActivity : BaseActivity() {
                 if (items.isEmpty()) "还没有屏蔽任何单词" else "共 ${items.size} 个已屏蔽单词"
 
             else -> if (blockedTotal > 0) {
-                "共 ${items.size} 个单词 · 屏蔽 $blockedTotal 个（长按可屏蔽）"
+                "共 ${items.size} 个单词 · 屏蔽 $blockedTotal 个"
             } else {
                 "共 ${items.size} 个单词"
             }

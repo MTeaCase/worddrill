@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.worddrill.app.R
 import com.worddrill.app.data.Book
@@ -47,6 +48,7 @@ class ReviewFragment : Fragment() {
         repo = WordRepository(requireContext())
 
         binding.btnReview.setOnClickListener { startReview() }
+        binding.cardDue.setOnClickListener { startReview() }
         binding.cardLearned.setOnClickListener { openList(WordFilter.LEARNED) }
         binding.cardMistakes.setOnClickListener { openList(WordFilter.MISTAKES) }
         binding.cardStarred.setOnClickListener { openList(WordFilter.STARRED) }
@@ -117,9 +119,8 @@ class ReviewFragment : Fragment() {
             }
             if (isEmpty()) append("选一个词库开始练习后这里会显示复习任务")
         }
-        binding.btnReview.isEnabled = data.allDue > 0
-        binding.btnReview.text =
-            if (data.allDue > 0) getString(R.string.action_review) else getString(R.string.review_none)
+        binding.btnReview.isVisible = data.allDue > 0
+        binding.btnReview.text = getString(R.string.action_review)
 
         binding.chartForecast.setForecast(data.forecast)
         val total = data.forecast.sum()
