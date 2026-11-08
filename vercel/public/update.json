@@ -3,6 +3,6 @@
   "versionName": "1.4.0",
   "content": "1. 界面重构：底部四个页签 练习 / 复习 / 词库 / 我的，不再全堆在首页\n2. 练习页：模式改 2x2 网格，题量与范围收进折叠区\n3. 复习页：今日到期、未来 7 天复习量、已学过/错题本/星标入口\n4. 词库页：新增词典搜索条，词库管理并入此页\n5. 选中的词库会记住；非练习页按返回先回练习页",
   "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.0/WordDrill-1.4.0.apk",
-  "size": 6801572,
-  "md5": "d2e7f7174df8905fc6c9f5e96cb67cd1"
+  "size": 6802292,
+  "md5": "9806d1cd4d984553a68a0d5a1dc41440"
 }
