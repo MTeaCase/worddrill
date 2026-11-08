@@ -119,14 +119,14 @@ class MainActivity : BaseActivity() {
     }
 
     /**
-     * 状态栏由外壳处理；底部导航栏自己吃手势条 inset，
-     * 这样导航条背景能一直铺到屏幕底边，不会像浮在空中。
+     * 状态栏由外壳处理；底部安全区加在 bottomBar 这层容器上，
+     * 导航条自己保持固定高度，三键导航和手势导航下都不会被压扁。
      */
     private fun applyOuterInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(bars.left, bars.top, bars.right, 0)
-            binding.bottomNav.updatePadding(bottom = bars.bottom)
+            binding.bottomBar.updatePadding(bottom = bars.bottom)
             insets
         }
         ViewCompat.requestApplyInsets(binding.root)

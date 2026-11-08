@@ -18,18 +18,31 @@
         android:layout_height="1dp"
         android:background="@color/divider" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        style="@style/Widget.Material3.BottomNavigationView"
+    <!--
+        外面套一层：手势条 / 三键导航的 inset 加在 wrapper 上，
+        而不是加在导航条本身。否则固定 72dp 减去 inset 之后，
+        三键导航（inset 约 48dp）会把图标和文字压扁。
+    -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="wrap_content"
         android:background="@color/surface"
-        app:itemActiveIndicatorStyle="@style/Widget.WordDrill.BottomNav.ActiveIndicator"
-        app:itemIconSize="22dp"
-        app:itemIconTint="@color/nav_item"
-        app:itemTextAppearanceActive="@style/TextAppearance.WordDrill.NavLabel"
-        app:itemTextAppearanceInactive="@style/TextAppearance.WordDrill.NavLabel"
-        app:itemTextColor="@color/nav_item"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/menu_bottom" />
+        android:orientation="vertical">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            style="@style/Widget.Material3.BottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:background="@color/surface"
+            app:itemActiveIndicatorStyle="@style/Widget.WordDrill.BottomNav.ActiveIndicator"
+            app:itemIconSize="22dp"
+            app:itemIconTint="@color/nav_item"
+            app:itemTextAppearanceActive="@style/TextAppearance.WordDrill.NavLabel"
+            app:itemTextAppearanceInactive="@style/TextAppearance.WordDrill.NavLabel"
+            app:itemTextColor="@color/nav_item"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/menu_bottom" />
+    </LinearLayout>
 </LinearLayout>
