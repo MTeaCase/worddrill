@@ -122,8 +122,9 @@ class ReviewFragment : Fragment() {
         binding.btnReview.isVisible = data.allDue > 0
         binding.btnReview.text = getString(R.string.action_review)
 
-        binding.chartForecast.setForecast(data.forecast)
         val total = data.forecast.sum()
+        // 没有排期时不画空柱状图，直接给一句说明，省一大块空白
+        binding.chartForecast.isVisible = total > 0
         binding.tvForecast.text = if (total == 0) {
             getString(R.string.report_forecast_empty)
         } else {
