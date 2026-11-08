@@ -1,8 +1,8 @@
 {
-  "versionCode": 16,
-  "versionName": "1.4.2",
-  "content": "1. 界面按 Material 3 规范统一：圆角、分区间距 24dp、卡片间距 16dp、正文字号、48dp 触控区\n2. 练习页：今日进度卡置顶，有到期复习时直接显示复习入口\n3. 复习页：无到期词时不显示假按钮，无排期时不画空图表\n4. 我的页：设置全部并入，开关就地生效，旧设置页删除\n5. 错题本：四种排序 + 行内「移出」+ 顶部清空\n6. 新增内置「大学英语四级」词库（4543 词），默认仍是高中 3500",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.2/WordDrill-1.4.2.apk",
-  "size": 6915169,
-  "md5": "5113aa5fb88beffc7081e4a4122da5db"
+  "versionCode": 17,
+  "versionName": "1.4.3",
+  "content": "1. 桌面小组件从 1 个扩到 4 个：今日进度 / 今日一词 / 待复习 / 连续打卡\n2. 修复三键导航设备上底部导航条被压扁的问题\n3. 小组件点击直达对应页面（词典 / 复习 / 首页）",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.4.3/WordDrill-1.4.3.apk",
+  "size": 6925633,
+  "md5": "d1defccf8e3b0eeb79b42acf5f114f16"
 }
