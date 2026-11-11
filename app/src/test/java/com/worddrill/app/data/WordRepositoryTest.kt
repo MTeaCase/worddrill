@@ -413,6 +413,19 @@ class WordRepositoryTest {
     }
 
     @Test
+    fun pickWordsFiltersBeforeSampling() {
+        // 20 个名词 + 5 个动词：要求只出动词时必须凑满 5 题，
+        // 而不是「先抽 20 个再筛」那种只剩零星的写法
+        val entries = (1..20).map { VocabEntry("noun$it", "n.", "名词$it") } +
+            (1..5).map { VocabEntry("verb$it", "v.", "动词$it") }
+        val bookId = repo.importEntries(null, "筛后抽题", entries).bookId
+
+        val verbs = repo.pickWords(bookId, 1, 25, 10, allowRepeat = true) { it.pos.startsWith("v") }
+        assertEquals(5, verbs.size)
+        assertTrue(verbs.all { it.pos.startsWith("v") })
+    }
+
+    @Test
     fun dailyWordIsStableWithinADayAndChangesNextDay() {
         val book = repo.books().first()
         val today = repo.wordForDate(book.id, 1_000)

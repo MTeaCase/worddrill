@@ -814,6 +814,11 @@ class WordRepository(context: Context) {
 
     // ---------- 抽题 ----------
 
+    /**
+     * 抽题。[require] 用来先筛掉出不了题的词——比如词形变化只收有变位的词。
+     * 这个筛选必须发生在「洗牌取前 N 个」之前：先抽 20 个再筛，动词只占词库一部分，
+     * 一轮就只剩几道题了。
+     */
     fun pickWords(
         bookId: Long,
         startOrd: Int,
@@ -821,6 +826,7 @@ class WordRepository(context: Context) {
         count: Int,
         allowRepeat: Boolean,
         filter: WordFilter = WordFilter.ALL,
+        require: (Word) -> Boolean = { true },
     ): List<Word> {
         if (count <= 0 || filter == WordFilter.BLOCKED) return emptyList()
         val args = mutableListOf(bookId.toString())
@@ -839,6 +845,7 @@ class WordRepository(context: Context) {
                 if (ord == row.ord) row else row.copy(ord = ord)
             }
             .filter { it.ord in startOrd..endOrd }
+            .filter(require)
 
         val pool = if (filter == WordFilter.ALL && !allowRepeat) {
             val practiced = practicedIds()

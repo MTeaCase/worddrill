@@ -146,10 +146,16 @@ class PracticeActivity : BaseActivity() {
         val requested = if (ids != null && ids.isNotEmpty()) ids.size else count
 
         Bg.run({
+            // 出不了题的词先筛掉，再抽题；否则先抽 20 个再过滤，一轮会只剩几道
+            val require: (com.worddrill.app.data.Word) -> Boolean = when (mode) {
+                PracticeMode.FORM -> { word -> com.worddrill.app.data.WordForms.questionFor(word) != null }
+                PracticeMode.EX_SPELL -> { word -> QuizEngine.blankExample(word.exampleEn, word.text) != null }
+                else -> { _ -> true }
+            }
             val words = if (ids != null && ids.isNotEmpty()) {
-                repo.wordsByIds(ids)
+                repo.wordsByIds(ids).filter(require)
             } else {
-                repo.pickWords(bookId, start, end, count, allowRepeat, filter)
+                repo.pickWords(bookId, start, end, count, allowRepeat, filter, require)
             }
             val all = repo.allWords()
             QuizEngine.build(
