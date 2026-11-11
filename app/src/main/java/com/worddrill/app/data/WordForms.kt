@@ -55,7 +55,7 @@ object WordForms {
     /** 能出题就返回题目，否则 null（调用方据此跳过这个词）。 */
     fun questionFor(word: Word): FormQuestion? {
         val base = word.text.trim().lowercase()
-        if (base.length < 3 || base.any { !it.isLetter() }) return null
+        if (base.isEmpty() || base.any { !it.isLetter() }) return null
         return when {
             word.pos.trim().lowercase().startsWith("v") ->
                 pastForm(base)?.let { FormQuestion("过去式", it) }
@@ -89,7 +89,8 @@ object WordForms {
         val middle = word[word.length - 2]
         val first = word[word.length - 3]
         if (last in "wxy") return false
-        if (isVowel(last) || isVowel(middle) || !isVowel(first)) return false
+        // 必须是 辅音 + 元音 + 辅音：任何一个位置不符合就不双写
+        if (isVowel(last) || !isVowel(middle) || isVowel(first)) return false
         return vowelGroups(word) == 1
     }
 

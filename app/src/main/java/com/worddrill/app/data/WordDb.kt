@@ -107,16 +107,51 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 level INTEGER NOT NULL DEFAULT 0,
                 due_at INTEGER NOT NULL,
                 last_at INTEGER NOT NULL,
-                lapses INTEGER NOT NULL DEFAULT 0
+                lapses INTEGER NOT NULL DEFAULT 0,
+                ease REAL NOT NULL DEFAULT 2.5
             )
             """.trimIndent(),
         )
         db.execSQL("CREATE INDEX idx_review_due ON review(due_at)")
+        db.execSQL(
+            """
+            CREATE TABLE practice_event(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                word_id INTEGER NOT NULL,
+                mode TEXT NOT NULL,
+                correct INTEGER NOT NULL DEFAULT 0,
+                elapsed_ms INTEGER NOT NULL DEFAULT 0,
+                at INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX idx_event_at ON practice_event(at)")
+        db.execSQL(
+            """
+            CREATE TABLE achievements(
+                key TEXT PRIMARY KEY,
+                unlocked_at INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
         seedBuiltin(db)
     }
 
     /** 只做增量迁移，避免升级安装时把用户导入的自组词库清掉。 */
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // 先补列，再跑后面的迁移块：v7 的 seedBook 已经会写音标列，
+        // 要是等到 v8 才加列，从 v1 升级过来的库会在种词库那步直接报 no such column。
+        if (oldVersion in 1 until 8) {
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_us TEXT NOT NULL DEFAULT ''")
+            }
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_uk TEXT NOT NULL DEFAULT ''")
+            }
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phrases TEXT NOT NULL DEFAULT ''")
+            }
+        }
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE words ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0")
         }
@@ -168,18 +203,39 @@ class WordDb(context: Context) : SQLiteOpenHelper(
             runCatching { seedBookIfAbsent(db, CET4_NAME, ASSET_CET4) }
         }
         if (oldVersion < 8) {
-            // v8：音标（美/英）、固定搭配；同时把例句补进老库。
-            // 内置词库原来 example 全是空的，例句要等用户手动生成，这里一次性灌满。
-            runCatching {
-                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_us TEXT NOT NULL DEFAULT ''")
-            }
-            runCatching {
-                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_uk TEXT NOT NULL DEFAULT ''")
-            }
-            runCatching {
-                db.execSQL("ALTER TABLE words ADD COLUMN phrases TEXT NOT NULL DEFAULT ''")
-            }
+            // 列在上面已经加好了，这里只做数据回填
             runCatching { backfillFromAssets(db) }
+        }
+        if (oldVersion < 9) {
+            // v9：SM-2 的 ease、题型统计、成就。
+            runCatching {
+                db.execSQL("ALTER TABLE review ADD COLUMN ease REAL NOT NULL DEFAULT 2.5")
+            }
+            runCatching {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS practice_event(
+                        _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        word_id INTEGER NOT NULL,
+                        mode TEXT NOT NULL,
+                        correct INTEGER NOT NULL DEFAULT 0,
+                        elapsed_ms INTEGER NOT NULL DEFAULT 0,
+                        at INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+            runCatching { db.execSQL("CREATE INDEX IF NOT EXISTS idx_event_at ON practice_event(at)") }
+            runCatching {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS achievements(
+                        key TEXT PRIMARY KEY,
+                        unlocked_at INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
         }
     }
 
@@ -284,7 +340,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 8
+        const val VERSION = 9
         const val BUILTIN_NAME = "高中 3500 词"
         const val CET4_NAME = "大学英语四级"
         private const val ASSET_3500 = "words3500.json"
