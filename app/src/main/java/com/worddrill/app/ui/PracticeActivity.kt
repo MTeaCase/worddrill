@@ -401,7 +401,14 @@ class PracticeActivity : BaseActivity() {
                 elapsedMs = elapsed,
             ),
         )
-        Bg.run({ repo.recordAnswer(item.word.id, item.mode, correct) }) { }
+        Bg.run({
+            repo.recordAnswer(item.word.id, item.mode, correct, elapsed)
+            repo.checkAchievements()
+        }) { result ->
+            result.onSuccess { fresh ->
+                fresh.firstOrNull()?.let { toast("🏅 解锁成就：${it.title}") }
+            }
+        }
         if (!correct) requeueForRetry(item)
     }
 

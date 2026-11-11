@@ -82,4 +82,34 @@ class ReviewSchedulerTest {
         assertTrue(!ReviewScheduler.addsToMistakes(ReviewRating.KNOW))
         assertTrue(!ReviewScheduler.addsToMistakes(ReviewRating.FUZZY))
     }
+
+    // ---------- ease（SM-2） ----------
+
+    @Test
+    fun easeMovesWithTheRatingAndStaysInRange() {
+        assertEquals(2.60, ReviewScheduler.nextEase(2.5, ReviewRating.KNOW), 0.001)
+        assertEquals(2.36, ReviewScheduler.nextEase(2.5, ReviewRating.FUZZY), 0.001)
+        assertEquals(2.30, ReviewScheduler.nextEase(2.5, ReviewRating.FORGOT), 0.001)
+        assertEquals(ReviewScheduler.MIN_EASE, ReviewScheduler.nextEase(1.3, ReviewRating.FORGOT), 0.001)
+        assertEquals(ReviewScheduler.MAX_EASE, ReviewScheduler.nextEase(3.0, ReviewRating.KNOW), 0.001)
+    }
+
+    @Test
+    fun defaultEaseKeepsTheOldCurve() {
+        // ease 2.5 时「认识」的间隔与原曲线完全一致
+        for (level in 1..ReviewScheduler.MAX_LEVEL) {
+            assertEquals(
+                ReviewScheduler.intervalDays(level, correct = true),
+                ReviewScheduler.intervalDays(level, ReviewRating.KNOW, ReviewScheduler.DEFAULT_EASE),
+            )
+        }
+    }
+
+    @Test
+    fun higherEaseStretchesLowerEaseShrinks() {
+        assertEquals(5, ReviewScheduler.intervalDays(3, ReviewRating.KNOW, 3.0))
+        assertEquals(2, ReviewScheduler.intervalDays(3, ReviewRating.KNOW, 1.3))
+        assertEquals(1, ReviewScheduler.intervalDays(3, ReviewRating.FUZZY, 3.0))
+        assertEquals(1, ReviewScheduler.intervalDays(3, ReviewRating.FORGOT, 3.0))
+    }
 }

@@ -12,7 +12,7 @@
 ```json
 {
   "format": "worddrill-backup",
-  "version": 1,
+  "version": 2,
   "exportedAt": 1730000000000,
   "books": [ ... ],
   "mistakes": [ ... ],
@@ -26,7 +26,7 @@
 | 字段 | 类型 | 取值 | 说明 |
 |---|---|---|---|
 | `format` | string | 固定 `"worddrill-backup"` | **导入时强校验**，不一致直接报错 |
-| `version` | int | 目前固定 `1` | 导出会写，导入**不校验** |
+| `version` | int | 当前 `2`（v1 备份仍可导入） | 导出会写，导入**不校验**；新增字段缺失时取默认值 |
 | `exportedAt` | int64 | 毫秒时间戳 | 导出时刻，仅参考 |
 | `books` | array | 见 §2 | **只包含自组词库**（`builtin=0`），内置词库不导出 |
 | `mistakes` | array | 见 §3 | 错题 |
@@ -67,6 +67,9 @@
 | `words[].star` | bool | `true` / `false` | 星标 |
 | `words[].block` | bool | `true` / `false` | 是否屏蔽（屏蔽词不参与练习/list 索引） |
 | `words[].ex` | string | 空串或 `英文\|\|中文` | 例句缓存，分隔符是两个竖线 `\|\|`；空串表示无例句 |
+| `words[].us` | string | 可为空串 | 美式音标，不含斜杠 |
+| `words[].uk` | string | 可为空串 | 英式音标，不含斜杠 |
+| `words[].ph` | string | 空串或 `英文=中文` | 一条固定搭配；分隔符是单个等号 |
 
 **顺序**：导入时**不使用** `ord`，按数组顺序追加到 `MAX(ord)+1`。
 
@@ -179,7 +182,7 @@
 
 ## 10. 数据库结构（供对照）
 
-`worddrill.db`，VERSION 7。
+`worddrill.db`，VERSION 9。
 
 ```sql
 books(_id INTEGER PK, name TEXT NOT NULL, builtin INTEGER 0|1, created_at INTEGER)
@@ -189,6 +192,9 @@ words(_id INTEGER PK, book_id INTEGER FK→books._id ON DELETE CASCADE,
       word TEXT NOT NULL, pos TEXT DEFAULT '',
       meaning TEXT NOT NULL, starred INTEGER 0|1, blocked INTEGER 0|1,
       example TEXT DEFAULT '',          -- "英文||中文"
+      phonetic_us TEXT DEFAULT '',      -- 美式音标，不含斜杠
+      phonetic_uk TEXT DEFAULT '',      -- 英式音标，不含斜杠
+      phrases TEXT DEFAULT '',          -- 一条固定搭配 "英文=中文"
       created_at INTEGER)
 
 mistakes(word_id INTEGER PK FK→words._id ON DELETE CASCADE,
@@ -201,7 +207,15 @@ practice_log(word_id INTEGER PK FK→words._id ON DELETE CASCADE,
 daily(date TEXT PK 'yyyy-MM-dd', answered INTEGER, correct INTEGER)
 
 review(word_id INTEGER PK FK→words._id ON DELETE CASCADE,
-       level INTEGER 0..7, due_at INTEGER, last_at INTEGER, lapses INTEGER DEFAULT 0)
+       level INTEGER 0..7, due_at INTEGER, last_at INTEGER, lapses INTEGER DEFAULT 0,
+       ease REAL DEFAULT 2.5)           -- SM-2 难度系数
+
+practice_event(_id INTEGER PK AUTOINCREMENT, word_id INTEGER, mode TEXT,
+               correct INTEGER 0|1, elapsed_ms INTEGER, at INTEGER)
+    -- 题型统计用，只保留 90 天，不进备份
+
+achievements(key TEXT PK, unlocked_at INTEGER)
+    -- 成就解锁时间，不进备份
 ```
 
 ---

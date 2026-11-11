@@ -35,4 +35,14 @@
         android:maxLines="2"
         android:textColor="#5B6172"
         android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvWordPhrase"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="#7A83A6"
+        android:textSize="11sp" />
 </LinearLayout>

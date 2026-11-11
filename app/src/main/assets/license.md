@@ -26,10 +26,16 @@
 数据来自 GitHub 项目 **KyleBing/english-vocabulary**
 （<https://github.com/KyleBing/english-vocabulary>）。
 
-本应用取其中的「四级」词表，按单词去重合并后共 4543 条，
-仅保留英文单词与中文释义，未包含例句、音标、词组等字段。
+本应用取其中的「四级」词表，按单词去重合并后共 4543 条。
 
-该词库以 BSD 3-Clause 协议授权，原文如下：
+### 音标、例句与固定搭配
+
+美式/英式音标、双语例句和固定搭配同样来自 **KyleBing/english-vocabulary** 的
+`sentence` 数据集（`full_line_jsonl/sentence/`）。生成脚本见仓库的
+`tools/enrich_vocab.py`，按单词匹配后并入内置词库，约 92%–94% 的词能匹配上，
+剩余的保持无音标、无例句。
+
+该数据集以 BSD 3-Clause 协议授权，原文如下：
 
 ```
 BSD 3-Clause License

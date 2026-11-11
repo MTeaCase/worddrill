@@ -42,6 +42,34 @@
     <string name="daily_pack_empty">今天没有新词也没有到期复习</string>
     <string name="daily_pack_start">开始学习包</string>
 
+    <!-- 统计 / 分享 -->
+    <string name="report_heatmap">近一年打卡</string>
+    <string name="action_share_card">生成打卡图分享</string>
+
+    <!-- 考试倒计时 -->
+    <string name="settings_exam">考试倒计时</string>
+    <string name="settings_exam_desc">填考试名和日期，练习页会按剩余天数反推每日任务</string>
+
+    <!-- 成就 -->
+    <string name="settings_achievements">成就徽章</string>
+    <string name="settings_achievements_desc">连续打卡、掌握词数、秒答次数都会解锁徽章</string>
+
+    <!-- 词汇量自测 -->
+    <string name="settings_vocab_test">词汇量自测</string>
+    <string name="settings_vocab_test_desc">抽 30 个词自评，估算当前词库的词汇量</string>
+    <string name="vocab_test_title">词汇量自测</string>
+    <string name="vocab_test_hint">认识的词点「认识」，不认识点「跳过」，30 个词估算一次</string>
+    <string name="vocab_test_known">认识</string>
+    <string name="vocab_test_skip">不认识</string>
+    <string name="vocab_test_result">估算词汇量约 %1$d 词（样本 %2$d 个，认识 %3$d 个）</string>
+
+    <!-- 生词本筛选 -->
+    <string name="action_filter">筛选</string>
+    <string name="filter_letter">首字母</string>
+    <string name="filter_pos">词性</string>
+    <string name="filter_level">熟练度</string>
+    <string name="filter_all">全部</string>
+
     <!-- 发音设置 -->
     <string name="settings_accent">口音</string>
     <string name="settings_accent_desc">音标显示和单词朗读都跟着这个走</string>

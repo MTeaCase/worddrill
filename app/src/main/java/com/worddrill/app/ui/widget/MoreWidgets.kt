@@ -22,6 +22,10 @@ private object WidgetCache {
     fun word(context: Context) = prefs(context).getString(WidgetUpdater.KEY_WORD, "").orEmpty()
     fun meaning(context: Context) =
         prefs(context).getString(WidgetUpdater.KEY_WORD_MEANING, "").orEmpty()
+    fun phonetic(context: Context) =
+        prefs(context).getString(WidgetUpdater.KEY_WORD_PHONETIC, "").orEmpty()
+    fun phrase(context: Context) =
+        prefs(context).getString(WidgetUpdater.KEY_WORD_PHRASE, "").orEmpty()
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(WidgetUpdater.PREFS, Context.MODE_PRIVATE)
@@ -53,10 +57,16 @@ class DailyWordWidget : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_word)
             val word = WidgetCache.word(context)
             val meaning = WidgetCache.meaning(context)
+            val phonetic = WidgetCache.phonetic(context)
+            val phrase = WidgetCache.phrase(context)
             views.setTextViewText(R.id.tvWord, word.ifBlank { "—" })
             views.setTextViewText(
                 R.id.tvWordMeaning,
                 meaning.ifBlank { "打开 App 开始练习" },
+            )
+            views.setTextViewText(
+                R.id.tvWordPhrase,
+                if (phonetic.isBlank()) phrase else "/$phonetic/  $phrase".trim(),
             )
             views.setOnClickPendingIntent(
                 R.id.widgetRoot,

@@ -212,6 +212,7 @@ class PracticeFragment : Fragment() {
                     if (stats.summary.dueReview > 0) append(" · 待复习 ${stats.summary.dueReview} 词")
                     if (stats.blocked > 0) append(" · 屏蔽 ${stats.blocked}")
                     if (max == 0) append(" · 没有可练习的单词")
+                    examHint(stats.practiced, stats.total)?.let { append(" · ").append(it) }
                 }
                 val due = stats.summary.dueReview
                 binding.btnReviewNow.isVisible = due > 0
@@ -327,6 +328,18 @@ class PracticeFragment : Fragment() {
                 allowRepeat = binding.cbAllowRepeat.isChecked,
             ),
         )
+    }
+
+    /** 考试倒计时：按剩余未练词数和剩余天数反推每天该练多少。 */
+    private fun examHint(practiced: Int, total: Int): String? {
+        val date = Settings.examDate(requireContext())
+        if (date <= 0L) return null
+        val days = ((date - System.currentTimeMillis()) / (24L * 60 * 60 * 1000)).toInt()
+        val name = Settings.examName(requireContext()).ifBlank { "考试" }
+        if (days <= 0) return "$name 倒计时已到"
+        val remaining = (total - practiced).coerceAtLeast(0)
+        val perDay = (remaining + days - 1) / days
+        return "距$name $days 天 · 每天 $perDay 词"
     }
 
     private fun dp(value: Int): Int =

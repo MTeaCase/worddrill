@@ -128,6 +128,16 @@ data class WordProgress(
     val streak: Int = 0,
 )
 
+/** 按题型统计的正确率。 */
+data class ModeStat(
+    val mode: String,
+    val total: Int,
+    val correct: Int,
+) {
+    val accuracy: Int
+        get() = if (total <= 0) 0 else correct * 100 / total
+}
+
 /** 每日学习包：到期复习 + 错题 + 新词，三类各自限额，词不重复。 */
 data class DailyPack(
     val due: List<Long> = emptyList(),

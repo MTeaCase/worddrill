@@ -35,6 +35,11 @@ class WordListActivity : BaseActivity() {
     private var learnedScope = LearnedScope.ALL
     private var mistakeSort = MistakeSort.RECENT
 
+    /** 生词本增强筛选：首字母区间 / 词性 / 熟练度，都在内存里做。 */
+    private var letterFilter: CharRange? = null
+    private var posFilter: String = ""
+    private var levelFilter: IntRange? = null
+
     /** 数据库里的完整结果，筛选（chip）在内存里做，避免每点一下都查库。 */
     private var rawItems: List<Word> = emptyList()
     private var items: List<Word> = emptyList()
@@ -236,7 +241,25 @@ class WordListActivity : BaseActivity() {
     private fun setupMenu(menuRes: Int, listener: (android.view.MenuItem) -> Boolean) {
         if (!menusReady) {
             binding.toolbar.inflateMenu(menuRes)
-            binding.toolbar.setOnMenuItemClickListener { listener(it) }
+            val menu = binding.toolbar.menu
+            if (menu.findItem(R.id.action_filter) == null && filter != WordFilter.BLOCKED) {
+                val item = menu.add(
+                    android.view.Menu.NONE,
+                    R.id.action_filter,
+                    100,
+                    R.string.action_filter,
+                )
+                item.setIcon(R.drawable.ic_filter)
+                item.setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
+            }
+            binding.toolbar.setOnMenuItemClickListener { item ->
+                if (item.itemId == R.id.action_filter) {
+                    showFilterDialog()
+                    true
+                } else {
+                    listener(item)
+                }
+            }
             menusReady = true
         }
     }
@@ -294,9 +317,127 @@ class WordListActivity : BaseActivity() {
         } else {
             rawItems
         }
-        items = filtered
-        adapter?.submit(filtered)
+        val visible = filtered.filter { matchesAdvancedFilter(it) }
+        items = visible
+        adapter?.submit(visible)
         updateCounts()
+    }
+
+    /** 首字母 / 词性 / 熟练度三个维度的附加筛选。 */
+    private fun matchesAdvancedFilter(word: Word): Boolean {
+        letterFilter?.let { range ->
+            val initial = word.text.firstOrNull()?.uppercaseChar() ?: return false
+            if (initial !in range) return false
+        }
+        if (posFilter.isNotBlank()) {
+            val pos = word.pos.trim().removeSuffix(".").lowercase()
+            if (!pos.startsWith(posFilter.lowercase().removeSuffix("."))) return false
+        }
+        levelFilter?.let { range ->
+            val level = progress[word.id]?.level ?: 0
+            if (level !in range) return false
+        }
+        return true
+    }
+
+    private fun showFilterDialog() {
+        val options = arrayOf(
+            "${getString(R.string.filter_letter)}：${letterFilterLabel()}",
+            "${getString(R.string.filter_pos)}：${posFilterLabel()}",
+            "${getString(R.string.filter_level)}：${levelFilterLabel()}",
+        )
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.action_filter)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pickLetterFilter()
+                    1 -> pickPosFilter()
+                    else -> pickLevelFilter()
+                }
+            }
+            .setNeutralButton(R.string.filter_all) { _, _ ->
+                letterFilter = null
+                posFilter = ""
+                levelFilter = null
+                applyScope()
+            }
+            .setNegativeButton("关闭", null)
+            .show()
+    }
+
+    private fun pickLetterFilter() {
+        val ranges = listOf(
+            null to "全部",
+            'A'..'F' to "A–F",
+            'G'..'L' to "G–L",
+            'M'..'R' to "M–R",
+            'S'..'Z' to "S–Z",
+        )
+        val index = ranges.indexOfFirst { it.first == letterFilter }.coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.filter_letter)
+            .setSingleChoiceItems(ranges.map { it.second }.toTypedArray(), index) { dialog, which ->
+                letterFilter = ranges[which].first
+                dialog.dismiss()
+                applyScope()
+                showFilterDialog()
+            }
+            .setNegativeButton("关闭", null)
+            .show()
+    }
+
+    private fun pickPosFilter() {
+        val options = listOf("", "n", "v", "a", "ad", "conj", "prep", "pron")
+        val labels = options.map { if (it.isBlank()) "全部" else "$it." }
+        val index = options.indexOf(posFilter).coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.filter_pos)
+            .setSingleChoiceItems(labels.toTypedArray(), index) { dialog, which ->
+                posFilter = options[which]
+                dialog.dismiss()
+                applyScope()
+                showFilterDialog()
+            }
+            .setNegativeButton("关闭", null)
+            .show()
+    }
+
+    private fun pickLevelFilter() {
+        val ranges = listOf<IntRange?>(
+            null,
+            0..2,
+            3..4,
+            5..ReviewScheduler.MAX_LEVEL,
+        )
+        val labels = arrayOf("全部", "0–2 级 · 新学", "3–4 级 · 较熟", "5 级以上 · 已掌握")
+        val index = ranges.indexOfFirst { it == levelFilter }.coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.filter_level)
+            .setSingleChoiceItems(labels, index) { dialog, which ->
+                levelFilter = ranges[which]
+                dialog.dismiss()
+                applyScope()
+                showFilterDialog()
+            }
+            .setNegativeButton("关闭", null)
+            .show()
+    }
+
+    private fun letterFilterLabel(): String = when (letterFilter) {
+        null -> "全部"
+        'A'..'F' -> "A–F"
+        'G'..'L' -> "G–L"
+        'M'..'R' -> "M–R"
+        else -> "S–Z"
+    }
+
+    private fun posFilterLabel(): String = if (posFilter.isBlank()) "全部" else "$posFilter."
+
+    private fun levelFilterLabel(): String = when (levelFilter) {
+        null -> "全部"
+        0..2 -> "0–2 级"
+        3..4 -> "3–4 级"
+        else -> "5 级以上"
     }
 
     private fun updateCounts() {

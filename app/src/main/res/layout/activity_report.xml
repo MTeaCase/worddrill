@@ -188,6 +188,41 @@
                     android:paddingBottom="8dp" />
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/report_heatmap"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <com.worddrill.app.ui.widget.HeatmapView
+                        android:id="@+id/heatmap"
+                        android:layout_width="match_parent"
+                        android:layout_height="112dp"
+                        android:layout_marginTop="10dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <TextView
                 android:id="@+id/tvAccuracy"
                 android:layout_width="match_parent"
@@ -219,7 +254,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <com.worddrill.app.ui.widget.BarChartView
+                    <com.worddrill.app.ui.widget.LineChartView
                         android:id="@+id/chartForecast"
                         android:layout_width="match_parent"
                         android:layout_height="150dp"
@@ -320,6 +355,25 @@
                     android:textColor="@color/text_primary"
                     android:textSize="13sp" />
             </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvModeStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:lineSpacingExtra="3dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShareCard"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/action_share_card"
+                android:textSize="14sp"
+                app:cornerRadius="14dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGoal"

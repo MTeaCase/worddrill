@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 代码里动态加到工具栏菜单的条目，需要一个稳定的 id -->
+    <item name="action_filter" type="id" />
+</resources>

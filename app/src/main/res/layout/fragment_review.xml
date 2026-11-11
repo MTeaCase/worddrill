@@ -308,6 +308,12 @@
                         app:trackStopIndicatorSize="0dp"
                         app:trackThickness="10dp" />
 
+                    <com.worddrill.app.ui.widget.MasteryBarView
+                        android:id="@+id/masteryBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="18dp"
+                        android:layout_marginTop="12dp" />
+
                     <TextView
                         android:id="@+id/tvMasteryDetail"
                         android:layout_width="match_parent"

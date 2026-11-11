@@ -20,11 +20,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.worddrill.app.BuildConfig
 import com.worddrill.app.R
 import com.worddrill.app.data.Accent
+import com.worddrill.app.data.Achievements
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.FragmentMineBinding
 import com.worddrill.app.ui.AboutDialog
 import com.worddrill.app.ui.DictionaryActivity
 import com.worddrill.app.ui.PrivacyActivity
+import com.worddrill.app.ui.VocabTestActivity
 import com.worddrill.app.util.AutoBackup
 import com.worddrill.app.util.Bg
 import com.worddrill.app.util.ReviewReminder
@@ -107,6 +109,11 @@ class MineFragment : Fragment() {
         binding.rowAccent.setOnClickListener { pickAccent() }
         binding.rowRate.setOnClickListener { pickRate() }
         binding.rowQuota.setOnClickListener { editQuotas() }
+        binding.rowExam.setOnClickListener { pickExam() }
+        binding.rowAchievements.setOnClickListener { showAchievements() }
+        binding.rowVocabTest.setOnClickListener {
+            startActivity(android.content.Intent(requireContext(), VocabTestActivity::class.java))
+        }
 
         binding.btnExport.setOnClickListener { startExport() }
         binding.btnImport.setOnClickListener { startImport() }
@@ -178,6 +185,101 @@ class MineFragment : Fragment() {
             append("新 ").append(Settings.newQuota(context))
             append(" · 复习 ").append(Settings.reviewQuota(context))
             append(" · 错题 ").append(Settings.mistakeQuota(context))
+        }
+        binding.tvExam.text = examLabel()
+        Bg.run({ repo.achievementState().count { it.second > 0 } }) { result ->
+            result.onSuccess { unlocked ->
+                if (_binding != null) {
+                    binding.tvAchievements.text = "$unlocked / ${Achievements.ALL.size}"
+                }
+            }
+        }
+    }
+
+    private fun examLabel(): String {
+        val date = Settings.examDate(requireContext())
+        if (date <= 0L) return "未设置"
+        val days = ((date - System.currentTimeMillis()) / (24L * 60 * 60 * 1000)).toInt().coerceAtLeast(0)
+        val name = Settings.examName(requireContext()).ifBlank { "考试" }
+        return "$name · $days 天"
+    }
+
+    /** 考试倒计时：先填名字，再选日期，两步都很轻。 */
+    private fun pickExam() {
+        val context = requireContext()
+        val input = EditText(context).apply {
+            setText(Settings.examName(context))
+            hint = "考试名称，比如 考研 / 四级"
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+        }
+        val density = resources.displayMetrics.density
+        val container = FrameLayout(context).apply {
+            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), 0)
+            addView(input)
+        }
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.settings_exam)
+            .setMessage(getString(R.string.settings_exam_desc))
+            .setView(container)
+            .setPositiveButton("下一步") { _, _ ->
+                Settings.setExamName(context, input.text.toString().trim().ifBlank { "考试" })
+                pickExamDate()
+            }
+            .setNeutralButton("清除") { _, _ ->
+                Settings.setExamName(context, "")
+                Settings.setExamDate(context, 0L)
+                refreshVoiceSettings()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun pickExamDate() {
+        val context = requireContext()
+        val calendar = java.util.Calendar.getInstance().apply {
+            val saved = Settings.examDate(context)
+            if (saved > 0L) {
+                timeInMillis = saved
+            } else {
+                add(java.util.Calendar.DAY_OF_YEAR, 90)
+            }
+        }
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, day ->
+                val picked = java.util.Calendar.getInstance().apply {
+                    set(year, month, day, 0, 0, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }
+                Settings.setExamDate(context, picked.timeInMillis)
+                refreshVoiceSettings()
+                toast("已设置：${Settings.examName(context)} ${year}-${month + 1}-${day}")
+            },
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH),
+            calendar.get(java.util.Calendar.DAY_OF_MONTH),
+        ).show()
+    }
+
+    private fun showAchievements() {
+        Bg.run({ repo.checkAchievements(); repo.achievementState() }) { result ->
+            result.onSuccess { list ->
+                if (_binding == null || !isAdded) return@onSuccess
+                val text = list.joinToString("\n") { (def, at) ->
+                    val mark = if (at > 0L) "✅" else "🔒"
+                    val whenText = if (at > 0L) {
+                        SimpleDateFormat("MM-dd", Locale.US).format(Date(at))
+                    } else {
+                        "未解锁"
+                    }
+                    "$mark ${def.title} · ${def.detail}（$whenText）"
+                }
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.settings_achievements)
+                    .setMessage(text)
+                    .setPositiveButton("好", null)
+                    .show()
+            }
         }
     }
 

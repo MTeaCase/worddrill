@@ -21,6 +21,8 @@ object Settings {
     private const val KEY_NEW_QUOTA = "quota_new"
     private const val KEY_REVIEW_QUOTA = "quota_review"
     private const val KEY_MISTAKE_QUOTA = "quota_mistake"
+    private const val KEY_EXAM_NAME = "exam_name"
+    private const val KEY_EXAM_DATE = "exam_date"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
@@ -145,5 +147,19 @@ object Settings {
 
     fun setMistakeQuota(context: Context, value: Int) {
         prefs(context).edit().putInt(KEY_MISTAKE_QUOTA, value.coerceIn(MIN_QUOTA, MAX_QUOTA)).apply()
+    }
+
+    /** 考试倒计时：名称与日期（毫秒，取当天 00:00）。0 表示没设置。 */
+    fun examName(context: Context): String =
+        prefs(context).getString(KEY_EXAM_NAME, "").orEmpty().trim()
+
+    fun setExamName(context: Context, name: String) {
+        prefs(context).edit().putString(KEY_EXAM_NAME, name.trim()).apply()
+    }
+
+    fun examDate(context: Context): Long = prefs(context).getLong(KEY_EXAM_DATE, 0L)
+
+    fun setExamDate(context: Context, millis: Long) {
+        prefs(context).edit().putLong(KEY_EXAM_DATE, millis).apply()
     }
 }

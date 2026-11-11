@@ -851,7 +851,7 @@ class WordRepository(context: Context) {
 
     // ---------- 答题记录 ----------
 
-    fun recordAnswer(wordId: Long, mode: PracticeMode, correct: Boolean) {
+    fun recordAnswer(wordId: Long, mode: PracticeMode, correct: Boolean, elapsedMs: Long = 0L) {
         val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
@@ -890,18 +890,33 @@ class WordRepository(context: Context) {
                 """.trimIndent(),
                 arrayOf<Any>(day, day, day, if (correct) 1 else 0),
             )
-            val (currentLevel, currentLapses) = db.rawQuery(
-                "SELECT level, lapses FROM review WHERE word_id = ?",
+            val (currentLevel, currentLapses, currentEase) = db.rawQuery(
+                "SELECT level, lapses, ease FROM review WHERE word_id = ?",
                 arrayOf(wordId.toString()),
             ).use { c ->
-                if (c.moveToFirst()) c.getInt(0) to c.getInt(1) else 0 to 0
+                if (c.moveToFirst()) {
+                    Triple(c.getInt(0), c.getInt(1), c.getDouble(2))
+                } else {
+                    Triple(0, 0, ReviewScheduler.DEFAULT_EASE)
+                }
             }
-            val nextLevel = ReviewScheduler.nextLevel(currentLevel, correct)
-            val dueAt = ReviewScheduler.nextDueAt(currentLevel, correct, now)
+            val rating = if (correct) ReviewRating.KNOW else ReviewRating.FORGOT
+            val nextLevel = ReviewScheduler.nextLevel(currentLevel, rating)
+            val ease = ReviewScheduler.nextEase(currentEase, rating)
+            val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now, currentEase)
             val lapses = if (correct) currentLapses else currentLapses + 1
             db.execSQL(
-                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses) VALUES(?,?,?,?,?)",
-                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses),
+                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses, ease) VALUES(?,?,?,?,?,?)",
+                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses, ease),
+            )
+            // 题型级统计：只留最近 90 天，避免这张表无限长
+            db.execSQL(
+                "INSERT INTO practice_event(word_id, mode, correct, elapsed_ms, at) VALUES(?,?,?,?,?)",
+                arrayOf<Any>(wordId, mode.name, if (correct) 1 else 0, elapsedMs, now),
+            )
+            db.execSQL(
+                "DELETE FROM practice_event WHERE at < ?",
+                arrayOf<Any>(now - EVENT_KEEP_MS),
             )
             db.setTransactionSuccessful()
         } finally {
@@ -917,18 +932,23 @@ class WordRepository(context: Context) {
         val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
-            val (currentLevel, currentLapses) = db.rawQuery(
-                "SELECT level, lapses FROM review WHERE word_id = ?",
+            val (currentLevel, currentLapses, currentEase) = db.rawQuery(
+                "SELECT level, lapses, ease FROM review WHERE word_id = ?",
                 arrayOf(wordId.toString()),
             ).use { c ->
-                if (c.moveToFirst()) c.getInt(0) to c.getInt(1) else 0 to 0
+                if (c.moveToFirst()) {
+                    Triple(c.getInt(0), c.getInt(1), c.getDouble(2))
+                } else {
+                    Triple(0, 0, ReviewScheduler.DEFAULT_EASE)
+                }
             }
             val nextLevel = ReviewScheduler.nextLevel(currentLevel, rating)
-            val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now)
+            val ease = ReviewScheduler.nextEase(currentEase, rating)
+            val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now, currentEase)
             val lapses = if (rating == ReviewRating.FORGOT) currentLapses + 1 else currentLapses
             db.execSQL(
-                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses) VALUES(?,?,?,?,?)",
-                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses),
+                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses, ease) VALUES(?,?,?,?,?,?)",
+                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses, ease),
             )
             if (ReviewScheduler.addsToMistakes(rating)) {
                 db.execSQL(
@@ -1051,6 +1071,105 @@ class WordRepository(context: Context) {
         db.delete("practice_log", null, null)
     }
 
+    // ---------- 统计 / 成就 / 每日一词 ----------
+
+    /** 题型级统计（最近 N 天），用于「哪个题型最容易错」。 */
+    fun modeStats(days: Int = 30): List<ModeStat> {
+        val since = System.currentTimeMillis() - days * ReviewScheduler.DAY_MS
+        return db.rawQuery(
+            "SELECT mode, COUNT(*), SUM(correct) FROM practice_event WHERE at >= ? GROUP BY mode",
+            arrayOf(since.toString()),
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    add(ModeStat(mode = c.getString(0) ?: "", total = c.getInt(1), correct = c.getInt(2)))
+                }
+            }
+        }
+    }
+
+    /** 最近 N 天的平均答题耗时（毫秒），没有数据返回 0。 */
+    fun averageElapsedMs(days: Int = 30): Int {
+        val since = System.currentTimeMillis() - days * ReviewScheduler.DAY_MS
+        return db.rawQuery(
+            "SELECT AVG(elapsed_ms) FROM practice_event WHERE at >= ? AND elapsed_ms > 0",
+            arrayOf(since.toString()),
+        ).use { c -> if (c.moveToFirst()) c.getDouble(0).toInt() else 0 }
+    }
+
+    /** 一年打卡热力图。 */
+    fun heatmap(days: Int = 365): List<DailyStat> = dailyStats(days)
+
+    fun achievementSnapshot(): AchievementSnapshot {
+        val practiced = db.rawQuery("SELECT COUNT(*) FROM practice_log", null).use { c ->
+            if (c.moveToFirst()) c.getInt(0) else 0
+        }
+        val mastered = db.rawQuery("SELECT COUNT(*) FROM review WHERE level >= 5", null).use { c ->
+            if (c.moveToFirst()) c.getInt(0) else 0
+        }
+        val fast = db.rawQuery(
+            "SELECT COUNT(*) FROM practice_event WHERE correct = 1 AND elapsed_ms BETWEEN 1 AND $FAST_MS",
+            null,
+        ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+        val studied = db.rawQuery("SELECT date FROM daily WHERE answered > 0", null).use { c ->
+            buildSet { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        return AchievementSnapshot(
+            practicedWords = practiced,
+            streak = StreakCalc.current(today(), studied),
+            masteredWords = mastered,
+            fastCorrect = fast,
+        )
+    }
+
+    /** 写入新解锁的成就，返回这一次新拿到的（用来弹提示）。 */
+    fun checkAchievements(): List<AchievementDef> {
+        val snapshot = achievementSnapshot()
+        val reached = Achievements.reached(snapshot)
+        val known = db.rawQuery("SELECT key FROM achievements", null).use { c ->
+            buildSet { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        val fresh = reached.filter { it.key !in known }
+        if (fresh.isEmpty()) return emptyList()
+        val now = System.currentTimeMillis()
+        db.beginTransaction()
+        try {
+            fresh.forEach {
+                db.execSQL(
+                    "INSERT OR IGNORE INTO achievements(key, unlocked_at) VALUES(?, ?)",
+                    arrayOf<Any>(it.key, now),
+                )
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return fresh
+    }
+
+    /** 全部成就 + 解锁时间（0 表示还没解锁）。 */
+    fun achievementState(): List<Pair<AchievementDef, Long>> {
+        val unlocked = db.rawQuery("SELECT key, unlocked_at FROM achievements", null).use { c ->
+            buildMap { while (c.moveToNext()) put(c.getString(0), c.getLong(1)) }
+        }
+        return Achievements.ALL.map { it to (unlocked[it.key] ?: 0L) }
+    }
+
+    /**
+     * 小组件「每日一词」：按日期取模，一天之内固定，跨天自动换。
+     * 用 ord 直接算偏移，不用把整本词库读进内存。
+     */
+    fun wordForDate(bookId: Long, dayIndex: Long = System.currentTimeMillis() / ReviewScheduler.DAY_MS): Word? {
+        val count = wordCount(bookId)
+        if (count <= 0) return null
+        val offset = Math.floorMod(dayIndex, count.toLong()).toInt()
+        return db.rawQuery(
+            "SELECT $WORD_COLUMNS FROM words w WHERE w.book_id = ? AND w.blocked = 0 " +
+                "ORDER BY w.ord ASC LIMIT 1 OFFSET $offset",
+            arrayOf(bookId.toString()),
+        ).use { c -> if (c.moveToNext()) c.toWord() else null }
+    }
+
     // ---------- 导入 ----------
 
     fun importEntries(
@@ -1168,6 +1287,12 @@ class WordRepository(context: Context) {
 
         /** 自评「忘了」写进错题本时用的题型标记（不是真的题型）。 */
         const val RATING_MODE = "SELF_RATING"
+
+        /** 答题事件只保留最近 90 天，超出的每次写入时顺手删掉。 */
+        const val EVENT_KEEP_MS = 90L * ReviewScheduler.DAY_MS
+
+        /** 3 秒内答对算「秒答」，成就判定用。 */
+        const val FAST_MS = 3000L
 
         const val WORD_COLUMNS =
             "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, " +

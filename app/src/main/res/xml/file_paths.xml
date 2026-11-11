@@ -11,4 +11,8 @@
     <files-path
         name="apk_internal"
         path="apk/" />
+    <!-- 分享图落在缓存目录，只在分享时临时暴露 -->
+    <cache-path
+        name="share"
+        path="share/" />
 </paths>

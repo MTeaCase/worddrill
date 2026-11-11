@@ -383,4 +383,57 @@ class WordRepositoryTest {
         assertEquals(1, progress.wrong)
         assertEquals("SELF_RATING", progress.lastMode)
     }
+
+    // ---------- 题型统计 / 成就 / 每日一词 ----------
+
+    @Test
+    fun answerEventsFeedModeStatsAndAverageTime() {
+        val bookId = repo.importEntries(null, "统计测试", listOf(VocabEntry("stat", "n.", "统计"))).bookId
+        val word = repo.words(bookId).single()
+        repo.recordAnswer(word.id, PracticeMode.ZH_EN, correct = true, elapsedMs = 1_200)
+        repo.recordAnswer(word.id, PracticeMode.ZH_EN, correct = false, elapsedMs = 4_000)
+
+        val stat = repo.modeStats(30).first { it.mode == PracticeMode.ZH_EN.name }
+        assertEquals(2, stat.total)
+        assertEquals(1, stat.correct)
+        assertEquals(50, stat.accuracy)
+        assertEquals(2_600, repo.averageElapsedMs(30))
+    }
+
+    @Test
+    fun achievementsUnlockOnlyOnce() {
+        val bookId = repo.importEntries(null, "成就测试", listOf(VocabEntry("badge", "n.", "徽章"))).bookId
+        val word = repo.words(bookId).single()
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true, elapsedMs = 900)
+
+        val first = repo.checkAchievements()
+        assertTrue("应该拿到第一步，实际=${first.map { it.key }}", first.any { it.key == "first_word" })
+        assertTrue(repo.checkAchievements().none { it.key == "first_word" })
+        assertTrue(repo.achievementState().any { it.first.key == "first_word" && it.second > 0L })
+    }
+
+    @Test
+    fun dailyWordIsStableWithinADayAndChangesNextDay() {
+        val book = repo.books().first()
+        val today = repo.wordForDate(book.id, 1_000)
+        val again = repo.wordForDate(book.id, 1_000)
+        val tomorrow = repo.wordForDate(book.id, 1_001)
+        assertNotNull(today)
+        assertEquals(today?.id, again?.id)
+        assertTrue("跨天应该换一个词", today?.id != tomorrow?.id)
+    }
+
+    @Test
+    fun forgotRatingStillZeroesTheLevelAndCountsTheLapse() {
+        val bookId = repo.importEntries(null, "Ease 测试", listOf(VocabEntry("ease", "n.", "难度"))).bookId
+        val word = repo.words(bookId).single()
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
+        repo.rateWord(word.id, ReviewRating.KNOW)
+        assertEquals(2, repo.progressFor(longArrayOf(word.id)).getValue(word.id).level)
+
+        repo.rateWord(word.id, ReviewRating.FORGOT)
+        val progress = repo.progressFor(longArrayOf(word.id)).getValue(word.id)
+        assertEquals(0, progress.level)
+        assertEquals(1, progress.lapses)
+    }
 }
