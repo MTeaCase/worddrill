@@ -6,6 +6,12 @@ import com.worddrill.app.BuildConfig
 /** 轻量设置存储（每日目标、发音开关、智能解析服务地址）。 */
 object Settings {
 
+    /** 口音：同时决定音标显示用哪一列、TTS 用哪个语言区域。 */
+    enum class Accent(val label: String) {
+        US("美式"),
+        UK("英式"),
+    }
+
     private const val PREFS = "worddrill_settings"
     private const val KEY_GOAL = "daily_goal"
     private const val KEY_TTS = "tts_enabled"
@@ -14,11 +20,26 @@ object Settings {
     private const val KEY_REMINDER_HOUR = "review_reminder_hour"
     private const val KEY_EXAMPLE_AI = "example_ai_enabled"
     private const val KEY_BOOK = "selected_book"
+    private const val KEY_ACCENT = "accent"
+    private const val KEY_SPEECH_RATE = "speech_rate"
+    private const val KEY_SELF_RATE = "self_rating"
+    private const val KEY_NEW_QUOTA = "quota_new"
+    private const val KEY_REVIEW_QUOTA = "quota_review"
+    private const val KEY_MISTAKE_QUOTA = "quota_mistake"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
     const val MAX_GOAL = 200
     const val DEFAULT_REMINDER_HOUR = 20
+
+    /** 三档语速，单位是 TTS 的 setSpeechRate 倍率。 */
+    val SPEECH_RATES = floatArrayOf(0.75f, 1.0f, 1.25f)
+
+    const val DEFAULT_NEW_QUOTA = 20
+    const val DEFAULT_REVIEW_QUOTA = 30
+    const val DEFAULT_MISTAKE_QUOTA = 10
+    const val MIN_QUOTA = 0
+    const val MAX_QUOTA = 100
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -78,5 +99,56 @@ object Settings {
 
     fun setSelectedBookId(context: Context, bookId: Long) {
         prefs(context).edit().putLong(KEY_BOOK, bookId).apply()
+    }
+
+    /** 口音（美式 / 英式）。音标显示与语音合成都跟着它。 */
+    fun accent(context: Context): Accent = when (prefs(context).getString(KEY_ACCENT, null)) {
+        Accent.UK.name -> Accent.UK
+        else -> Accent.US
+    }
+
+    fun setAccent(context: Context, accent: Accent) {
+        prefs(context).edit().putString(KEY_ACCENT, accent.name).apply()
+    }
+
+    /** 复读语速，限定在三档之内，越界值回落到 1.0。 */
+    fun speechRate(context: Context): Float {
+        val value = prefs(context).getFloat(KEY_SPEECH_RATE, 1.0f)
+        return SPEECH_RATES.firstOrNull { kotlin.math.abs(it - value) < 0.01f } ?: 1.0f
+    }
+
+    fun setSpeechRate(context: Context, rate: Float) {
+        val safe = SPEECH_RATES.firstOrNull { kotlin.math.abs(it - rate) < 0.01f } ?: 1.0f
+        prefs(context).edit().putFloat(KEY_SPEECH_RATE, safe).apply()
+    }
+
+    /** 答完题后是否显示「认识 / 模糊 / 忘了」三档自评。 */
+    fun selfRatingEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_SELF_RATE, false)
+
+    fun setSelfRatingEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_SELF_RATE, enabled).apply()
+    }
+
+    /** 每日学习包的三类配额，彼此独立。 */
+    fun newQuota(context: Context): Int =
+        prefs(context).getInt(KEY_NEW_QUOTA, DEFAULT_NEW_QUOTA).coerceIn(MIN_QUOTA, MAX_QUOTA)
+
+    fun setNewQuota(context: Context, value: Int) {
+        prefs(context).edit().putInt(KEY_NEW_QUOTA, value.coerceIn(MIN_QUOTA, MAX_QUOTA)).apply()
+    }
+
+    fun reviewQuota(context: Context): Int =
+        prefs(context).getInt(KEY_REVIEW_QUOTA, DEFAULT_REVIEW_QUOTA).coerceIn(MIN_QUOTA, MAX_QUOTA)
+
+    fun setReviewQuota(context: Context, value: Int) {
+        prefs(context).edit().putInt(KEY_REVIEW_QUOTA, value.coerceIn(MIN_QUOTA, MAX_QUOTA)).apply()
+    }
+
+    fun mistakeQuota(context: Context): Int =
+        prefs(context).getInt(KEY_MISTAKE_QUOTA, DEFAULT_MISTAKE_QUOTA).coerceIn(MIN_QUOTA, MAX_QUOTA)
+
+    fun setMistakeQuota(context: Context, value: Int) {
+        prefs(context).edit().putInt(KEY_MISTAKE_QUOTA, value.coerceIn(MIN_QUOTA, MAX_QUOTA)).apply()
     }
 }

@@ -54,6 +54,45 @@ class ImportActivity : BaseActivity() {
         binding.btnPreview.setOnClickListener { preview() }
         binding.btnSave.setOnClickListener { save() }
         binding.btnAiParse.setOnClickListener { confirmSmartParse() }
+
+        handleIntent(intent)
+    }
+
+    /** 被别的应用分享/打开时，Intent 里带过来的就是词表文本。 */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(incoming: Intent?) {
+        if (incoming == null) return
+        when (incoming.action) {
+            Intent.ACTION_SEND -> {
+                val text = incoming.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+                val subject = incoming.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString()
+                if (!text.isNullOrBlank()) fillSharedText(text, subject)
+            }
+
+            Intent.ACTION_VIEW -> incoming.data?.let { loadSharedFile(it) }
+        }
+    }
+
+    private fun fillSharedText(text: String, name: String?) {
+        binding.etMarkdown.setText(text)
+        binding.tvFileName.visibility = View.GONE
+        if (appendBookId == null && !name.isNullOrBlank() && binding.etName.text.isNullOrBlank()) {
+            binding.etName.setText(name)
+        }
+        preview()
+        if (parsed.isNotEmpty()) toast("从分享内容解析到 ${parsed.size} 条")
+    }
+
+    private fun loadSharedFile(uri: Uri) {
+        Bg.run({ TextFiles.read(this, uri) }) { result ->
+            result.onSuccess { fillSharedText(it, null) }
+                .onFailure { toast("读取分享的文件失败：${it.message}") }
+        }
     }
 
     private fun loadFile(uri: Uri) {

@@ -5,6 +5,7 @@ import com.worddrill.app.data.Word
 import com.worddrill.app.parser.VocabMarkdownParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
@@ -78,6 +79,89 @@ class QuizEngineTest {
     fun hintRevealsFirstLetterOnly() {
         assertEquals("a _ _ _ _", QuizEngine.hint("apple"))
         assertEquals("p _ _ _ / o _ _", QuizEngine.hint("pick out"))
+    }
+
+    @Test
+    fun listenToMeaningAsksForMeaningAndHidesTheWord() {
+        val item = QuizEngine.makeItem(all[0], all, PracticeMode.LISTEN_ZH, Random(7))
+        assertEquals(PracticeMode.LISTEN_ZH, item.mode)
+        assertEquals(4, item.options.size)
+        assertEquals("n. 苹果", item.options[item.correctOption])
+        assertFalse(item.spell)
+        assertFalse("题面不能露出单词", item.prompt.contains("apple", ignoreCase = true))
+    }
+
+    @Test
+    fun modeIsCarriedOnEveryItem() {
+        val item = QuizEngine.makeItem(all[1], all, PracticeMode.ZH_EN_SPELL, Random(2))
+        assertEquals(PracticeMode.ZH_EN_SPELL, item.mode)
+    }
+
+    @Test
+    fun mixedModeIsStableForTheSameWord() {
+        val first = QuizEngine.pickMixed(all[0], ttsEnabled = true)
+        val second = QuizEngine.pickMixed(all[0], ttsEnabled = true)
+        assertEquals(first, second)
+        assertTrue(first in QuizEngine.MIXED_MODES)
+    }
+
+    @Test
+    fun mixedModeSpreadsOverSeveralModes() {
+        val words = (1L..40L).map { word(it, "w$it", "m$it") }
+        val modes = words.map { QuizEngine.pickMixed(it, ttsEnabled = true) }.toSet()
+        assertTrue("实际只分到 $modes", modes.size >= 3)
+    }
+
+    @Test
+    fun mixedModeWithoutTtsNeverPicksListening() {
+        val words = (1L..40L).map { word(it, "w$it", "m$it") }
+        val modes = words.map { QuizEngine.pickMixed(it, ttsEnabled = false) }
+        assertTrue(modes.none { it.needsTts })
+    }
+
+    @Test
+    fun mixedBuildResolvesEveryItemToAConcreteMode() {
+        val items = QuizEngine.build(all, all, all.size, PracticeMode.MIXED, Random(3), ttsEnabled = true)
+        assertEquals(all.size, items.size)
+        assertTrue(items.all { it.mode != PracticeMode.MIXED })
+        assertEquals(all.size, items.map { it.word.id }.toSet().size)
+    }
+
+    @Test
+    fun fastAnswerRequiresCorrectnessAndThreeSeconds() {
+        assertTrue(QuizEngine.isFast(1_200, correct = true))
+        assertTrue(QuizEngine.isFast(3_000, correct = true))
+        assertFalse(QuizEngine.isFast(3_500, correct = true))
+        assertFalse(QuizEngine.isFast(1_200, correct = false))
+    }
+
+    @Test
+    fun editDistanceCountsSingleEdits() {
+        assertEquals(0, QuizEngine.editDistance("apple", "apple"))
+        assertEquals(1, QuizEngine.editDistance("appl", "apple"))
+        assertEquals(2, QuizEngine.editDistance("recieve", "receive"))
+        assertEquals(5, QuizEngine.editDistance("", "apple"))
+    }
+
+    @Test
+    fun diagnosisIsSilentWhenTheAnswerIsRight() {
+        assertNull(QuizEngine.diagnose("Apple", "apple"))
+        assertNull(QuizEngine.diagnose("  ", "apple"))
+    }
+
+    @Test
+    fun diagnosisNamesTheMissingTail() {
+        val text = QuizEngine.diagnose("appl", "apple")
+        assertTrue("实际=$text", text.contains("只差 1 个字母"))
+        assertTrue("实际=$text", text.contains("后面还差 1 个字母"))
+    }
+
+    @Test
+    fun diagnosisCatchesIeEiAndDoubleLetters() {
+        val mixed = QuizEngine.diagnose("recieve", "receive")
+        assertTrue("实际=$mixed", mixed.contains("记混了"))
+        val doubled = QuizEngine.diagnose("necesary", "necessary")
+        assertTrue("实际=$doubled", doubled.contains("要双写"))
     }
 
     @Test

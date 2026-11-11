@@ -99,6 +99,14 @@ class MineFragment : Fragment() {
             toast(if (checked) "已开启，打开词条时会自动生成例句" else "已关闭，不再请求例句")
         }
 
+        binding.swSelfRating.setOnCheckedChangeListener { _, checked ->
+            Settings.setSelfRatingEnabled(requireContext(), checked)
+        }
+
+        binding.rowAccent.setOnClickListener { pickAccent() }
+        binding.rowRate.setOnClickListener { pickRate() }
+        binding.rowQuota.setOnClickListener { editQuotas() }
+
         binding.btnExport.setOnClickListener { startExport() }
         binding.btnImport.setOnClickListener { startImport() }
         binding.btnRestoreAuto.setOnClickListener { restoreAutoBackup() }
@@ -114,6 +122,7 @@ class MineFragment : Fragment() {
 
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
         refreshSwitches()
+        refreshVoiceSettings()
         refreshSmartParseUrl()
         refreshAutoBackupTime()
     }
@@ -135,6 +144,7 @@ class MineFragment : Fragment() {
 
     private fun refresh() {
         refreshSwitches()
+        refreshVoiceSettings()
         refreshReminderText()
         refreshAutoBackupTime()
         refreshSmartParseUrl()
@@ -152,8 +162,101 @@ class MineFragment : Fragment() {
         binding.swTts.isChecked = Settings.ttsEnabled(context)
         binding.swReminder.isChecked = Settings.reminderEnabled(context)
         binding.swExampleAi.isChecked = Settings.exampleAiEnabled(context)
+        binding.swSelfRating.isChecked = Settings.selfRatingEnabled(context)
         suppressSwitchEvent = false
         refreshReminderText()
+    }
+
+    /** 口音、语速、学习包配额这三行的当前值。 */
+    private fun refreshVoiceSettings() {
+        if (_binding == null) return
+        val context = requireContext()
+        binding.tvAccent.text = Settings.accent(context).label
+        binding.tvRate.text = "${Settings.speechRate(context)}×"
+        binding.tvQuota.text = buildString {
+            append("新 ").append(Settings.newQuota(context))
+            append(" · 复习 ").append(Settings.reviewQuota(context))
+            append(" · 错题 ").append(Settings.mistakeQuota(context))
+        }
+    }
+
+    private fun pickAccent() {
+        val context = requireContext()
+        val current = Settings.accent(context)
+        val options = Settings.Accent.entries.map { it.label }.toTypedArray()
+        AlertDialog.Builder(context)
+            .setTitle(R.string.settings_accent)
+            .setSingleChoiceItems(options, current.ordinal) { dialog, which ->
+                Settings.setAccent(context, Settings.Accent.entries[which])
+                Tts.refreshVoice()
+                refreshVoiceSettings()
+                dialog.dismiss()
+                Tts.speak(context, "hello")
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun pickRate() {
+        val context = requireContext()
+        val current = Settings.speechRate(context)
+        val labels = Settings.SPEECH_RATES.map { rate ->
+            when (rate) {
+                0.75f -> "慢 0.75×"
+                1.25f -> "快 1.25×"
+                else -> "正常 1.0×"
+            }
+        }.toTypedArray()
+        val index = Settings.SPEECH_RATES.indexOfFirst { kotlin.math.abs(it - current) < 0.01f }
+            .coerceAtLeast(0)
+        AlertDialog.Builder(context)
+            .setTitle(R.string.settings_speech_rate)
+            .setSingleChoiceItems(labels, index) { dialog, which ->
+                Settings.setSpeechRate(context, Settings.SPEECH_RATES[which])
+                Tts.refreshVoice()
+                refreshVoiceSettings()
+                dialog.dismiss()
+                Tts.speak(context, "hello, this is a test")
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun editQuotas() {
+        val context = requireContext()
+        val density = resources.displayMetrics.density
+        fun input(hint: String, value: Int): EditText = EditText(context).apply {
+            this.hint = hint
+            setText(value.toString())
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+        }
+        val newInput = input("每天新词数", Settings.newQuota(context))
+        val reviewInput = input("每天复习数", Settings.reviewQuota(context))
+        val mistakeInput = input("每天错题数", Settings.mistakeQuota(context))
+        val container = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), 0)
+            addView(newInput)
+            addView(reviewInput)
+            addView(mistakeInput)
+        }
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.settings_quota)
+            .setMessage("三类配额彼此独立，三个都是 0 时学习包为空")
+            .setView(container)
+            .setPositiveButton("保存") { _, _ ->
+                fun parse(view: EditText, fallback: Int): Int =
+                    view.text?.toString()?.trim()?.toIntOrNull()
+                        ?.coerceIn(Settings.MIN_QUOTA, Settings.MAX_QUOTA) ?: fallback
+                Settings.setNewQuota(context, parse(newInput, Settings.newQuota(context)))
+                Settings.setReviewQuota(context, parse(reviewInput, Settings.reviewQuota(context)))
+                Settings.setMistakeQuota(context, parse(mistakeInput, Settings.mistakeQuota(context)))
+                refreshVoiceSettings()
+                toast("已保存")
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun onReminderToggled(enabled: Boolean) {

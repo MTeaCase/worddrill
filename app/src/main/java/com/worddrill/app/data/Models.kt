@@ -100,6 +100,23 @@ data class WordProgress(
     val streak: Int = 0,
 )
 
+/** 每日学习包：到期复习 + 错题 + 新词，三类各自限额，词不重复。 */
+data class DailyPack(
+    val due: List<Long> = emptyList(),
+    val mistakes: List<Long> = emptyList(),
+    val fresh: List<Long> = emptyList(),
+) {
+    /** 开练顺序：先复习到期的，再补错题，最后才是新词。 */
+    val wordIds: List<Long>
+        get() = due + mistakes + fresh
+
+    val total: Int
+        get() = due.size + mistakes.size + fresh.size
+
+    val isEmpty: Boolean
+        get() = total == 0
+}
+
 /** 「已学过」页面的头部统计。 */
 data class LearnedStats(
     val learned: Int,
@@ -159,6 +176,14 @@ enum class PracticeMode(val label: String, val subtitle: String) {
     ZH_EN("汉译英", "看中文，从四个英文单词中选"),
     ZH_EN_SPELL("单词默写", "看中文，自己拼写英文"),
     LISTEN_SPELL("听音拼写", "听发音，自己拼出英文单词"),
+    LISTEN_ZH("听音选义", "听发音，从四个中文释义中选"),
+
+    /** 一轮里混着出题，具体题型按单词 id 固定分配。 */
+    MIXED("混合题型", "四种题型混着来，同一个词每次都是同一题");
+
+    /** 听力题依赖 TTS，关掉发音时不应该出这类题。 */
+    val needsTts: Boolean
+        get() = this == LISTEN_SPELL || this == LISTEN_ZH
 }
 
 enum class WordFilter {
@@ -179,4 +204,6 @@ data class AnswerRecord(
     val answer: String,
     val userAnswer: String,
     val correct: Boolean,
+    /** 题面出现到作答之间的毫秒数，用来判断是不是「秒答」。 */
+    val elapsedMs: Long = 0L,
 )

@@ -12,6 +12,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.worddrill.app.R
 import com.worddrill.app.data.Book
+import com.worddrill.app.data.DailyPack
 import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.WordFilter
 import com.worddrill.app.data.WordRepository
@@ -37,6 +38,8 @@ class PracticeFragment : Fragment() {
     private var ordRange: IntRange? = null
     private var expanded = false
     private var loadedBookId = -1L
+    private var pack: DailyPack? = null
+    private var currentBookName = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +61,11 @@ class PracticeFragment : Fragment() {
         binding.cardZhEn.setOnClickListener { selectMode(PracticeMode.ZH_EN) }
         binding.cardSpell.setOnClickListener { selectMode(PracticeMode.ZH_EN_SPELL) }
         binding.cardListen.setOnClickListener { selectMode(PracticeMode.LISTEN_SPELL) }
+        binding.cardListenZh.setOnClickListener { selectMode(PracticeMode.LISTEN_ZH) }
+        binding.cardMixed.setOnClickListener { selectMode(PracticeMode.MIXED) }
+
+        // 学习包：每天一个「复习 + 错题 + 新词」的组合，点一下直接开练
+        binding.cardDailyPack.setOnClickListener { startDailyPack() }
 
         binding.rowSettings.setOnClickListener { setExpanded(!expanded) }
         binding.etCount.doAfterTextChanged { refreshSettingsSummary() }
@@ -108,12 +116,14 @@ class PracticeFragment : Fragment() {
     private fun selectMode(target: PracticeMode) {
         mode = target
         val rows = listOf(
-            Triple(PracticeMode.EN_ZH, binding.cardEnZh, null),
-            Triple(PracticeMode.ZH_EN, binding.cardZhEn, null),
-            Triple(PracticeMode.ZH_EN_SPELL, binding.cardSpell, null),
-            Triple(PracticeMode.LISTEN_SPELL, binding.cardListen, null),
+            PracticeMode.EN_ZH to binding.cardEnZh,
+            PracticeMode.ZH_EN to binding.cardZhEn,
+            PracticeMode.ZH_EN_SPELL to binding.cardSpell,
+            PracticeMode.LISTEN_SPELL to binding.cardListen,
+            PracticeMode.LISTEN_ZH to binding.cardListenZh,
+            PracticeMode.MIXED to binding.cardMixed,
         )
-        rows.forEach { (rowMode, card, _) ->
+        rows.forEach { (rowMode, card) ->
             val selected = rowMode == target
             card.strokeWidth = dp(if (selected) 2 else 1)
             card.strokeColor = color(if (selected) R.color.brand else R.color.divider)
@@ -162,7 +172,11 @@ class PracticeFragment : Fragment() {
     }
 
     private fun applyBook(book: Book, resetRange: Boolean) {
+        currentBookName = book.name
         val goal = Settings.dailyGoal(requireContext())
+        val newQuota = Settings.newQuota(requireContext())
+        val reviewQuota = Settings.reviewQuota(requireContext())
+        val mistakeQuota = Settings.mistakeQuota(requireContext())
         Bg.run({
             BookStats(
                 range = repo.ordRange(book.id),
@@ -170,11 +184,19 @@ class PracticeFragment : Fragment() {
                 blocked = repo.blockedCount(book.id),
                 total = book.wordCount,
                 summary = repo.studySummary(7, goal, book.id),
+                pack = repo.dailyPack(book.id, newQuota, reviewQuota, mistakeQuota),
             )
         }) { result ->
             result.onSuccess { stats ->
                 if (_binding == null || !isAdded) return@onSuccess
                 ordRange = stats.range
+                pack = stats.pack
+                binding.cardDailyPack.isVisible = !stats.pack.isEmpty
+                binding.tvPackSub.text = buildString {
+                    append("复习 ").append(stats.pack.due.size)
+                    append(" · 错题 ").append(stats.pack.mistakes.size)
+                    append(" · 新词 ").append(stats.pack.fresh.size)
+                }
                 val max = stats.range?.last ?: 0
                 val goal = stats.summary.dailyGoal.coerceAtLeast(1)
                 val todayPercent = stats.summary.todayAnswered * 100 / goal
@@ -239,6 +261,23 @@ class PracticeFragment : Fragment() {
         startActivity(WordListActivity.intent(requireContext(), book.id, book.name, filter))
     }
 
+    /** 学习包：把「复习 + 错题 + 新词」拼成一轮混合题直接开练。 */
+    private fun startDailyPack() {
+        val current = pack ?: return
+        if (current.isEmpty) {
+            toast(getString(R.string.daily_pack_empty))
+            return
+        }
+        startActivity(
+            PracticeActivity.retryIntent(
+                context = requireContext(),
+                mode = PracticeMode.MIXED,
+                bookName = currentBookName,
+                wordIds = current.wordIds.toLongArray(),
+            ),
+        )
+    }
+
     private fun startPractice() {
         val book = books.firstOrNull { it.id == selectedBookId } ?: run {
             toast("还没有可用的词库")
@@ -297,5 +336,6 @@ class PracticeFragment : Fragment() {
         val blocked: Int,
         val total: Int,
         val summary: com.worddrill.app.data.StudySummary,
+        val pack: DailyPack,
     )
 }

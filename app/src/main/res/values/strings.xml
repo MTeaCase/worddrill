@@ -22,6 +22,29 @@
     <string name="mode_spell">单词默写</string>
     <string name="mode_listen">听音拼写</string>
     <string name="mode_listen_desc">听发音，自己拼出英文单词</string>
+    <string name="mode_listen_zh">听音选义</string>
+    <string name="mode_listen_zh_desc">听发音，从四个中文释义中选</string>
+    <string name="mode_mixed">混合题型</string>
+    <string name="mode_mixed_desc">一轮里混着来，同一个词每次都是同一题</string>
+
+    <!-- 三档自评 -->
+    <string name="rating_know">认识</string>
+    <string name="rating_fuzzy">模糊</string>
+    <string name="rating_forgot">忘了</string>
+
+    <!-- 每日学习包 -->
+    <string name="daily_pack_title">今日学习包</string>
+    <string name="daily_pack_sub">复习 0 · 错题 0 · 新词 0</string>
+    <string name="daily_pack_empty">今天没有新词也没有到期复习</string>
+    <string name="daily_pack_start">开始学习包</string>
+
+    <!-- 发音设置 -->
+    <string name="settings_accent">口音</string>
+    <string name="settings_accent_desc">音标显示和单词朗读都跟着这个走</string>
+    <string name="settings_speech_rate">语速</string>
+    <string name="settings_self_rating">答完题后自评</string>
+    <string name="settings_self_rating_desc">答完一题可以标「认识 / 模糊 / 忘了」，直接决定下次复习时间；关闭时自动按对错排期</string>
+    <string name="settings_quota">每日学习包题量</string>
 
     <!-- 桌面快捷方式 -->
     <string name="shortcut_review">今日复习</string>

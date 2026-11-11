@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -16,6 +17,7 @@ import androidx.core.view.isVisible
 import com.worddrill.app.R
 import com.worddrill.app.data.AnswerRecord
 import com.worddrill.app.data.PracticeMode
+import com.worddrill.app.data.ReviewRating
 import com.worddrill.app.data.WordFilter
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityPracticeBinding
@@ -41,6 +43,12 @@ class PracticeActivity : BaseActivity() {
     private var pendingNext: Runnable? = null
     private var ttsWarned = false
     private lateinit var gestureDetector: GestureDetector
+
+    /** 题面出现的时刻（单调时钟），用来算答题耗时。 */
+    private var shownAt = 0L
+
+    /** 当前反馈卡对应的词；点了自评就用它，避免翻页后错记到下一个词。 */
+    private var ratingWordId: Long? = null
 
     /** 本轮原始题量，用来限制「错题补练」最多追加多少。 */
     private var baseSize = 0
@@ -75,6 +83,11 @@ class PracticeActivity : BaseActivity() {
         }
         binding.btnDontKnow.setOnClickListener { markUnknown() }
         binding.btnStar.setOnClickListener { toggleStar() }
+
+        binding.btnRateKnow.setOnClickListener { applyRating(ReviewRating.KNOW) }
+        binding.btnRateFuzzy.setOnClickListener { applyRating(ReviewRating.FUZZY) }
+        binding.btnRateForgot.setOnClickListener { applyRating(ReviewRating.FORGOT) }
+        binding.ratingRow.isVisible = Settings.selfRatingEnabled(this)
 
         // 手势：左滑 = 我不会，长按 = 收藏/取消收藏
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
@@ -139,7 +152,13 @@ class PracticeActivity : BaseActivity() {
                 repo.pickWords(bookId, start, end, count, allowRepeat, filter)
             }
             val all = repo.allWords()
-            QuizEngine.build(words, all, requested, mode)
+            QuizEngine.build(
+                pool = words,
+                allWords = all,
+                count = requested,
+                mode = mode,
+                ttsEnabled = Settings.ttsEnabled(this),
+            )
         }) { result ->
             binding.progressBar.isIndeterminate = false
             result.onSuccess { quiz ->
@@ -190,14 +209,20 @@ class PracticeActivity : BaseActivity() {
     private fun render() {
         val item = items[index]
         answered = false
-        binding.tvProgress.text = "第 ${index + 1} 题 / 共 ${items.size} 题"
+        shownAt = SystemClock.elapsedRealtime()
+        val itemMode = item.mode
+        binding.tvProgress.text = if (mode == PracticeMode.MIXED) {
+            "第 ${index + 1} 题 / 共 ${items.size} 题 · ${itemMode.label}"
+        } else {
+            "第 ${index + 1} 题 / 共 ${items.size} 题"
+        }
         binding.progressBar.max = items.size
         binding.progressBar.setProgressCompat(index, true)
-        val isListen = mode == PracticeMode.LISTEN_SPELL
-        val canHear = mode == PracticeMode.EN_ZH || isListen
+        val isListen = itemMode == PracticeMode.LISTEN_SPELL || itemMode == PracticeMode.LISTEN_ZH
+        val canHear = isListen || itemMode == PracticeMode.EN_ZH
         binding.tvPromptLabel.text = when {
             isListen -> "听 发 音"
-            mode == PracticeMode.EN_ZH -> "英 文"
+            itemMode == PracticeMode.EN_ZH -> "英 文"
             else -> "中 文 释 义"
         }
         binding.tvPrompt.text = item.prompt
@@ -211,6 +236,8 @@ class PracticeActivity : BaseActivity() {
         }
         binding.feedbackCard.visibility = View.GONE
         binding.btnNext.visibility = View.GONE
+        binding.ratingRow.isVisible = Settings.selfRatingEnabled(this)
+        setRatingEnabled(true)
         updateStar(item)
         binding.etAnswer.isEnabled = true
         binding.btnSubmit.isEnabled = true
@@ -260,9 +287,10 @@ class PracticeActivity : BaseActivity() {
                 i == option && !correct -> markOption(i, R.drawable.bg_option_wrong, R.color.wrong)
             }
         }
-        showFeedback(correct, item, userAnswer)
-        persist(correct, userAnswer)
-        scheduleAdvance(if (correct) 850L else 1600L)
+        val elapsed = elapsedSinceShown()
+        showFeedback(correct, item, userAnswer, elapsed)
+        persist(correct, userAnswer, elapsed)
+        scheduleAdvance(advanceDelay(correct))
     }
 
     private fun markOption(index: Int, background: Int, tone: Int) {
@@ -282,9 +310,10 @@ class PracticeActivity : BaseActivity() {
         binding.btnDontKnow.isEnabled = false
         binding.etAnswer.isEnabled = false
         binding.btnSubmit.isEnabled = false
-        showFeedback(false, item, "我不会")
-        persist(false, "我不会")
-        scheduleAdvance(1600L)
+        val elapsed = elapsedSinceShown()
+        showFeedback(false, item, "我不会", elapsed)
+        persist(false, "我不会", elapsed)
+        scheduleAdvance(advanceDelay(false))
     }
 
     private fun submitSpelling() {
@@ -300,22 +329,43 @@ class PracticeActivity : BaseActivity() {
         binding.etAnswer.isEnabled = false
         binding.btnSubmit.isEnabled = false
         val correct = QuizEngine.isCorrect(input, item.answer)
-        showFeedback(correct, item, input)
-        persist(correct, input)
+        val elapsed = elapsedSinceShown()
+        showFeedback(correct, item, input, elapsed)
+        persist(correct, input, elapsed)
         binding.btnNext.visibility = View.VISIBLE
     }
 
-    private fun showFeedback(correct: Boolean, item: QuizItem, userAnswer: String) {
+    private fun elapsedSinceShown(): Long =
+        if (shownAt <= 0L) 0L else (SystemClock.elapsedRealtime() - shownAt).coerceAtLeast(0L)
+
+    private fun showFeedback(correct: Boolean, item: QuizItem, userAnswer: String, elapsed: Long) {
+        ratingWordId = item.word.id
         binding.feedbackCard.visibility = View.VISIBLE
         binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
         binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
         binding.tvFeedback.text = if (correct) {
-            "✓ 答对了\n${item.word.text} — ${item.word.meaningWithPos}"
+            buildString {
+                append("✓ 答对了")
+                if (QuizEngine.isFast(elapsed, true)) {
+                    append("  ⚡ ${(elapsed / 1000.0).toBigDecimalShort()} 秒")
+                }
+                append("\n${item.word.text} — ${item.word.meaningWithPos}")
+            }
         } else {
-            "✗ 正确答案：${item.answer}\n你作答的是：$userAnswer\n${item.word.text} — ${item.word.meaningWithPos}"
+            buildString {
+                append("✗ 正确答案：${item.answer}")
+                append("\n你作答的是：$userAnswer")
+                if (item.spell) {
+                    QuizEngine.diagnose(userAnswer, item.answer)?.let { append("\n提示：$it") }
+                }
+                append("\n${item.word.text} — ${item.word.meaningWithPos}")
+            }
         }
         speakWord(item.word.text)
     }
+
+    private fun Double.toBigDecimalShort(): String =
+        if (this >= 10) "${this.toInt()}" else String.format(java.util.Locale.US, "%.1f", this)
 
     private fun speakWord(text: String) {
         Tts.speak(this, text) { reason ->
@@ -326,7 +376,7 @@ class PracticeActivity : BaseActivity() {
         }
     }
 
-    private fun persist(correct: Boolean, userAnswer: String) {
+    private fun persist(correct: Boolean, userAnswer: String, elapsed: Long) {
         val item = items[index]
         records.add(
             AnswerRecord(
@@ -336,9 +386,10 @@ class PracticeActivity : BaseActivity() {
                 answer = item.answer,
                 userAnswer = userAnswer,
                 correct = correct,
+                elapsedMs = elapsed,
             ),
         )
-        Bg.run({ repo.recordAnswer(item.word.id, mode, correct) }) { }
+        Bg.run({ repo.recordAnswer(item.word.id, item.mode, correct) }) { }
         if (!correct) requeueForRetry(item)
     }
 
@@ -356,15 +407,42 @@ class PracticeActivity : BaseActivity() {
         }
     }
 
+    /** 开启自评后把自动前进放慢一点，否则还没来得及点就翻页了。 */
+    private fun advanceDelay(correct: Boolean): Long = when {
+        !Settings.selfRatingEnabled(this) -> if (correct) 850L else 1600L
+        correct -> 2_200L
+        else -> 3_200L
+    }
+
     private fun scheduleAdvance(delay: Long) {
         val runnable = Runnable { advance() }
         pendingNext = runnable
         binding.root.postDelayed(runnable, delay)
     }
 
+    /** 三档自评：覆盖判分排期，点完立刻下一题。 */
+    private fun applyRating(rating: ReviewRating) {
+        val wordId = ratingWordId ?: return
+        if (!answered) return
+        ratingWordId = null
+        setRatingEnabled(false)
+        pendingNext?.let { binding.root.removeCallbacks(it) }
+        pendingNext = null
+        Bg.run({ repo.rateWord(wordId, rating) }) { }
+        toast("记为「${rating.label}」，已重排复习时间")
+        advance()
+    }
+
+    private fun setRatingEnabled(enabled: Boolean) {
+        binding.btnRateKnow.isEnabled = enabled
+        binding.btnRateFuzzy.isEnabled = enabled
+        binding.btnRateForgot.isEnabled = enabled
+    }
+
     private fun advance() {
         pendingNext?.let { binding.root.removeCallbacks(it) }
         pendingNext = null
+        ratingWordId = null
         index++
         if (index >= items.size) {
             finishSession()

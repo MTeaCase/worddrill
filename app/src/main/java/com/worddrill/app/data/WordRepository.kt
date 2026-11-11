@@ -903,6 +903,111 @@ class WordRepository(context: Context) {
         }
     }
 
+    /**
+     * 三档自评：直接改写 review 的排期，作为判分结果的覆盖项。
+     * 「忘了」同时记进错题本，「认识」则按连续答对把错题冲掉。
+     */
+    fun rateWord(wordId: Long, rating: ReviewRating) {
+        val now = System.currentTimeMillis()
+        db.beginTransaction()
+        try {
+            val (currentLevel, currentLapses) = db.rawQuery(
+                "SELECT level, lapses FROM review WHERE word_id = ?",
+                arrayOf(wordId.toString()),
+            ).use { c ->
+                if (c.moveToFirst()) c.getInt(0) to c.getInt(1) else 0 to 0
+            }
+            val nextLevel = ReviewScheduler.nextLevel(currentLevel, rating)
+            val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now)
+            val lapses = if (rating == ReviewRating.FORGOT) currentLapses + 1 else currentLapses
+            db.execSQL(
+                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses) VALUES(?,?,?,?,?)",
+                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses),
+            )
+            if (ReviewScheduler.addsToMistakes(rating)) {
+                db.execSQL(
+                    """
+                    INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at, streak)
+                    VALUES(?, ?, COALESCE((SELECT wrong FROM mistakes WHERE word_id = ?), 0) + 1, ?, 0)
+                    """.trimIndent(),
+                    arrayOf<Any>(wordId, RATING_MODE, wordId, now),
+                )
+            } else if (rating == ReviewRating.KNOW) {
+                db.execSQL(
+                    "UPDATE mistakes SET streak = streak + 1 WHERE word_id = ?",
+                    arrayOf<Any>(wordId),
+                )
+                db.execSQL(
+                    "DELETE FROM mistakes WHERE word_id = ? AND streak >= $MISTAKE_STREAK_TO_CLEAR",
+                    arrayOf<Any>(wordId),
+                )
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    // ---------- 每日学习包 ----------
+
+    /**
+     * 一键开练的组成：到期复习 → 错题 → 没练过的新词，三类各自有限额，
+     * 同一个词只出现一次（先到先得）。
+     */
+    fun dailyPack(
+        bookId: Long,
+        newLimit: Int,
+        reviewLimit: Int,
+        mistakeLimit: Int,
+        now: Long = System.currentTimeMillis(),
+    ): DailyPack {
+        val due = if (reviewLimit <= 0) {
+            emptyList()
+        } else {
+            db.rawQuery(
+                """
+                SELECT w._id FROM words w JOIN review r ON r.word_id = w._id
+                WHERE w.book_id = ? AND w.blocked = 0 AND r.due_at <= ?
+                ORDER BY r.due_at ASC LIMIT ?
+                """.trimIndent(),
+                arrayOf(bookId.toString(), now.toString(), reviewLimit.toString()),
+            ).use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }
+        }
+
+        val picked = due.toMutableSet()
+        val mistakes = if (mistakeLimit <= 0) {
+            emptyList()
+        } else {
+            val rows = db.rawQuery(
+                """
+                SELECT w._id FROM mistakes m JOIN words w ON w._id = m.word_id
+                WHERE w.book_id = ? AND w.blocked = 0
+                ORDER BY m.wrong DESC, m.last_at DESC
+                """.trimIndent(),
+                arrayOf(bookId.toString()),
+            ).use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }
+            rows.filter { it !in picked }.take(mistakeLimit)
+        }
+        picked += mistakes
+
+        val fresh = if (newLimit <= 0) {
+            emptyList()
+        } else {
+            val rows = db.rawQuery(
+                """
+                SELECT w._id FROM words w
+                WHERE w.book_id = ? AND w.blocked = 0
+                  AND NOT EXISTS(SELECT 1 FROM practice_log p WHERE p.word_id = w._id)
+                ORDER BY w.ord ASC
+                """.trimIndent(),
+                arrayOf(bookId.toString()),
+            ).use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }
+            rows.filter { it !in picked }.take(newLimit)
+        }
+
+        return DailyPack(due = due, mistakes = mistakes, fresh = fresh)
+    }
+
     fun removeMistake(wordId: Long) {
         db.delete("mistakes", "word_id = ?", arrayOf(wordId.toString()))
     }
@@ -1007,6 +1112,9 @@ class WordRepository(context: Context) {
 
         /** 答错后要连续答对几次才移出错题本。 */
         const val MISTAKE_STREAK_TO_CLEAR = 2
+
+        /** 自评「忘了」写进错题本时用的题型标记（不是真的题型）。 */
+        const val RATING_MODE = "SELF_RATING"
 
         const val WORD_COLUMNS =
             "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example"

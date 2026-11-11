@@ -271,4 +271,74 @@ class WordRepositoryTest {
         assertEquals(7, forecast.size)
         assertEquals(2, forecast[0] + forecast[1])
     }
+
+    // ---------- 每日学习包 ----------
+
+    @Test
+    fun dailyPackPutsDueWordsFirstThenMistakesThenFresh() {
+        val bookId = repo.importEntries(
+            null,
+            "学习包",
+            listOf(
+                VocabEntry("alpha", "n.", "甲"),
+                VocabEntry("beta", "n.", "乙"),
+                VocabEntry("gamma", "n.", "丙"),
+                VocabEntry("delta", "n.", "丁"),
+            ),
+        ).bookId
+        val words = repo.words(bookId)
+        // alpha 答对（明天到期），beta 答错（进错题本）
+        repo.recordAnswer(words[0].id, PracticeMode.EN_ZH, correct = true)
+        repo.recordAnswer(words[1].id, PracticeMode.EN_ZH, correct = false)
+
+        val tomorrow = System.currentTimeMillis() + ReviewScheduler.DAY_MS + 1_000
+        val pack = repo.dailyPack(bookId, newLimit = 1, reviewLimit = 5, mistakeLimit = 1, now = tomorrow)
+
+        // 两个词明天都到期：先练最早到期的 alpha，beta 已经在 due 里就不再进错题
+        assertEquals(words[0].id, pack.due.first())
+        assertTrue("beta 已到期，不应重复出现在错题里", pack.mistakes.isEmpty())
+        assertEquals(1, pack.fresh.size)
+        // 三类之间不重复
+        assertEquals(pack.wordIds.size, pack.wordIds.toSet().size)
+    }
+
+    @Test
+    fun dailyPackHonoursZeroQuotasAndDropsDuplicates() {
+        val bookId = repo.importEntries(
+            null,
+            "学习包限额",
+            listOf(VocabEntry("one", "n.", "一"), VocabEntry("two", "n.", "二")),
+        ).bookId
+        val words = repo.words(bookId)
+        repo.recordAnswer(words[0].id, PracticeMode.EN_ZH, correct = false)
+
+        val now = System.currentTimeMillis()
+        val empty = repo.dailyPack(bookId, newLimit = 0, reviewLimit = 0, mistakeLimit = 0, now = now)
+        assertTrue(empty.isEmpty)
+
+        // 今天不到期：错题仍然出现，但不会在 due 里重复
+        val pack = repo.dailyPack(bookId, newLimit = 5, reviewLimit = 5, mistakeLimit = 5, now = now)
+        assertEquals(0, pack.due.size)
+        assertEquals(listOf(words[0].id), pack.mistakes)
+        assertTrue(pack.fresh.isNotEmpty())
+        assertTrue(pack.fresh.none { it == words[0].id })
+    }
+
+    @Test
+    fun selfRatingOverwritesTheAnswerBasedSchedule() {
+        val bookId = repo.importEntries(null, "自评测试", listOf(VocabEntry("rate", "n.", "评分"))).bookId
+        val word = repo.words(bookId).single()
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = true)
+        assertEquals(1, repo.progressFor(longArrayOf(word.id)).getValue(word.id).level)
+
+        repo.rateWord(word.id, ReviewRating.KNOW)
+        assertEquals(2, repo.progressFor(longArrayOf(word.id)).getValue(word.id).level)
+
+        repo.rateWord(word.id, ReviewRating.FORGOT)
+        val progress = repo.progressFor(longArrayOf(word.id)).getValue(word.id)
+        assertEquals(0, progress.level)
+        assertEquals(1, progress.lapses)
+        assertEquals(1, progress.wrong)
+        assertEquals("SELF_RATING", progress.lastMode)
+    }
 }

@@ -70,7 +70,24 @@
 
         <activity
             android:name=".ui.ImportActivity"
-            android:windowSoftInputMode="adjustResize" />
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+
+            <!-- 从别的应用「分享」过来的纯文本，直接填进导入框 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!-- 从文件管理器「用其他应用打开」一个 .md/.txt 词表 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
 
         <receiver
             android:name=".ui.widget.WordDrillWidget"

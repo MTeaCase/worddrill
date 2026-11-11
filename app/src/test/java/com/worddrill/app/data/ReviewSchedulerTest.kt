@@ -48,4 +48,38 @@ class ReviewSchedulerTest {
         assertEquals(now + day, due)
         assertTrue(due > now)
     }
+
+    // ---------- 三档自评 ----------
+
+    @Test
+    fun knowRatingUpsTheLevel() {
+        assertEquals(3, ReviewScheduler.nextLevel(2, ReviewRating.KNOW))
+        assertEquals(ReviewScheduler.MAX_LEVEL, ReviewScheduler.nextLevel(ReviewScheduler.MAX_LEVEL, ReviewRating.KNOW))
+    }
+
+    @Test
+    fun fuzzyRatingKeepsLevelButNotBelowOne() {
+        assertEquals(2, ReviewScheduler.nextLevel(2, ReviewRating.FUZZY))
+        assertEquals(1, ReviewScheduler.nextLevel(0, ReviewRating.FUZZY))
+    }
+
+    @Test
+    fun forgotRatingResetsToZero() {
+        assertEquals(0, ReviewScheduler.nextLevel(5, ReviewRating.FORGOT))
+    }
+
+    @Test
+    fun fuzzyAndForgotBothComeBackTomorrow() {
+        val now = 1_700_000_000_000L
+        assertEquals(now + day, ReviewScheduler.nextDueAt(4, ReviewRating.FUZZY, now = now))
+        assertEquals(now + day, ReviewScheduler.nextDueAt(4, ReviewRating.FORGOT, now = now))
+        assertEquals(now + 15 * day, ReviewScheduler.nextDueAt(4, ReviewRating.KNOW, now = now))
+    }
+
+    @Test
+    fun onlyForgotGoesIntoTheMistakeBook() {
+        assertTrue(ReviewScheduler.addsToMistakes(ReviewRating.FORGOT))
+        assertTrue(!ReviewScheduler.addsToMistakes(ReviewRating.KNOW))
+        assertTrue(!ReviewScheduler.addsToMistakes(ReviewRating.FUZZY))
+    }
 }

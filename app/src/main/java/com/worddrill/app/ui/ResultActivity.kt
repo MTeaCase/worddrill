@@ -12,6 +12,7 @@ import com.worddrill.app.data.ReviewScheduler
 import com.worddrill.app.data.WordProgress
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityResultBinding
+import com.worddrill.app.quiz.QuizEngine
 import com.worddrill.app.ui.adapter.ResultAdapter
 import com.worddrill.app.util.Bg
 
@@ -41,6 +42,7 @@ class ResultActivity : BaseActivity() {
         val userAnswers = intent.getStringArrayListExtra(EXTRA_USER) ?: arrayListOf()
         val correctFlags = intent.getBooleanArrayExtra(EXTRA_CORRECT) ?: BooleanArray(0)
         val ids = intent.getLongArrayExtra(EXTRA_IDS) ?: LongArray(0)
+        val elapsed = intent.getLongArrayExtra(EXTRA_ELAPSED) ?: LongArray(0)
 
         records = words.indices.map { i ->
             AnswerRecord(
@@ -50,16 +52,21 @@ class ResultActivity : BaseActivity() {
                 answer = answers.getOrElse(i) { "" },
                 userAnswer = userAnswers.getOrElse(i) { "" },
                 correct = correctFlags.getOrElse(i) { false },
+                elapsedMs = elapsed.getOrElse(i) { 0L },
             )
         }
 
         val correctCount = records.count { it.correct }
         val wrong = records.filter { !it.correct }
         val percent = if (records.isEmpty()) 0 else correctCount * 100 / records.size
+        val fast = records.count { QuizEngine.isFast(it.elapsedMs, it.correct) }
 
         binding.tvScore.text = "$percent%"
         binding.pbScore.setProgressCompat(percent, true)
-        binding.tvScoreDetail.text = "答对 $correctCount / ${records.size} 题 · ${mode.label} · $bookName"
+        binding.tvScoreDetail.text = buildString {
+            append("答对 $correctCount / ${records.size} 题 · ${mode.label} · $bookName")
+            if (fast > 0) append("\n⚡ 3 秒内答对 $fast 题")
+        }
         binding.tvWrongLabel.text = if (wrong.isEmpty()) "全部答对，没有错题" else "错题 ${wrong.size}"
 
         binding.recycler.layoutManager = LinearLayoutManager(this)
@@ -138,6 +145,7 @@ class ResultActivity : BaseActivity() {
         private const val EXTRA_USER = "user_answers"
         private const val EXTRA_CORRECT = "correct_flags"
         private const val EXTRA_IDS = "word_ids"
+        private const val EXTRA_ELAPSED = "elapsed_ms"
 
         fun intent(
             context: Context,
@@ -153,6 +161,7 @@ class ResultActivity : BaseActivity() {
             putStringArrayListExtra(EXTRA_USER, ArrayList(records.map { it.userAnswer }))
             putExtra(EXTRA_CORRECT, BooleanArray(records.size) { records[it].correct })
             putExtra(EXTRA_IDS, records.map { it.wordId }.toLongArray())
+            putExtra(EXTRA_ELAPSED, records.map { it.elapsedMs }.toLongArray())
         }
     }
 }
