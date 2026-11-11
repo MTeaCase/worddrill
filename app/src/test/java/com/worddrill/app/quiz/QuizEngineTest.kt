@@ -151,16 +151,16 @@ class QuizEngineTest {
 
     @Test
     fun diagnosisNamesTheMissingTail() {
-        val text = QuizEngine.diagnose("appl", "apple")
+        val text = QuizEngine.diagnose("appl", "apple").orEmpty()
         assertTrue("实际=$text", text.contains("只差 1 个字母"))
         assertTrue("实际=$text", text.contains("后面还差 1 个字母"))
     }
 
     @Test
     fun diagnosisCatchesIeEiAndDoubleLetters() {
-        val mixed = QuizEngine.diagnose("recieve", "receive")
+        val mixed = QuizEngine.diagnose("recieve", "receive").orEmpty()
         assertTrue("实际=$mixed", mixed.contains("记混了"))
-        val doubled = QuizEngine.diagnose("necesary", "necessary")
+        val doubled = QuizEngine.diagnose("necesary", "necessary").orEmpty()
         assertTrue("实际=$doubled", doubled.contains("要双写"))
     }
 
