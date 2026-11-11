@@ -15,6 +15,12 @@ data class Word(
     val blocked: Boolean = false,
     /** 例句缓存，格式「英文例句||中文翻译」；没有则为空串。 */
     val example: String = "",
+    /** 美式音标（不含斜杠）。 */
+    val phoneticUs: String = "",
+    /** 英式音标（不含斜杠）。 */
+    val phoneticUk: String = "",
+    /** 一条固定搭配，格式「英文=中文」；没有则为空串。 */
+    val phrases: String = "",
 ) {
     /** 展示用释义：词性 + 中文。 */
     val meaningWithPos: String
@@ -29,9 +35,31 @@ data class Word(
     val hasExample: Boolean
         get() = exampleEn.isNotEmpty()
 
+    val phraseEn: String
+        get() = phrases.substringBefore(PHRASE_SEP).trim()
+
+    val phraseZh: String
+        get() = phrases.substringAfter(PHRASE_SEP, "").trim()
+
+    val hasPhrase: Boolean
+        get() = phraseEn.isNotEmpty()
+
+    /** 按口音取音标，缺哪个就用另一个顶上。 */
+    fun phonetic(accent: Accent): String = when (accent) {
+        Accent.UK -> phoneticUk.ifBlank { phoneticUs }
+        Accent.US -> phoneticUs.ifBlank { phoneticUk }
+    }
+
     companion object {
         const val EXAMPLE_SEP = "||"
+        const val PHRASE_SEP = "="
     }
+}
+
+/** 口音：决定显示哪一列音标、TTS 用哪个语言区域。 */
+enum class Accent(val label: String) {
+    US("美式"),
+    UK("英式"),
 }
 
 /** 某一天的练习统计。date 为 yyyy-MM-dd。 */
@@ -177,6 +205,8 @@ enum class PracticeMode(val label: String, val subtitle: String) {
     ZH_EN_SPELL("单词默写", "看中文，自己拼写英文"),
     LISTEN_SPELL("听音拼写", "听发音，自己拼出英文单词"),
     LISTEN_ZH("听音选义", "听发音，从四个中文释义中选"),
+    EX_SPELL("例句填词", "看中文句意，把例句里挖掉的词填上"),
+    FORM("词形变化", "填过去式，或常见名词的复数"),
 
     /** 一轮里混着出题，具体题型按单词 id 固定分配。 */
     MIXED("混合题型", "四种题型混着来，同一个词每次都是同一题");

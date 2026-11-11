@@ -128,9 +128,23 @@ class DictionaryActivity : BaseActivity() {
         dialog.show()
         // 没有例句且开关打开时，后台生成；弹窗先开，例句好了就地替换
         if (!word.hasExample && Settings.exampleAiEnabled(this)) generateInto(dialog, word)
+        loadConfusableWords(dialog, word)
+    }
+
+    /** 拼写相近的词，后台算（4500 词跑一遍编辑距离也就几十毫秒），算完补进弹窗。 */
+    private fun loadConfusableWords(dialog: AlertDialog, word: Word) {
+        Bg.run({ repo.confusableWords(word.id, 3) }) { result ->
+            result.onSuccess { list ->
+                if (list.isEmpty() || !dialog.isShowing || isFinishing) return@onSuccess
+                val text = list.joinToString("\n") { "· ${it.text}  ${it.meaningWithPos}" }
+                dialog.setMessage("${buildDetailText(word)}\n\n易混词（拼写相近）：\n$text")
+            }
+        }
     }
 
     private fun buildDetailText(word: Word, busy: Boolean = false): String = buildString {
+        val phonetic = word.phonetic(Settings.accent(this@DictionaryActivity))
+        if (phonetic.isNotBlank()) append("/$phonetic/\n")
         append(word.meaningWithPos)
         when {
             word.hasExample -> {
@@ -141,6 +155,10 @@ class DictionaryActivity : BaseActivity() {
             busy -> append("\n\n正在生成例句…")
             Settings.exampleAiEnabled(this@DictionaryActivity) -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
             else -> append("\n\n例句：未开启（设置 → AI 例句生成）")
+        }
+        if (word.hasPhrase) {
+            append("\n\n搭配：").append(word.phraseEn)
+            if (word.phraseZh.isNotBlank()) append("  ").append(word.phraseZh)
         }
     }
 

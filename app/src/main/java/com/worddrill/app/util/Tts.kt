@@ -2,6 +2,7 @@ package com.worddrill.app.util
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
+import com.worddrill.app.data.Accent
 import java.util.Locale
 
 /**
@@ -24,7 +25,7 @@ object Tts {
     private var app: Context? = null
 
     /** 已经应用到引擎上的口音和语速，用来判断设置变了没有。 */
-    private var appliedAccent: Settings.Accent? = null
+    private var appliedAccent: Accent? = null
     private var appliedRate: Float = -1f
 
     /** 朗读 [text]；失败时调用 [onError] 并给出可读原因。 */
@@ -87,7 +88,7 @@ object Tts {
         val rate = Settings.speechRate(application)
 
         if (accent != appliedAccent) {
-            val preferred = if (accent == Settings.Accent.UK) Locale.UK else Locale.US
+            val preferred = if (accent == Accent.UK) Locale.UK else Locale.US
             var result = runCatching { current.setLanguage(preferred) }
                 .getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -141,7 +142,7 @@ object Tts {
     /** 排查用：返回语言可用性与初始化状态描述。 */
     fun diagnose(context: Context): String {
         val accent = Settings.accent(context)
-        val locale = if (accent == Settings.Accent.UK) Locale.UK else Locale.US
+        val locale = if (accent == Accent.UK) Locale.UK else Locale.US
         val langCode = runCatching { engine?.isLanguageAvailable(locale) }.getOrNull() ?: Int.MIN_VALUE
         val langText = when (langCode) {
             TextToSpeech.LANG_AVAILABLE -> "可用"

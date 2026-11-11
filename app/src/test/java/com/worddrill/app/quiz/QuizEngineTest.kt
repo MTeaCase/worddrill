@@ -164,6 +164,83 @@ class QuizEngineTest {
         assertTrue("实际=$doubled", doubled.contains("要双写"))
     }
 
+    // ---------- 例句填词 ----------
+
+    @Test
+    fun blankExampleCutsTheFirstOccurrence() {
+        val blank = QuizEngine.blankExample("He abandoned his car last year.", "abandon")!!
+        assertEquals("He ____ his car last year.", blank.line)
+        assertEquals("abandoned", blank.token)
+    }
+
+    @Test
+    fun blankExampleSkipsTinyWordsAndMissingWords() {
+        assertNull(QuizEngine.blankExample("a cat sat", "a"))
+        assertNull(QuizEngine.blankExample("no match here", "zebra"))
+        assertNull(QuizEngine.blankExample("", "abandon"))
+    }
+
+    @Test
+    fun exampleModeAcceptsBothInflectionAndBaseForm() {
+        assertTrue(QuizEngine.isAcceptable("abandoned", "abandoned", listOf("abandon")))
+        assertTrue(QuizEngine.isAcceptable("abandon", "abandoned", listOf("abandon")))
+        assertFalse(QuizEngine.isAcceptable("abandons", "abandoned", listOf("abandon")))
+    }
+
+    @Test
+    fun mixedModeNeverPicksExampleModeWithoutAnExample() {
+        // all 里的词 example 都是空串
+        val modes = (1L..60L).map { QuizEngine.pickMixed(word(it, "w$it", "m$it"), ttsEnabled = true) }
+        assertTrue(modes.none { it == PracticeMode.EX_SPELL })
+    }
+
+    @Test
+    fun mixedModeCanPickExampleModeWhenTheWordHasOne() {
+        val withExample = all[0].copy(example = "An apple a day.||一天一苹果。")
+        val modes = (1L..60L).map {
+            QuizEngine.pickMixed(withExample.copy(id = it), ttsEnabled = true)
+        }
+        assertTrue("实际=$modes", modes.any { it == PracticeMode.EX_SPELL })
+    }
+
+    @Test
+    fun exampleModeBuildsASentencePromptAndDropsWordsWithoutExamples() {
+        val withExample = all[0].copy(example = "An apple a day keeps the doctor away.||一天一苹果，医生远离我。")
+        val items = QuizEngine.build(
+            pool = listOf(withExample) + all.drop(1),
+            allWords = all,
+            count = 10,
+            mode = PracticeMode.EX_SPELL,
+            random = Random(1),
+        )
+        assertEquals(1, items.size)
+        val item = items.single()
+        assertEquals(PracticeMode.EX_SPELL, item.mode)
+        assertTrue(item.spell)
+        assertTrue(item.longPrompt)
+        assertTrue(item.prompt.contains("____"))
+        assertTrue(item.prompt.contains("一天一苹果"))
+    }
+
+    // ---------- 词形变化 ----------
+
+    @Test
+    fun formModeOnlyKeepsWordsThatHaveAForm() {
+        val verb = word(1, "go", "走").copy(pos = "v.")
+        val nouns = word(2, "child", "孩子").copy(pos = "n.")
+        val prep = word(3, "on", "在…上").copy(pos = "prep.")
+        val items = QuizEngine.build(
+            pool = listOf(verb, nouns, prep),
+            allWords = listOf(verb, nouns, prep),
+            count = 10,
+            mode = PracticeMode.FORM,
+            random = Random(2),
+        )
+        assertEquals(2, items.size)
+        assertEquals(setOf("went", "children"), items.map { it.answer }.toSet())
+        assertTrue(items.all { it.spell })
+    }
+
     @Test
     fun markdownTableParsingKeepsOrderAndSkipsHeader() {
         val md = """

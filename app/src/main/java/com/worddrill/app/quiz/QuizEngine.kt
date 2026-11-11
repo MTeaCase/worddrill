@@ -2,8 +2,6 @@ package com.worddrill.app.quiz
 
 import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.Word
-import kotlin.math.abs
-import kotlin.math.min
 import kotlin.random.Random
 
 /**
@@ -20,12 +18,19 @@ data class QuizItem(
     val correctOption: Int = -1,
     val spell: Boolean = false,
     val mode: PracticeMode = PracticeMode.EN_ZH,
+    /** 除 [answer] 之外还算对的写法（例句填词时原形和变形都认）。 */
+    val accept: List<String> = emptyList(),
+    /** 长题面（整句例句）用小字号显示。 */
+    val longPrompt: Boolean = false,
 )
 
 /** 纯逻辑出题器，可在 JVM 单元测试中直接运行。 */
 object QuizEngine {
 
     const val OPTION_COUNT = 4
+
+    /** 例句里挖掉的空。 */
+    const val BLANK = "____"
 
     /** 3 秒内答对算「秒答」，用于结果页统计和成就判定。 */
     const val FAST_ANSWER_MS = 3_000L
@@ -37,6 +42,7 @@ object QuizEngine {
         PracticeMode.ZH_EN_SPELL,
         PracticeMode.LISTEN_SPELL,
         PracticeMode.LISTEN_ZH,
+        PracticeMode.EX_SPELL,
     )
 
     /** 关掉发音时不出听力题。 */
@@ -44,6 +50,7 @@ object QuizEngine {
         PracticeMode.EN_ZH,
         PracticeMode.ZH_EN,
         PracticeMode.ZH_EN_SPELL,
+        PracticeMode.EX_SPELL,
     )
 
     fun build(
@@ -55,7 +62,14 @@ object QuizEngine {
         ttsEnabled: Boolean = true,
     ): List<QuizItem> {
         if (pool.isEmpty() || count <= 0) return emptyList()
-        val picked = pool.shuffled(random).distinctBy { it.id }.take(count)
+        // 例句填词和词形变化有前提条件，先按条件筛一遍，宁可这轮题少也别出空题
+        val usable = when (mode) {
+            PracticeMode.EX_SPELL -> pool.filter { blankExample(it.exampleEn, it.text) != null }
+            PracticeMode.FORM -> pool.filter { com.worddrill.app.data.WordForms.questionFor(it) != null }
+            else -> pool
+        }
+        if (usable.isEmpty()) return emptyList()
+        val picked = usable.shuffled(random).distinctBy { it.id }.take(count)
         return picked.map { word ->
             val itemMode = if (mode == PracticeMode.MIXED) pickMixed(word, ttsEnabled) else mode
             makeItem(word, allWords, itemMode, random)
@@ -65,9 +79,15 @@ object QuizEngine {
     /**
      * 混合模式给某个词分配题型：按 id 的哈希取模，同一个词永远落到同一档，
      * 不会出现「这次会、下次又抽到最难的形态」这种运气问题。
+     * 词本身不具备条件的题型（没例句 / 没词形）会先从候选里剔除，
+     * 所以同一个词在不同词库里的落点可能不同，但在同一个库里是固定的。
      */
     fun pickMixed(word: Word, ttsEnabled: Boolean): PracticeMode {
-        val modes = if (ttsEnabled) MIXED_MODES else MIXED_MODES_NO_TTS
+        var modes = if (ttsEnabled) MIXED_MODES else MIXED_MODES_NO_TTS
+        if (blankExample(word.exampleEn, word.text) == null) {
+            modes = modes.filter { it != PracticeMode.EX_SPELL }
+        }
+        if (modes.isEmpty()) return PracticeMode.EN_ZH
         val index = Math.floorMod(word.id.hashCode(), modes.size)
         return modes[index]
     }
@@ -137,6 +157,66 @@ object QuizEngine {
 
         // 只有 build() 会把 MIXED 拆成具体题型；直接调到这里时按默认规则拆一次
         PracticeMode.MIXED -> makeItem(word, allWords, pickMixed(word, true), random)
+
+        // 例句填词：中文句意 + 英文挖空；没有例句就退回英译汉，不让出题器空转
+        PracticeMode.EX_SPELL -> {
+            val blank = blankExample(word.exampleEn, word.text)
+            if (blank == null) {
+                makeItem(word, allWords, PracticeMode.EN_ZH, random)
+            } else {
+                val zh = word.exampleZh.ifBlank { "把这句话补完整" }
+                QuizItem(
+                    word = word,
+                    prompt = "$zh\n${blank.line}",
+                    answer = blank.token,
+                    spell = true,
+                    mode = mode,
+                    accept = listOf(word.text),
+                    longPrompt = true,
+                )
+            }
+        }
+
+        // 词形变化：题干给释义和原词，答案是变位后的形式
+        PracticeMode.FORM -> {
+            val form = com.worddrill.app.data.WordForms.questionFor(word)
+            if (form == null) {
+                makeItem(word, allWords, PracticeMode.ZH_EN_SPELL, random)
+            } else {
+                QuizItem(
+                    word = word,
+                    prompt = "「${word.text}」的${form.label}",
+                    answer = form.answer,
+                    spell = true,
+                    mode = mode,
+                )
+            }
+        }
+    }
+
+    // ---------- 例句挖空 ----------
+
+    /** 挖空后的句子 + 被挖掉的那个词形（可能是 abandoned 这种变形）。 */
+    data class ExampleBlank(val line: String, val token: String)
+
+    /**
+     * 把例句里第一次出现的目标词（含变形）替换成下划线。
+     * 太短的词不挖（a / an 满篇都是），返回 null 让调用方跳过。
+     */
+    fun blankExample(sentence: String, word: String): ExampleBlank? {
+        val base = word.trim().lowercase()
+        if (base.length < 3 || sentence.isBlank()) return null
+        val regex = Regex("\\b${Regex.escape(base)}[a-z]*\\b", RegexOption.IGNORE_CASE)
+        val match = regex.find(sentence) ?: return null
+        val token = match.value
+        val line = sentence.replaceRange(match.range, BLANK)
+        return ExampleBlank(line = line, token = token)
+    }
+
+    /** 例句填词时原形和变形都算对。 */
+    fun isAcceptable(input: String, answer: String, accept: List<String>): Boolean {
+        if (isCorrect(input, answer)) return true
+        return accept.any { isCorrect(input, it) }
     }
 
     /** 正确项 + 最多 3 个来自全词库的干扰项，全部打乱且去重。 */
@@ -251,29 +331,9 @@ object QuizEngine {
     }
 
     /** Levenshtein 距离，两次滚动数组，单词长度量级足够快。 */
-    fun editDistance(a: String, b: String): Int {
-        if (a == b) return 0
-        if (a.isEmpty()) return b.length
-        if (b.isEmpty()) return a.length
-        var previous = IntArray(b.length + 1) { it }
-        var current = IntArray(b.length + 1)
-        for (i in 1..a.length) {
-            current[0] = i
-            for (j in 1..b.length) {
-                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
-                current[j] = min(
-                    min(current[j - 1] + 1, previous[j] + 1),
-                    previous[j - 1] + cost,
-                )
-            }
-            val swap = previous
-            previous = current
-            current = swap
-        }
-        return previous[b.length]
-    }
+    fun editDistance(a: String, b: String): Int = com.worddrill.app.data.TextDistance.editDistance(a, b)
 
     /** 两个词形是否只差一个后缀（诊断用不到时保留接口，测试里用到）。 */
     fun similarLength(a: String, b: String, tolerance: Int = 2): Boolean =
-        abs(a.length - b.length) <= tolerance
+        com.worddrill.app.data.TextDistance.similarLength(a, b, tolerance)
 }

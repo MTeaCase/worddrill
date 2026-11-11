@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.worddrill.app.BuildConfig
 import com.worddrill.app.R
+import com.worddrill.app.data.Accent
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.FragmentMineBinding
 import com.worddrill.app.ui.AboutDialog
@@ -183,11 +184,11 @@ class MineFragment : Fragment() {
     private fun pickAccent() {
         val context = requireContext()
         val current = Settings.accent(context)
-        val options = Settings.Accent.entries.map { it.label }.toTypedArray()
+        val options = Accent.entries.map { it.label }.toTypedArray()
         AlertDialog.Builder(context)
             .setTitle(R.string.settings_accent)
             .setSingleChoiceItems(options, current.ordinal) { dialog, which ->
-                Settings.setAccent(context, Settings.Accent.entries[which])
+                Settings.setAccent(context, Accent.entries[which])
                 Tts.refreshVoice()
                 refreshVoiceSettings()
                 dialog.dismiss()

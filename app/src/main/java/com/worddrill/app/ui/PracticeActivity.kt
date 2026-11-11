@@ -223,9 +223,14 @@ class PracticeActivity : BaseActivity() {
         binding.tvPromptLabel.text = when {
             isListen -> "听 发 音"
             itemMode == PracticeMode.EN_ZH -> "英 文"
+            itemMode == PracticeMode.EX_SPELL -> "例 句"
             else -> "中 文 释 义"
         }
         binding.tvPrompt.text = item.prompt
+        binding.tvPrompt.setTextSize(
+            android.util.TypedValue.COMPLEX_UNIT_SP,
+            if (item.longPrompt) 17f else 30f,
+        )
         binding.btnSpeak.isVisible = canHear
         binding.btnDontKnow.isEnabled = true
         binding.tvPrompt.setOnClickListener {
@@ -328,7 +333,7 @@ class PracticeActivity : BaseActivity() {
         hideKeyboard()
         binding.etAnswer.isEnabled = false
         binding.btnSubmit.isEnabled = false
-        val correct = QuizEngine.isCorrect(input, item.answer)
+        val correct = QuizEngine.isAcceptable(input, item.answer, item.accept)
         val elapsed = elapsedSinceShown()
         showFeedback(correct, item, input, elapsed)
         persist(correct, input, elapsed)
@@ -343,13 +348,19 @@ class PracticeActivity : BaseActivity() {
         binding.feedbackCard.visibility = View.VISIBLE
         binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
         binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
+
+        val word = item.word
+        val phonetic = word.phonetic(Settings.accent(this))
+        val head = if (phonetic.isBlank()) word.text else "${word.text}  /$phonetic/"
+
         binding.tvFeedback.text = if (correct) {
             buildString {
                 append("✓ 答对了")
                 if (QuizEngine.isFast(elapsed, true)) {
-                    append("  ⚡ ${(elapsed / 1000.0).toBigDecimalShort()} 秒")
+                    append("  ⚡ ${(elapsed / 1000.0).toSecondsShort()} 秒")
                 }
-                append("\n${item.word.text} — ${item.word.meaningWithPos}")
+                append("\n$head — ${word.meaningWithPos}")
+                if (word.hasPhrase) append("\n搭配：${word.phraseEn} ${word.phraseZh}")
             }
         } else {
             buildString {
@@ -358,13 +369,14 @@ class PracticeActivity : BaseActivity() {
                 if (item.spell) {
                     QuizEngine.diagnose(userAnswer, item.answer)?.let { append("\n提示：$it") }
                 }
-                append("\n${item.word.text} — ${item.word.meaningWithPos}")
+                append("\n$head — ${word.meaningWithPos}")
+                if (word.hasPhrase) append("\n搭配：${word.phraseEn} ${word.phraseZh}")
             }
         }
-        speakWord(item.word.text)
+        speakWord(word.text)
     }
 
-    private fun Double.toBigDecimalShort(): String =
+    private fun Double.toSecondsShort(): String =
         if (this >= 10) "${this.toInt()}" else String.format(java.util.Locale.US, "%.1f", this)
 
     private fun speakWord(text: String) {

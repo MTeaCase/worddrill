@@ -160,7 +160,7 @@ class WordRepository(context: Context) {
         if (ids.isEmpty()) return emptyList()
         val placeholders = ids.joinToString(",") { "?" }
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
         val byId = db.rawQuery(sql, ids.map { it.toString() }.toTypedArray()).use { c ->
             c.toWords().associateBy { it.id }
         }
@@ -206,7 +206,7 @@ class WordRepository(context: Context) {
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
     fun allWords(limit: Int = 5000): List<Word> {
-        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words WHERE blocked = 0 LIMIT $limit"
+        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
@@ -332,7 +332,7 @@ class WordRepository(context: Context) {
     /** 随机取一个未屏蔽的词，给桌面小组件用。 */
     fun randomWord(): Word? {
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example FROM words " +
+            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words " +
                 "WHERE blocked = 0 ORDER BY RANDOM() LIMIT 1"
         return db.rawQuery(sql, null).use { c -> if (c.moveToFirst()) c.toWord() else null }
     }
@@ -350,7 +350,7 @@ class WordRepository(context: Context) {
         val prefix = "$q%"
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example
+            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, w.phonetic_us, w.phonetic_uk, w.phrases
             FROM words w
             WHERE w.blocked = 0 AND (w.word LIKE ? OR w.meaning LIKE ?)
             ORDER BY CASE
@@ -430,7 +430,7 @@ class WordRepository(context: Context) {
     fun exportBackupJson(): String {
         val root = org.json.JSONObject()
         root.put("format", BACKUP_FORMAT)
-        root.put("version", 1)
+        root.put("version", 2)
         root.put("exportedAt", System.currentTimeMillis())
 
         val bookArray = org.json.JSONArray()
@@ -439,7 +439,7 @@ class WordRepository(context: Context) {
             entry.put("name", book.name)
             val wordArray = org.json.JSONArray()
             db.rawQuery(
-                "SELECT word, pos, meaning, starred, blocked, example FROM words WHERE book_id = ? ORDER BY ord",
+                "SELECT word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE book_id = ? ORDER BY ord",
                 arrayOf(book.id.toString()),
             ).use { c ->
                 while (c.moveToNext()) {
@@ -450,6 +450,9 @@ class WordRepository(context: Context) {
                     item.put("star", c.getInt(3) == 1)
                     item.put("block", c.getInt(4) == 1)
                     item.put("ex", c.getString(5) ?: "")
+                    item.put("us", c.getString(6) ?: "")
+                    item.put("uk", c.getString(7) ?: "")
+                    item.put("ph", c.getString(8) ?: "")
                     wordArray.put(item)
                 }
             }
@@ -588,6 +591,9 @@ class WordRepository(context: Context) {
                             put("pos", w.optString("pos", ""))
                             put("meaning", w.optString("m", ""))
                             put("example", w.optString("ex", ""))
+                            put("phonetic_us", w.optString("us", ""))
+                            put("phonetic_uk", w.optString("uk", ""))
+                            put("phrases", w.optString("ph", ""))
                             put("starred", 0)
                             put("blocked", 0)
                             put("created_at", System.currentTimeMillis())
@@ -1008,6 +1014,24 @@ class WordRepository(context: Context) {
         return DailyPack(due = due, mistakes = mistakes, fresh = fresh)
     }
 
+    /** 拼写相近、容易混的词：同首字母、长度差 ≤2、编辑距离 1–2。 */
+    fun confusableWords(wordId: Long, limit: Int = 3): List<Word> {
+        val target = wordsByIds(longArrayOf(wordId)).firstOrNull() ?: return emptyList()
+        val key = target.text.lowercase()
+        if (key.length < 3) return emptyList()
+        return words(target.bookId, limit = 5000)
+            .asSequence()
+            .filter { it.id != target.id }
+            .filter { TextDistance.similarLength(it.text.lowercase(), key) }
+            .filter { it.text.firstOrNull()?.lowercaseChar() == key.first() }
+            .map { candidate -> candidate to TextDistance.editDistance(candidate.text.lowercase(), key) }
+            .filter { (_, distance) -> distance in 1..2 }
+            .sortedWith(compareBy({ it.second }, { it.first.ord }))
+            .take(limit)
+            .map { it.first }
+            .toList()
+    }
+
     fun removeMistake(wordId: Long) {
         db.delete("mistakes", "word_id = ?", arrayOf(wordId.toString()))
     }
@@ -1044,8 +1068,32 @@ class WordRepository(context: Context) {
             var skipped = 0
             val exists = db.compileStatement("SELECT 1 FROM words WHERE book_id = ? AND lower(word) = lower(?) LIMIT 1")
             val insert = db.compileStatement(
-                "INSERT INTO words(book_id, ord, word, pos, meaning, starred, created_at) VALUES(?,?,?,?,?,0,?)",
+                """
+                INSERT INTO words(book_id, ord, word, pos, meaning, starred, example,
+                                  phonetic_us, phonetic_uk, phrases, created_at)
+                VALUES(?,?,?,?,?,0,?,?,?,?,?)
+                """.trimIndent(),
             )
+            // 自建词库也能白拿音标和例句：内置词库里已经有一条同名词就照抄过来
+            val enrichment = HashMap<String, Array<String>>()
+            db.rawQuery(
+                """
+                SELECT lower(word), phonetic_us, phonetic_uk, phrases, example FROM words
+                WHERE phonetic_us <> '' OR phonetic_uk <> '' OR example <> ''
+                """.trimIndent(),
+                null,
+            ).use { c ->
+                while (c.moveToNext()) {
+                    val key = c.getString(0) ?: continue
+                    if (enrichment.containsKey(key)) continue
+                    enrichment[key] = arrayOf(
+                        c.getString(1) ?: "",
+                        c.getString(2) ?: "",
+                        c.getString(3) ?: "",
+                        c.getString(4) ?: "",
+                    )
+                }
+            }
             val now = System.currentTimeMillis()
             for (entry in entries) {
                 exists.clearBindings()
@@ -1056,6 +1104,7 @@ class WordRepository(context: Context) {
                     skipped++
                     continue
                 }
+                val extra = enrichment[entry.word.trim().lowercase()]
                 ord++
                 insert.clearBindings()
                 insert.bindLong(1, targetId)
@@ -1063,7 +1112,11 @@ class WordRepository(context: Context) {
                 insert.bindString(3, entry.word)
                 insert.bindString(4, entry.pos)
                 insert.bindString(5, entry.meaning)
-                insert.bindLong(6, now)
+                insert.bindString(6, extra?.get(3) ?: "")
+                insert.bindString(7, extra?.get(0) ?: "")
+                insert.bindString(8, extra?.get(1) ?: "")
+                insert.bindString(9, extra?.get(2) ?: "")
+                insert.bindLong(10, now)
                 insert.executeInsert()
                 added++
             }
@@ -1117,18 +1170,19 @@ class WordRepository(context: Context) {
         const val RATING_MODE = "SELF_RATING"
 
         const val WORD_COLUMNS =
-            "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example"
+            "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, " +
+            "w.phonetic_us, w.phonetic_uk, w.phrases"
     }
 
     private fun Cursor.toMistake(): MistakeItem = MistakeItem(
         word = toWord(),
-        wrongCount = getInt(9),
-        mode = getString(10) ?: "",
-        lastAt = getLong(11),
-        streak = getInt(12),
-        level = getInt(13),
-        dueAt = getLong(14),
-        lapses = getInt(15),
+        wrongCount = getInt(12),
+        mode = getString(13) ?: "",
+        lastAt = getLong(14),
+        streak = getInt(15),
+        level = getInt(16),
+        dueAt = getLong(17),
+        lapses = getInt(18),
     )
 
     private fun Cursor.toWord(): Word = Word(
@@ -1141,6 +1195,9 @@ class WordRepository(context: Context) {
         starred = getInt(6) == 1,
         blocked = getInt(7) == 1,
         example = getString(8) ?: "",
+        phoneticUs = getString(9) ?: "",
+        phoneticUk = getString(10) ?: "",
+        phrases = getString(11) ?: "",
     )
 
     private fun Cursor.toWords(): List<Word> = buildList {

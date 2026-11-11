@@ -62,6 +62,8 @@ class PracticeFragment : Fragment() {
         binding.cardSpell.setOnClickListener { selectMode(PracticeMode.ZH_EN_SPELL) }
         binding.cardListen.setOnClickListener { selectMode(PracticeMode.LISTEN_SPELL) }
         binding.cardListenZh.setOnClickListener { selectMode(PracticeMode.LISTEN_ZH) }
+        binding.cardExample.setOnClickListener { selectMode(PracticeMode.EX_SPELL) }
+        binding.cardForm.setOnClickListener { selectMode(PracticeMode.FORM) }
         binding.cardMixed.setOnClickListener { selectMode(PracticeMode.MIXED) }
 
         // 学习包：每天一个「复习 + 错题 + 新词」的组合，点一下直接开练
@@ -121,6 +123,8 @@ class PracticeFragment : Fragment() {
             PracticeMode.ZH_EN_SPELL to binding.cardSpell,
             PracticeMode.LISTEN_SPELL to binding.cardListen,
             PracticeMode.LISTEN_ZH to binding.cardListenZh,
+            PracticeMode.EX_SPELL to binding.cardExample,
+            PracticeMode.FORM to binding.cardForm,
             PracticeMode.MIXED to binding.cardMixed,
         )
         rows.forEach { (rowMode, card) ->

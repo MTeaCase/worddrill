@@ -2,15 +2,10 @@ package com.worddrill.app.util
 
 import android.content.Context
 import com.worddrill.app.BuildConfig
+import com.worddrill.app.data.Accent
 
 /** 轻量设置存储（每日目标、发音开关、智能解析服务地址）。 */
 object Settings {
-
-    /** 口音：同时决定音标显示用哪一列、TTS 用哪个语言区域。 */
-    enum class Accent(val label: String) {
-        US("美式"),
-        UK("英式"),
-    }
 
     private const val PREFS = "worddrill_settings"
     private const val KEY_GOAL = "daily_goal"

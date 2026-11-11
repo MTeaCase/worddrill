@@ -62,6 +62,9 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 starred INTEGER NOT NULL DEFAULT 0,
                 blocked INTEGER NOT NULL DEFAULT 0,
                 example TEXT NOT NULL DEFAULT '',
+                phonetic_us TEXT NOT NULL DEFAULT '',
+                phonetic_uk TEXT NOT NULL DEFAULT '',
+                phrases TEXT NOT NULL DEFAULT '',
                 created_at INTEGER NOT NULL
             )
             """.trimIndent(),
@@ -164,6 +167,20 @@ class WordDb(context: Context) : SQLiteOpenHelper(
             // v7：新增内置「大学英语四级」词库。老用户升级时补进来，不动原有数据。
             runCatching { seedBookIfAbsent(db, CET4_NAME, ASSET_CET4) }
         }
+        if (oldVersion < 8) {
+            // v8：音标（美/英）、固定搭配；同时把例句补进老库。
+            // 内置词库原来 example 全是空的，例句要等用户手动生成，这里一次性灌满。
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_us TEXT NOT NULL DEFAULT ''")
+            }
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phonetic_uk TEXT NOT NULL DEFAULT ''")
+            }
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN phrases TEXT NOT NULL DEFAULT ''")
+            }
+            runCatching { backfillFromAssets(db) }
+        }
     }
 
     private fun seedBuiltin(db: SQLiteDatabase) {
@@ -183,7 +200,11 @@ class WordDb(context: Context) : SQLiteOpenHelper(
         db.beginTransaction()
         try {
             val stmt = db.compileStatement(
-                "INSERT INTO words(book_id, ord, word, pos, meaning, starred, created_at) VALUES(?,?,?,?,?,0,?)",
+                """
+                INSERT INTO words(book_id, ord, word, pos, meaning, starred, example,
+                                  phonetic_us, phonetic_uk, phrases, created_at)
+                VALUES(?,?,?,?,?,0,?,?,?,?,?)
+                """.trimIndent(),
             )
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
@@ -193,8 +214,58 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 stmt.bindString(3, o.getString("w"))
                 stmt.bindString(4, o.optString("pos", ""))
                 stmt.bindString(5, o.getString("m"))
-                stmt.bindLong(6, now)
+                stmt.bindString(6, o.optString("ex", ""))
+                stmt.bindString(7, o.optString("us", ""))
+                stmt.bindString(8, o.optString("uk", ""))
+                stmt.bindString(9, o.optString("ph", ""))
+                stmt.bindLong(10, now)
                 stmt.executeInsert()
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    /**
+     * 给已有单词补音标、搭配和例句：逐行按主键更新，比逐词 UPDATE ... WHERE lower(word)=?
+     * 快一个数量级（后者对每行都要全表扫一遍）。
+     */
+    private fun backfillFromAssets(db: SQLiteDatabase) {
+        val data = HashMap<String, org.json.JSONObject>()
+        for (asset in listOf(ASSET_3500, ASSET_CET4)) {
+            val json = appContext.assets.open(asset).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val arr = JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                data[o.getString("w").lowercase()] = o
+            }
+        }
+        if (data.isEmpty()) return
+
+        val rows = ArrayList<Pair<Long, String>>()
+        db.rawQuery("SELECT _id, word FROM words", null).use { c ->
+            while (c.moveToNext()) rows.add(c.getLong(0) to (c.getString(1) ?: "").lowercase())
+        }
+
+        val stmt = db.compileStatement(
+            """
+            UPDATE words SET phonetic_us = ?, phonetic_uk = ?, phrases = ?,
+                             example = CASE WHEN example = '' THEN ? ELSE example END
+            WHERE _id = ?
+            """.trimIndent(),
+        )
+        db.beginTransaction()
+        try {
+            for ((id, word) in rows) {
+                val o = data[word] ?: continue
+                stmt.clearBindings()
+                stmt.bindString(1, o.optString("us", ""))
+                stmt.bindString(2, o.optString("uk", ""))
+                stmt.bindString(3, o.optString("ph", ""))
+                stmt.bindString(4, o.optString("ex", ""))
+                stmt.bindLong(5, id)
+                stmt.executeUpdateDelete()
             }
             db.setTransactionSuccessful()
         } finally {
@@ -213,7 +284,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 7
+        const val VERSION = 8
         const val BUILTIN_NAME = "高中 3500 词"
         const val CET4_NAME = "大学英语四级"
         private const val ASSET_3500 = "words3500.json"

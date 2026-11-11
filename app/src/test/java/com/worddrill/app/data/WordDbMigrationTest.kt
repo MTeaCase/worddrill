@@ -88,6 +88,15 @@ class WordDbMigrationTest {
         assertEquals(1, word.ord)
         assertTrue(word.starred)
         assertFalse(word.blocked)
+        // v8 新增的列对老数据默认是空串，不会崩也不会污染
+        assertEquals("", word.phoneticUs)
+        assertEquals("", word.phoneticUk)
+
+        // v8 的另一个动作：内置词库补上音标和例句
+        val cet4 = repo.books().first { it.name == "大学英语四级" }
+        val seeded = repo.words(cet4.id, limit = 1).first()
+        assertTrue("音标未回填", seeded.phoneticUs.isNotEmpty())
+        assertTrue("例句未回填", seeded.hasExample)
 
         repo.setBlocked(word.id, true)
         assertEquals(1, repo.blockedCount(book.id))

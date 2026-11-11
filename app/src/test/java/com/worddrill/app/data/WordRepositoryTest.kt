@@ -302,6 +302,48 @@ class WordRepositoryTest {
         assertEquals(pack.wordIds.size, pack.wordIds.toSet().size)
     }
 
+    // ---------- 音标 / 例句 / 易混词 ----------
+
+    @Test
+    fun builtinWordsCarryPhoneticsExamplesAndPhrases() {
+        val book = repo.books().first()
+        val abandon = repo.words(book.id, query = "abandon").first { it.text == "abandon" }
+        assertTrue("美音=${abandon.phoneticUs}", abandon.phoneticUs.isNotEmpty())
+        assertTrue("英音=${abandon.phoneticUk}", abandon.phoneticUk.isNotEmpty())
+        assertTrue("例句=${abandon.example}", abandon.hasExample)
+        // 口音切换取不同的列，缺一列时回退到另一列
+        assertEquals(abandon.phoneticUs, abandon.phonetic(Accent.US))
+        assertEquals(abandon.phoneticUk, abandon.phonetic(Accent.UK))
+        val bare = abandon.copy(phoneticUk = "")
+        assertEquals(bare.phoneticUs, bare.phonetic(Accent.UK))
+    }
+
+    @Test
+    fun importedWordBorrowsPhoneticAndExampleFromBuiltin() {
+        val bookId = repo.importEntries(null, "借音标", listOf(VocabEntry("abandon", "v.", "放弃"))).bookId
+        val word = repo.words(bookId).single()
+        assertTrue(word.phoneticUs.isNotEmpty())
+        assertTrue(word.hasExample)
+    }
+
+    @Test
+    fun confusableWordsFindsNearMisspellingsInTheSameBook() {
+        val bookId = repo.importEntries(
+            null,
+            "易混词",
+            listOf(
+                VocabEntry("adapt", "v.", "适应"),
+                VocabEntry("adopt", "v.", "采用"),
+                VocabEntry("adept", "a.", "熟练的"),
+                VocabEntry("zebra", "n.", "斑马"),
+            ),
+        ).bookId
+        val adapt = repo.words(bookId).first { it.text == "adapt" }
+        val near = repo.confusableWords(adapt.id, limit = 3)
+        assertEquals(2, near.size)
+        assertEquals(setOf("adopt", "adept"), near.map { it.text }.toSet())
+    }
+
     @Test
     fun dailyPackHonoursZeroQuotasAndDropsDuplicates() {
         val bookId = repo.importEntries(

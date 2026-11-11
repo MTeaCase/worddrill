@@ -21,6 +21,7 @@ import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityWordListBinding
 import com.worddrill.app.ui.adapter.WordAdapter
 import com.worddrill.app.util.Bg
+import com.worddrill.app.util.Settings
 
 class WordListActivity : BaseActivity() {
 
@@ -372,7 +373,7 @@ class WordListActivity : BaseActivity() {
             }
         }
 
-        else -> null
+        else -> word.phonetic(Settings.accent(this)).takeIf { it.isNotBlank() }?.let { "/$it/" }
     }
 
     private fun modeLabel(modeName: String): String =

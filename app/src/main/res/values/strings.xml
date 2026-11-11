@@ -26,6 +26,10 @@
     <string name="mode_listen_zh_desc">听发音，从四个中文释义中选</string>
     <string name="mode_mixed">混合题型</string>
     <string name="mode_mixed_desc">一轮里混着来，同一个词每次都是同一题</string>
+    <string name="mode_example">例句填词</string>
+    <string name="mode_example_desc">看中文句意，把例句里挖掉的词填上</string>
+    <string name="mode_form">词形变化</string>
+    <string name="mode_form_desc">填动词过去式，或常见名词的复数</string>
 
     <!-- 三档自评 -->
     <string name="rating_know">认识</string>

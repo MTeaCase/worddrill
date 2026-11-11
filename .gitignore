@@ -15,3 +15,6 @@ local.properties
 # 部署工具的本地缓存
 .wrangler/
 .netlify/
+
+# 词库生成脚本拉下来的上游原始数据（9 MB 左右，不进仓库）
+.vocab-cache/
