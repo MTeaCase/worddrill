@@ -160,7 +160,7 @@
     <string name="title_settings">设置</string>
     <string name="action_dont_know">我不会</string>
     <string name="settings_tts_title">单词朗读</string>
-    <string name="settings_tts_desc">练习英译汉时自动朗读单词，也可点喇叭重听</string>
+    <string name="settings_tts_desc">练习时自动朗读单词，也可点喇叭重听；听力题依赖它，关掉后不会出听力题</string>
     <string name="settings_reminder">复习提醒</string>
     <string name="settings_reminder_on">每天 %1$s 提醒（点这里改时间）</string>
     <string name="settings_reminder_off">开启后每天固定时间提醒你复习到期的单词</string>

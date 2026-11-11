@@ -28,7 +28,7 @@ class MasteryBarView @JvmOverloads constructor(
     private var stats: MasteryStats? = null
 
     private val paints = intArrayOf(
-        R.color.divider,
+        R.color.brand_container,
         R.color.brand_soft,
         R.color.accent,
         R.color.brand,
