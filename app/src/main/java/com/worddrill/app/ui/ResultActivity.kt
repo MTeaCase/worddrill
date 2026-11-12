@@ -66,6 +66,23 @@ class ResultActivity : BaseActivity() {
         binding.tvScoreDetail.text = buildString {
             append("答对 $correctCount / ${records.size} 题 · ${mode.label} · $bookName")
             if (fast > 0) append("\n⚡ 3 秒内答对 $fast 题")
+            if (records.isNotEmpty() && wrong.isEmpty()) append("\n全部答对，这一轮干净")
+        }
+        // 训练记录：总用时与配速，比只有百分比更像一张成绩单
+        val totalMs = records.sumOf { it.elapsedMs }
+        binding.tvSession.text = if (totalMs > 0) {
+            val totalSec = totalMs / 1000.0
+            val avgSec = totalSec / records.size
+            buildString {
+                append("用时 ")
+                append(if (totalSec >= 60) "${(totalSec / 60).toInt()} 分 ${(totalSec % 60).toInt()} 秒" else "${totalSec.toInt()} 秒")
+                append(" · 平均 ")
+                append(String.format(java.util.Locale.US, "%.1f", avgSec))
+                append(" 秒/题")
+                if (bookName.isNotBlank()) append(" · $bookName")
+            }
+        } else {
+            ""
         }
         binding.tvWrongLabel.text = if (wrong.isEmpty()) "全部答对，没有错题" else "错题 ${wrong.size}"
 

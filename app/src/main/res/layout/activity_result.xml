@@ -44,6 +44,15 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSession"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp" />
+
+            <TextView
                 android:id="@+id/tvScoreDetail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
