@@ -72,10 +72,10 @@ object Updater {
             return
         }
         if (manual) toast(activity, activity.getString(R.string.update_checking))
-        Bg.run({ fetch(urls) }) { result ->
+        val current = appVersionCode(activity)
+        Bg.run({ fetch(urls, current) }) { result ->
             if (activity.isFinishing || activity.isDestroyed) return@run
             result.onSuccess { info ->
-                val current = appVersionCode(activity)
                 when {
                     info != null && info.versionCode > current -> {
                         // 用户上次选过「以后再说」的版本，自动检查时不再打扰；手动检查仍然提示
@@ -213,17 +213,36 @@ object Updater {
         .map { it.trim() }
         .filter { it.startsWith("http") }
 
-    private fun fetch(urls: List<String>): UpdateInfo? {
+    /**
+     * 依次问每个清单源，取「最新」的那份。
+     *
+     * 规则：
+     * - 哪个源报的版本比本机新，立刻返回它（正常情况只发一次请求）；
+     * - 都比本机旧就取版本号最大的那份；
+     * - 单个源失败（超时 / HTML / 解析不了）不影响其余源。
+     *
+     * 这样即使某个源被 CDN 缓存成旧版本，也不会让 App 误判「已是最新」。
+     */
+    internal fun fetch(
+        urls: List<String>,
+        currentVersion: Int,
+        fetcher: (String) -> UpdateInfo? = { fetchOne(it) },
+    ): UpdateInfo? {
+        var best: UpdateInfo? = null
         var lastError: Throwable? = null
         for (url in urls) {
-            try {
-                fetchOne(url)?.let { return it }
+            val info = try {
+                fetcher(url)
             } catch (error: Throwable) {
                 lastError = error
-            }
+                null
+            } ?: continue
+            if (info.versionCode > currentVersion) return info
+            val known = best
+            if (known == null || info.versionCode > known.versionCode) best = info
         }
         lastError?.let { throw it }
-        return null
+        return best
     }
 
     private fun fetchOne(url: String): UpdateInfo? {

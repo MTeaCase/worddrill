@@ -351,34 +351,57 @@ class PracticeActivity : BaseActivity() {
 
     private fun showFeedback(correct: Boolean, item: QuizItem, userAnswer: String, elapsed: Long) {
         ratingWordId = item.word.id
-        binding.feedbackCard.visibility = View.VISIBLE
-        binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
-        binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
-
         val word = item.word
         val phonetic = word.phonetic(Settings.accent(this))
         val head = if (phonetic.isBlank()) word.text else "${word.text}  /$phonetic/"
 
-        binding.tvFeedback.text = if (correct) {
+        val title = if (correct) {
             buildString {
                 append("✓ 答对了")
                 if (QuizEngine.isFast(elapsed, true)) {
                     append("  ⚡ ${(elapsed / 1000.0).toSecondsShort()} 秒")
                 }
-                append("\n$head — ${word.meaningWithPos}")
-                if (word.hasPhrase) append("\n搭配：${word.phraseEn} ${word.phraseZh}")
             }
         } else {
-            buildString {
-                append("✗ 正确答案：${item.answer}")
-                append("\n你作答的是：$userAnswer")
+            "✗ 正确答案：${item.answer}"
+        }
+
+        val detail = buildString {
+            if (!correct) {
+                append("\n你作答的是：").append(userAnswer)
                 if (item.spell) {
-                    QuizEngine.diagnose(userAnswer, item.answer)?.let { append("\n提示：$it") }
+                    QuizEngine.diagnose(userAnswer, item.answer)?.let { append("\n提示：").append(it) }
                 }
-                append("\n$head — ${word.meaningWithPos}")
-                if (word.hasPhrase) append("\n搭配：${word.phraseEn} ${word.phraseZh}")
+            }
+            append("\n").append(head).append(" — ").append(word.meaningWithPos)
+            if (word.hasPhrase) {
+                append("\n搭配：").append(word.phraseEn).append(' ').append(word.phraseZh)
             }
         }
+
+        // 第一行加重、其余行常规字重：原来的整块粗体没有层次
+        val text = android.text.SpannableStringBuilder().apply {
+            val start = length
+            append(title)
+            setSpan(
+                android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                start,
+                length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            append(detail)
+            setSpan(
+                android.text.style.StyleSpan(android.graphics.Typeface.NORMAL),
+                start + title.length,
+                length,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+        }
+
+        binding.feedbackCard.visibility = View.VISIBLE
+        binding.feedbackCard.setCardBackgroundColor(color(if (correct) R.color.correct_bg else R.color.wrong_bg))
+        binding.tvFeedback.setTextColor(color(if (correct) R.color.correct else R.color.wrong))
+        binding.tvFeedback.text = text
         speakWord(word.text)
     }
 

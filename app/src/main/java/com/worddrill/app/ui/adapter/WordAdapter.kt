@@ -3,6 +3,7 @@ package com.worddrill.app.ui.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.worddrill.app.R
 import com.worddrill.app.data.Word
@@ -17,6 +18,8 @@ class WordAdapter(
     private val onLongClick: ((Word) -> Unit)? = null,
     /** 传入后每行右侧会多一个「移出」按钮（错题本用）。 */
     private val onRemove: ((Word) -> Unit)? = null,
+    /** 附加行要强调成红字时传入（错题本）；不传就是中性灰，音标这类信息不该报警。 */
+    private val extraColorProvider: ((Word) -> Int?)? = null,
 ) : RecyclerView.Adapter<WordAdapter.VH>() {
 
     class VH(val binding: ItemWordBinding) : RecyclerView.ViewHolder(binding.root)
@@ -39,6 +42,11 @@ class WordAdapter(
         b.tvWord.text = word.text
         b.tvMeaning.text = word.meaningWithPos
         val extra = extraProvider(word)
+        // 复用的行会带着上一次的颜色，每次都要重设
+        b.tvExtra.setTextColor(
+            extraColorProvider?.invoke(word)
+                ?: ContextCompat.getColor(b.root.context, R.color.text_secondary),
+        )
         if (extra.isNullOrBlank()) {
             b.tvExtra.visibility = View.GONE
         } else {

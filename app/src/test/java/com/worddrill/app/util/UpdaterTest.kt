@@ -107,4 +107,53 @@ class UpdaterTest {
         assertEquals("2 KB", ApkDownloader.formatSize(2048))
         assertEquals("5.1 MB", ApkDownloader.formatSize(5333256))
     }
+
+    // ---------- 多清单源的选路 ----------
+
+    private fun info(code: Int, name: String) =
+        Updater.UpdateInfo(code, name, "", "https://x/$code.apk")
+
+    @Test
+    fun fetchTakesTheNewestSource() {
+        val sources = mapOf("gitee" to info(9, "1.4.9"), "cf" to info(12, "1.5.2"))
+        val picked = Updater.fetch(listOf("gitee", "cf"), currentVersion = 10) { sources[it] }
+        assertEquals(12, picked?.versionCode)
+    }
+
+    @Test
+    fun fetchSkipsBrokenSourcesAndKeepsLooking() {
+        val picked = Updater.fetch(listOf("down", "empty", "ok"), currentVersion = 10) { url ->
+            when (url) {
+                "down" -> throw java.io.IOException("timeout")
+                "empty" -> null
+                else -> info(12, "1.5.2")
+            }
+        }
+        assertEquals(12, picked?.versionCode)
+    }
+
+    @Test
+    fun fetchReturnsNullWhenEverySourceIsOlder() {
+        assertNull(Updater.fetch(listOf("a", "b"), currentVersion = 10) { info(8, "1.4.0") })
+    }
+
+    @Test
+    fun fetchStopsAtTheFirstSourceWithAnUpdate() {
+        var calls = 0
+        val picked = Updater.fetch(listOf("a", "b", "c"), currentVersion = 10) {
+            calls++
+            info(12, "1.5.2")
+        }
+        assertEquals(12, picked?.versionCode)
+        assertEquals("正常情况只发一次请求", 1, calls)
+    }
+
+    @Test
+    fun fetchSurfacesTheLastErrorWhenNothingWorks() {
+        val failure = runCatching {
+            Updater.fetch(listOf("a", "b"), currentVersion = 10) { throw java.io.IOException("boom") }
+        }
+        assertTrue(failure.isFailure)
+        assertEquals("boom", failure.exceptionOrNull()?.message)
+    }
 }

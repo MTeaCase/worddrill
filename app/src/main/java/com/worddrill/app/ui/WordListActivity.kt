@@ -114,6 +114,12 @@ class WordListActivity : BaseActivity() {
             } else {
                 null
             },
+            // 只有错题本的附加行是红色（错误次数），其余是音标这类中性信息
+            extraColorProvider = if (filter == WordFilter.MISTAKES) {
+                { _ -> androidx.core.content.ContextCompat.getColor(this, R.color.wrong) }
+            } else {
+                null
+            },
         )
 
         binding.recycler.layoutManager = LinearLayoutManager(this)
