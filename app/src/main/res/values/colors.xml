@@ -4,14 +4,14 @@
     <color name="brand_dark">#1D2B6B</color>
     <color name="brand_container">#E4E9FF</color>
     <color name="brand_soft">#ECF0FF</color>
-    <color name="accent">#F2A03D</color>
-    <color name="star">#F0A028</color>
+    <color name="accent">#C97A00</color>
+    <color name="star">#B26A00</color>
     <color name="bg">#F4F5FA</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_variant">#F1F3FA</color>
     <color name="text_primary">#17181C</color>
     <color name="text_secondary">#5B6172</color>
-    <color name="text_hint">#9AA0B0</color>
+    <color name="text_hint">#6A7280</color>
     <color name="divider">#E6E8F0</color>
     <color name="correct">#1E8E5A</color>
     <color name="correct_bg">#E4F6EC</color>
@@ -19,4 +19,8 @@
     <color name="wrong_bg">#FDEBEB</color>
     <color name="warn">#A8620A</color>
     <color name="white">#FFFFFF</color>
+    <!-- hero 卡片：浅色用品牌蓝配白字，深色用深底配浅字，避免夜间白字压浅蓝 -->
+    <color name="hero_bg">#3F5BD9</color>
+    <color name="hero_text">#FFFFFF</color>
+    <color name="hero_sub">#E6EAFF</color>
 </resources>

@@ -33,7 +33,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/brand"
+                app:cardBackgroundColor="@color/hero_bg"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp">
 
@@ -48,7 +48,7 @@
                         android:layout_height="wrap_content"
                         android:letterSpacing="0.1"
                         android:text="@string/report_today"
-                        android:textColor="#B9C4FF"
+                        android:textColor="@color/hero_sub"
                         android:textSize="12sp" />
 
                     <TextView
@@ -75,7 +75,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:textColor="#B9C4FF"
+                        android:textColor="@color/hero_sub"
                         android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

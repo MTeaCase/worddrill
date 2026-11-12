@@ -235,7 +235,12 @@ class PracticeActivity : BaseActivity() {
         binding.tvPrompt.text = item.prompt
         binding.tvPrompt.setTextSize(
             android.util.TypedValue.COMPLEX_UNIT_SP,
-            if (item.longPrompt) 17f else 30f,
+            when {
+                item.longPrompt -> 17f
+                // 单词是这一屏的主角，给它独立字阶；释义类题干留 30sp
+                itemMode == PracticeMode.EN_ZH || itemMode == PracticeMode.LISTEN_SPELL -> 40f
+                else -> 30f
+            },
         )
         binding.btnSpeak.isVisible = canHear
         binding.btnDontKnow.isEnabled = true
@@ -301,7 +306,22 @@ class PracticeActivity : BaseActivity() {
         val elapsed = elapsedSinceShown()
         showFeedback(correct, item, userAnswer, elapsed)
         persist(correct, userAnswer, elapsed)
-        scheduleAdvance(advanceDelay(correct))
+        holdForReading(correct)
+    }
+
+    /**
+     * 答对可以自动翻页，**答错必须停下**：讲解是这个 App 唯一的教学时刻，
+     * 1.6 秒读完一整段释义是不可能的，所以等用户点「下一题」。
+     */
+    private fun holdForReading(correct: Boolean) {
+        if (correct) {
+            scheduleAdvance(advanceDelay(true))
+        } else {
+            pendingNext?.let { binding.root.removeCallbacks(it) }
+            pendingNext = null
+            binding.btnNext.setText(R.string.action_next)
+            binding.btnNext.visibility = View.VISIBLE
+        }
     }
 
     private fun markOption(index: Int, background: Int, tone: Int) {
@@ -324,7 +344,7 @@ class PracticeActivity : BaseActivity() {
         val elapsed = elapsedSinceShown()
         showFeedback(false, item, "我不会", elapsed)
         persist(false, "我不会", elapsed)
-        scheduleAdvance(advanceDelay(false))
+        holdForReading(correct = false)
     }
 
     private fun submitSpelling() {

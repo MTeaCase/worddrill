@@ -12,11 +12,14 @@
     <color name="surface_variant">#22252E</color>
     <color name="text_primary">#E8EAF0</color>
     <color name="text_secondary">#A2A9BA</color>
-    <color name="text_hint">#6E7588</color>
+    <color name="text_hint">#7E8699</color>
     <color name="divider">#2C2F39</color>
     <color name="correct">#5BD08E</color>
     <color name="correct_bg">#15301F</color>
     <color name="wrong">#F0756C</color>
     <color name="wrong_bg">#38191A</color>
     <color name="warn">#F0B060</color>
+    <color name="hero_bg">#26305C</color>
+    <color name="hero_text">#EDF0FF</color>
+    <color name="hero_sub">#C3CCF0</color>
 </resources>

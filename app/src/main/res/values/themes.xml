@@ -51,7 +51,7 @@
 
     <style name="Text.Hero" parent="">
         <item name="android:textSize">26sp</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@color/hero_text</item>
         <item name="android:textStyle">bold</item>
     </style>
 </resources>
