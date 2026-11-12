@@ -109,6 +109,13 @@ class MineFragment : Fragment() {
         binding.rowAccent.setOnClickListener { pickAccent() }
         binding.rowRate.setOnClickListener { pickRate() }
         binding.rowQuota.setOnClickListener { editQuotas() }
+        binding.rowHelp.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.help_title)
+                .setMessage(R.string.help_body)
+                .setPositiveButton("好", null)
+                .show()
+        }
         binding.rowExam.setOnClickListener { pickExam() }
         binding.rowAchievements.setOnClickListener { showAchievements() }
         binding.rowVocabTest.setOnClickListener {

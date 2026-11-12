@@ -278,6 +278,8 @@
     <string name="placeholder_spell_input">在这里输入英文</string>
     <string name="action_undo">撤销</string>
     <string name="undo_marked_unknown">已记为「我不会」</string>
-    <string name="undo_ai_replaced">已用 AI 结果替换原文</string></resources>
+    <string name="undo_ai_replaced">已用 AI 结果替换原文</string>    <string name="settings_help">使用帮助</string>
+    <string name="help_title">使用帮助</string>
+    <string name="help_body">一、学习包是什么\n把「今天到期该复习的」「做错还没掌握的」「还没练过的新词」按三类配额拼成一轮，点一下就能开练。配额在「我的 → 每日学习包题量」里改。\n\n二、复习等级怎么算\n每答对一次升一级，间隔按 1、2、4、7、15、30、60 天递增；答错归零、明天重来。等级到 5 级（约 30 天）算掌握。开启「答完题后自评」后，可以自己标认识 / 模糊 / 忘了来改写排期。\n\n三、八种题型\n英译汉、汉译英、单词默写、听音拼写、听音选义、例句填词、词形变化、混合题型。混合会在同一轮里轮换，同一个词每次固定同一题。\n\n四、小技巧\n练习页长按可收藏；答题页点喇叭重听；词表长按可屏蔽；「我的」里可导出备份。</string></resources>
 
 

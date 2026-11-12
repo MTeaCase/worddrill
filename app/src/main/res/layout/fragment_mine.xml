@@ -58,7 +58,14 @@
                     android:paddingEnd="16dp"
                     android:paddingBottom="8dp">
 
-                    <com.google.android.material.materialswitch.MaterialSwitch
+                                        <TextView
+                        style="@style/Text.SectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="2dp"
+                        android:text="发音与朗读" />
+<com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swTts"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -75,7 +82,14 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
-                    <com.google.android.material.materialswitch.MaterialSwitch
+                                        <TextView
+                        style="@style/Text.SectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="2dp"
+                        android:text="提醒与节奏" />
+<com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swReminder"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -234,7 +248,14 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
-                    <LinearLayout
+                                        <TextView
+                        style="@style/Text.SectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="2dp"
+                        android:text="更多" />
+<LinearLayout
                         android:id="@+id/rowExam"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -336,6 +357,31 @@
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/rowHelp"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_help"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
 
                         <ImageView
                             android:layout_width="18dp"
