@@ -15,6 +15,7 @@ import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.WordFilter
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.FragmentReviewBinding
+import com.worddrill.app.ui.MainActivity
 import com.worddrill.app.ui.PracticeActivity
 import com.worddrill.app.ui.ReportActivity
 import com.worddrill.app.ui.WordListActivity
@@ -119,8 +120,12 @@ class ReviewFragment : Fragment() {
             }
             if (isEmpty()) append("选一个词库开始练习后这里会显示复习任务")
         }
-        binding.btnReview.isVisible = data.allDue > 0
-        binding.btnReview.text = getString(R.string.action_review)
+        binding.btnReview.isVisible = true
+        binding.btnReview.text = if (data.allDue > 0) {
+            "${getString(R.string.action_review)}（${data.allDue} 个）"
+        } else {
+            "${getString(R.string.review_none)} · 去练新词"
+        }
 
         val total = data.forecast.sum()
         // 没有排期时不画空柱状图，直接给一句说明，省一大块空白
@@ -155,52 +160,32 @@ class ReviewFragment : Fragment() {
         startActivity(WordListActivity.intent(requireContext(), bookId, bookName, filter))
     }
 
-    /** 先选范围（当前词库 / 全部词库），再选题量，最后选题型。 */
+    /** 一次弹窗定完范围、题量与题型：原来要连点三个对话框才开练。 */
     private fun startReview() {
         if (allCount == 0) {
-            toast(getString(R.string.review_none))
+            (activity as? MainActivity)?.selectTab(R.id.tab_practice)
             return
         }
-        if (!multipleBooks || bookCount == allCount || bookCount == 0) {
-            if (bookCount == 0) {
-                pickCount("复习", allCount, null)
-            } else {
-                pickCount(bookName, bookCount, bookId)
-            }
-            return
-        }
-        val options = arrayOf("$bookName（$bookCount 个）", "全部词库（$allCount 个）")
-        AlertDialog.Builder(requireContext())
-            .setTitle("复习哪个词库？")
-            .setItems(options) { _, which ->
-                if (which == 0) {
-                    pickCount(bookName, bookCount, bookId)
-                } else {
-                    pickCount("复习", allCount, null)
-                }
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-
-    private fun pickCount(label: String, count: Int, scopedBookId: Long?) {
-        val options = linkedMapOf(
-            "全部 $count 个" to count,
-            "只练 20 个" to minOf(20, count),
-            "只练 10 个" to minOf(10, count),
+        val scoped = bookCount > 0
+        val scopeCount = if (scoped) bookCount else allCount
+        val scopeId = if (scoped) bookId else null
+        val scopeName = if (scoped) bookName else "复习"
+        val presets = listOf(
+            Triple("全部 $scopeCount 个 · 英译汉", scopeCount, PracticeMode.EN_ZH),
+            Triple("${minOf(20, scopeCount)} 个 · 混合题型", minOf(20, scopeCount), PracticeMode.MIXED),
+            Triple("${minOf(10, scopeCount)} 个 · 听音选义", minOf(10, scopeCount), PracticeMode.LISTEN_ZH),
         )
-        val labels = options.keys.toTypedArray()
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.action_review))
-            .setItems(labels) { _, which ->
-                val take = options[labels[which]] ?: return@setItems
-                pickMode(label, take, scopedBookId)
+            .setItems(presets.map { it.first }.toTypedArray()) { _, which ->
+                val (_, take, mode) = presets[which]
+                launchReview(scopeName, take, scopeId, mode)
             }
             .setNegativeButton("取消", null)
             .show()
     }
 
-    private fun pickMode(label: String, take: Int, scopedBookId: Long?) {
+    private fun launchReview(label: String, take: Int, scopedBookId: Long?, mode: PracticeMode) {
         Bg.run({ repo.dueReviewWords(limit = take, bookId = scopedBookId) }) { result ->
             result.onSuccess { words ->
                 if (_binding == null || !isAdded) return@onSuccess
@@ -208,25 +193,17 @@ class ReviewFragment : Fragment() {
                     toast(getString(R.string.review_none))
                     return@onSuccess
                 }
-                val modes = PracticeMode.entries.map { it.label }.toTypedArray()
-                AlertDialog.Builder(requireContext())
-                    .setTitle("复习 ${words.size} 个单词")
-                    .setItems(modes) { _, which ->
-                        startActivity(
-                            PracticeActivity.retryIntent(
-                                context = requireContext(),
-                                mode = PracticeMode.entries[which],
-                                bookName = label.ifBlank { "复习" },
-                                wordIds = words.map { it.id }.toLongArray(),
-                            ),
-                        )
-                    }
-                    .setNegativeButton("取消", null)
-                    .show()
+                startActivity(
+                    PracticeActivity.retryIntent(
+                        context = requireContext(),
+                        mode = mode,
+                        bookName = label.ifBlank { "复习" },
+                        wordIds = words.map { it.id }.toLongArray(),
+                    ),
+                )
             }.onFailure { toast("读取复习列表失败：${it.message}") }
         }
     }
-
     private data class ReviewData(
         val bookId: Long,
         val bookName: String,
