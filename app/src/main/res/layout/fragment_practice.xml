@@ -72,7 +72,7 @@
                             android:id="@+id/btnOpenList"
                             style="@style/Widget.Material3.Button.TextButton"
                             android:layout_width="wrap_content"
-                            android:layout_height="36dp"
+                            android:layout_height="48dp"
                             android:minWidth="0dp"
                             android:paddingStart="10dp"
                             android:paddingEnd="10dp"
@@ -87,7 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="0 / 0 题" />
+                        android:text="@string/placeholder_zero_progress" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/pbHero"
@@ -146,7 +146,7 @@
                     android:orientation="horizontal"
                     android:paddingStart="16dp"
                     android:paddingTop="14dp"
-                    android:paddingEnd="12dp"
+                    android:paddingEnd="16dp"
                     android:paddingBottom="14dp">
 
                     <LinearLayout
@@ -561,7 +561,7 @@
                         android:minHeight="56dp"
                         android:orientation="horizontal"
                         android:paddingStart="16dp"
-                        android:paddingEnd="12dp">
+                        android:paddingEnd="16dp">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -708,6 +708,7 @@
                             android:id="@+id/cbAllowRepeat"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                        android:checked="true"
                             android:layout_marginTop="10dp"
                             android:minHeight="48dp"
                             android:text="@string/allow_repeat"

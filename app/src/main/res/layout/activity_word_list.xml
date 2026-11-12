@@ -57,7 +57,7 @@
             android:id="@+id/btnClearMistakes"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="48dp"
             android:minWidth="0dp"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
@@ -128,8 +128,8 @@
         android:layout_marginTop="4dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="8dp" />
 
     <com.google.android.material.button.MaterialButton

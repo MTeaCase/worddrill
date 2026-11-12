@@ -51,6 +51,8 @@ class PracticeActivity : BaseActivity() {
     private var ratingWordId: Long? = null
 
     /** 本轮原始题量，用来限制「错题补练」最多追加多少。 */
+    /** 用户选了「重练已练过的词」，本轮强制允许重复。 */
+    private var forceRepeat = false
     private var baseSize = 0
     private val retried = mutableSetOf<Long>()
     private var retryHintShown = false
@@ -89,20 +91,9 @@ class PracticeActivity : BaseActivity() {
         binding.btnRateForgot.setOnClickListener { applyRating(ReviewRating.FORGOT) }
         binding.ratingRow.isVisible = Settings.selfRatingEnabled(this)
 
-        // 手势：左滑 = 我不会，长按 = 收藏/取消收藏
+        // 手势只保留长按收藏。左滑「我不会」已移除：它不可见、无法撤销，
+// 而且一次误滑就会记一次错并重置复习等级——代价和收益不成比例。
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(start: MotionEvent?, end: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                if (start == null) return false
-                val dx = end.x - start.x
-                val dy = end.y - start.y
-                val threshold = 110 * resources.displayMetrics.density
-                if (abs(dx) > abs(dy) * 1.5f && abs(dx) > threshold && dx < 0) {
-                    markUnknown()
-                    return true
-                }
-                return false
-            }
-
             override fun onLongPress(event: MotionEvent) {
                 if (items.isNotEmpty()) toggleStar()
             }
@@ -139,7 +130,7 @@ class PracticeActivity : BaseActivity() {
         val count = intent.getIntExtra(EXTRA_COUNT, 20)
         val start = intent.getIntExtra(EXTRA_START, 1)
         val end = intent.getIntExtra(EXTRA_END, 0)
-        val allowRepeat = intent.getBooleanExtra(EXTRA_ALLOW_REPEAT, true)
+        val allowRepeat = intent.getBooleanExtra(EXTRA_ALLOW_REPEAT, true) || forceRepeat
         val filter = intent.getStringExtra(EXTRA_FILTER)
             ?.let { runCatching { WordFilter.valueOf(it) }.getOrNull() } ?: WordFilter.ALL
         val ids = intent.getLongArrayExtra(EXTRA_WORD_IDS)
@@ -200,11 +191,10 @@ class PracticeActivity : BaseActivity() {
             .setNegativeButton("返回") { _, _ -> finish() }
 
         if (!allowRepeat) {
-            builder.setPositiveButton("清空记录并重试") { _, _ ->
-                Bg.run({ repo.clearPracticeLog() }) { r ->
-                    r.onSuccess { loadSession() }
-                        .onFailure { toast("清空失败：${it.message}") }
-                }
+            builder.setPositiveButton("本轮重练已练过的词") { _, _ ->
+                // 不删练习记录：把「允许重复」在本轮强制打开就够了
+                forceRepeat = true
+                loadSession()
             }
         } else {
             builder.setPositiveButton(null, null)

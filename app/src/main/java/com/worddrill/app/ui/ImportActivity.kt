@@ -185,10 +185,21 @@ class ImportActivity : BaseActivity() {
                 setBusy(false)
                 binding.tvAiProgress.text = getString(R.string.import_ai_running)
                 result.onSuccess { r ->
+                    val original = binding.etMarkdown.text?.toString().orEmpty()
                     binding.etMarkdown.setText(r.markdown)
                     binding.tvFileName.visibility = View.GONE
                     preview()
                     toast(getString(R.string.import_ai_done, r.count))
+                    // AI 改写会覆盖用户粘贴的原文，给一次反悔机会
+                    if (original.isNotBlank() && original != r.markdown) {
+                        com.google.android.material.snackbar.Snackbar
+                            .make(binding.root, R.string.undo_ai_replaced, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .setAction(R.string.action_undo) {
+                                binding.etMarkdown.setText(original)
+                                preview()
+                            }
+                            .show()
+                    }
                 }.onFailure { error ->
                     toast("智能解析失败：${error.message ?: "未知错误"}")
                 }

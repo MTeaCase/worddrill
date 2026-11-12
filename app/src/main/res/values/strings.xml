@@ -271,6 +271,13 @@
     <string name="about_data_label">数据</string>
     <string name="about_data_value">全部保存在本机，不联网、不收集个人信息</string>
     <string name="about_note">仅供学习交流使用，不应将本软件用于商业用途。默认3500词库来自github开源项目，准确性不100%保证。</string>
-</resources>
+    <string name="placeholder_zero_progress">0 / 0 题</string>
+    <string name="placeholder_zero_words">0 个单词</string>
+    <string name="placeholder_zero_days">0 天</string>
+    <string name="placeholder_zero_count">0 题</string>
+    <string name="placeholder_spell_input">在这里输入英文</string>
+    <string name="action_undo">撤销</string>
+    <string name="undo_marked_unknown">已记为「我不会」</string>
+    <string name="undo_ai_replaced">已用 AI 结果替换原文</string></resources>
 
 

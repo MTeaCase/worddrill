@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 间距与圆角只有这一套；布局里不要再写裸 dp -->
+    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="card_gap">16dp</dimen>
+    <dimen name="section_gap">24dp</dimen>
+    <dimen name="radius_hero">16dp</dimen>
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_button">14dp</dimen>
+    <dimen name="touch_min">48dp</dimen>
+</resources>
