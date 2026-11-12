@@ -69,6 +69,8 @@ class PracticeFragment : Fragment() {
         // 学习包：每天一个「复习 + 错题 + 新词」的组合，点一下直接开练
         binding.cardDailyPack.setOnClickListener { startDailyPack() }
 
+        // 八种模式默认收起：先给推荐（混合），需要时再展开挑
+        binding.rowMode.setOnClickListener { setModeGridOpen(binding.modeGrid.visibility != View.VISIBLE) }
         binding.rowSettings.setOnClickListener { setExpanded(!expanded) }
         binding.etCount.doAfterTextChanged { refreshSettingsSummary() }
         binding.etStart.doAfterTextChanged { refreshSettingsSummary() }
@@ -85,6 +87,7 @@ class PracticeFragment : Fragment() {
         }
 
         selectMode(mode)
+        setModeGridOpen(false)
         setExpanded(false)
         loadBooks()
     }
@@ -133,6 +136,12 @@ class PracticeFragment : Fragment() {
             card.strokeColor = color(if (selected) R.color.brand else R.color.divider)
             card.setCardBackgroundColor(color(if (selected) R.color.brand_soft else R.color.surface))
         }
+        binding.tvModeValue.text = target.label
+    }
+
+    private fun setModeGridOpen(open: Boolean) {
+        binding.modeGrid.isVisible = open
+        binding.ivModeChevron.rotation = if (open) 270f else 90f
     }
 
     private fun loadBooks() {

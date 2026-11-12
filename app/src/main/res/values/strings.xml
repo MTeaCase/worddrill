@@ -37,7 +37,7 @@
     <string name="rating_forgot">忘了</string>
 
     <!-- 每日学习包 -->
-    <string name="daily_pack_title">今日学习包</string>
+    <string name="daily_pack_title">开始今日学习包</string>
     <string name="daily_pack_sub">复习 0 · 错题 0 · 新词 0</string>
     <string name="daily_pack_empty">今天没有新词也没有到期复习</string>
     <string name="daily_pack_start">开始学习包</string>
