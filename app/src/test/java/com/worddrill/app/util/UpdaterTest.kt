@@ -133,8 +133,10 @@ class UpdaterTest {
     }
 
     @Test
-    fun fetchReturnsNullWhenEverySourceIsOlder() {
-        assertNull(Updater.fetch(listOf("a", "b"), currentVersion = 10) { info(8, "1.4.0") })
+    fun fetchReturnsTheNewestManifestEvenWhenItIsOlderThanInstalled() {
+        // fetch 只负责挑「最好的一份」，是否提示更新由调用方比较版本号决定
+        val picked = Updater.fetch(listOf("a", "b"), currentVersion = 10) { info(8, "1.4.0") }
+        assertEquals(8, picked?.versionCode)
     }
 
     @Test
