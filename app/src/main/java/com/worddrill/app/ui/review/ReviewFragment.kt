@@ -33,6 +33,7 @@ class ReviewFragment : Fragment() {
     private var bookName = ""
     private var bookCount = 0
     private var allCount = 0
+    private var learnedCount = 0
     private var multipleBooks = false
 
     override fun onCreateView(
@@ -102,6 +103,7 @@ class ReviewFragment : Fragment() {
                 bookName = data.bookName
                 bookCount = data.bookDue
                 allCount = data.allDue
+                learnedCount = data.learned.learned
                 multipleBooks = data.multipleBooks
                 render(data)
             }.onFailure {
@@ -170,23 +172,44 @@ class ReviewFragment : Fragment() {
         val scopeCount = if (scoped) bookCount else allCount
         val scopeId = if (scoped) bookId else null
         val scopeName = if (scoped) bookName else "复习"
-        val presets = listOf(
-            Triple("全部 $scopeCount 个 · 英译汉", scopeCount, PracticeMode.EN_ZH),
-            Triple("${minOf(20, scopeCount)} 个 · 混合题型", minOf(20, scopeCount), PracticeMode.MIXED),
-            Triple("${minOf(10, scopeCount)} 个 · 听音选义", minOf(10, scopeCount), PracticeMode.LISTEN_ZH),
-        )
+        val presets = buildList {
+            add(ReviewPreset("全部 $scopeCount 个 · 英译汉", scopeCount, PracticeMode.EN_ZH, false))
+            add(ReviewPreset("${minOf(20, scopeCount)} 个 · 混合题型", minOf(20, scopeCount), PracticeMode.MIXED, false))
+            add(ReviewPreset("${minOf(10, scopeCount)} 个 · 听音选义", minOf(10, scopeCount), PracticeMode.LISTEN_ZH, false))
+            // 今天没到期的词也能练：不按 due_at 筛，直接取练过的全部
+            if (learnedCount > scopeCount) {
+                add(ReviewPreset("练过的全部 $learnedCount 个 · 混合题型", learnedCount, PracticeMode.MIXED, true))
+            }
+        }
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.action_review))
-            .setItems(presets.map { it.first }.toTypedArray()) { _, which ->
-                val (_, take, mode) = presets[which]
-                launchReview(scopeName, take, scopeId, mode)
+            .setItems(presets.map { it.label }.toTypedArray()) { _, which ->
+                val preset = presets[which]
+                launchReview(scopeName, preset.take, scopeId, preset.mode, preset.all)
             }
             .setNegativeButton("取消", null)
             .show()
     }
 
-    private fun launchReview(label: String, take: Int, scopedBookId: Long?, mode: PracticeMode) {
-        Bg.run({ repo.dueReviewWords(limit = take, bookId = scopedBookId) }) { result ->
+    private data class ReviewPreset(
+        val label: String,
+        val take: Int,
+        val mode: PracticeMode,
+        /** true 表示不看到期时间，取练过的全部。 */
+        val all: Boolean,
+    )
+
+    private fun launchReview(
+        label: String,
+        take: Int,
+        scopedBookId: Long?,
+        mode: PracticeMode,
+        all: Boolean = false,
+    ) {
+        Bg.run({
+            if (all) repo.allReviewWords(limit = take, bookId = scopedBookId)
+            else repo.dueReviewWords(limit = take, bookId = scopedBookId)
+        }) { result ->
             result.onSuccess { words ->
                 if (_binding == null || !isAdded) return@onSuccess
                 if (words.isEmpty()) {

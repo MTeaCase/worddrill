@@ -143,7 +143,7 @@ class ImportActivity : BaseActivity() {
         parsed = VocabMarkdownParser.parse(text)
         binding.previewCard.visibility = View.VISIBLE
         if (parsed.isEmpty()) {
-            binding.tvPreview.text = "未解析到单词，请确认为 Markdown 表格。"
+            binding.tvPreview.text = "未解析到单词，请确认每行使用 | 分隔。"
             return
         }
         val sample = parsed.take(5).joinToString("\n") { entry ->
@@ -153,7 +153,7 @@ class ImportActivity : BaseActivity() {
         binding.tvPreview.text = "解析 ${parsed.size} 条，按出现顺序入库：\n$sample$more"
     }
 
-    /** AI 智能解析：把当前内容发给自建服务整理成表格，再走原来的导入流程。 */
+    /** AI 智能解析：把当前内容发给自建服务整理成固定格式文本，再走原来的导入流程。 */
     private fun confirmSmartParse() {
         val text = binding.etMarkdown.text?.toString()?.trim().orEmpty()
         if (text.isEmpty()) {

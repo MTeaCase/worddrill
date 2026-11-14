@@ -2,14 +2,17 @@ package com.worddrill.app.ui
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.worddrill.app.R
 import com.worddrill.app.data.Book
+import com.worddrill.app.data.CsvFormat
 import com.worddrill.app.data.LearnedStats
 import com.worddrill.app.data.MistakeSort
 import com.worddrill.app.data.Pos
@@ -44,6 +47,16 @@ class WordListActivity : BaseActivity() {
     /** 数据库里的完整结果，筛选（chip）在内存里做，避免每点一下都查库。 */
     private var rawItems: List<Word> = emptyList()
     private var items: List<Word> = emptyList()
+
+    /** 等用户选完保存位置再写入的 CSV 内容。 */
+    private var pendingCsv: String? = null
+    private var pendingCsvCount = 0
+
+    private val exportCsv = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        val text = pendingCsv
+        pendingCsv = null
+        if (uri != null && text != null) writeCsv(uri, text)
+    }
     private var progress: Map<Long, WordProgress> = emptyMap()
     private var learnedStats: LearnedStats? = null
 
@@ -161,11 +174,18 @@ class WordListActivity : BaseActivity() {
 
     private fun setupMistakeMenu() {
         setupMenu(R.menu.menu_word_list) { item ->
-            if (item.itemId == R.id.action_sort) {
-                showSortDialog()
-                true
-            } else {
-                false
+            when (item.itemId) {
+                R.id.action_sort -> {
+                    showSortDialog()
+                    true
+                }
+
+                R.id.action_export_mistakes -> {
+                    showExportDialog()
+                    true
+                }
+
+                else -> false
             }
         }
         binding.tvHint.isVisible = true
@@ -208,6 +228,59 @@ class WordListActivity : BaseActivity() {
             getString(R.string.learned_hint)
         } else {
             getString(R.string.learned_hint)
+        }
+    }
+
+    /** 错题导出：先选版式，再生成 CSV，最后让用户挑保存位置。 */
+    private fun showExportDialog() {
+        val formats = listOf(
+            CsvFormat.REVIEW to getString(R.string.export_csv_review),
+            CsvFormat.PRACTICE_EN to getString(R.string.export_csv_en),
+            CsvFormat.PRACTICE_ZH to getString(R.string.export_csv_zh),
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.action_export_csv)
+            .setItems(formats.map { it.second }.toTypedArray()) { _, which ->
+                exportMistakes(formats[which].first)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun exportMistakes(format: CsvFormat) {
+        Bg.run({
+            val csv = repo.mistakesCsv(bookId, format)
+            csv to repo.mistakes(bookId).size
+        }) { result ->
+            result.onSuccess { (csv, count) ->
+                pendingCsv = csv
+                pendingCsvCount = count
+                exportCsv.launch(csvFileName(format))
+            }.onFailure { toast("导出失败：${it.message}") }
+        }
+    }
+
+    private fun csvFileName(format: CsvFormat): String {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date())
+        val label = when (format) {
+            CsvFormat.REVIEW -> "复习版"
+            CsvFormat.PRACTICE_EN -> "练习版-英文"
+            CsvFormat.PRACTICE_ZH -> "练习版-中文"
+        }
+        return "错题-$label-$stamp.csv"
+    }
+
+    private fun writeCsv(uri: Uri, text: String) {
+        Bg.run({
+            contentResolver.openOutputStream(uri)?.use { out ->
+                out.write(text.toByteArray(Charsets.UTF_8))
+                out.flush()
+            } ?: throw IllegalStateException("无法写入文件")
+            pendingCsvCount
+        }) { result ->
+            result.onSuccess { count ->
+                toast(getString(R.string.export_csv_done, count))
+            }.onFailure { toast("导出失败：${it.message}") }
         }
     }
 

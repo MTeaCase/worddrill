@@ -80,6 +80,23 @@
     <string name="settings_speech_rate">语速</string>
     <string name="settings_self_rating">答完题后自评</string>
     <string name="settings_self_rating_desc">答完可标认识 / 模糊 / 忘了，用于调整下次复习时间</string>
+    <string name="settings_vary">干扰项变化</string>
+    <string name="settings_vary_desc">每次从最像的几个词里重新抽取选项</string>
+    <string name="settings_reveal">答对后显示选项释义</string>
+    <string name="settings_reveal_desc">汉译英答对后，标出其余选项的中文</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_auto_backup">自动备份</string>
+    <string name="settings_auto_backup_desc">定时保存本地快照，误删时可恢复</string>
+    <string name="settings_backup_interval">备份间隔</string>
+    <string name="settings_backup_keep">保留份数</string>
+    <string name="settings_snapshot_now">立即存一份快照</string>
+    <string name="settings_clear_cache">清除备份缓存</string>
+    <string name="settings_interval_format">%1$d 小时（0 为仅手动）</string>
+    <string name="settings_keep_format">%1$d 份</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="library_storage">已用 %1$s · 数据保存在本机</string>
     <string name="settings_quota">每日学习包题量</string>
 
     <!-- 桌面快捷方式 -->
@@ -116,6 +133,11 @@
     <string name="mistake_sort_alphabet">按字母</string>
     <string name="mistake_sort_label">排序</string>
     <string name="action_remove_mistake">移出错题本</string>
+    <string name="action_export_csv">导出 CSV</string>
+    <string name="export_csv_review">复习版：英文、词性、释义、复习提示</string>
+    <string name="export_csv_en">练习版：只保留英文</string>
+    <string name="export_csv_zh">练习版：只保留中文释义</string>
+    <string name="export_csv_done">已导出 %1$d 个单词</string>
     <string name="action_clear_mistakes">清空错题本</string>
     <string name="mistake_empty">暂无错题</string>
     <string name="mistake_clear_confirm">删除当前词库的错题记录，单词与复习进度不受影响。</string>
@@ -149,18 +171,18 @@
     <string name="import_file_hint">支持 .md / .markdown / .txt，自动识别 UTF-8 与 GBK</string>
     <string name="import_file_title">从文件导入</string>
     <string name="import_name_hint">词库名称</string>
-    <string name="import_columns_hint">支持三列或四列表格，序号列可省略。</string>
-    <string name="import_markdown_hint">Markdown 词汇表</string>
-    <string name="import_or_paste">或粘贴表格内容</string>
+    <string name="import_columns_hint">每行一个词条，用竖线 | 分隔三个字段，序号列可省略。</string>
+    <string name="import_markdown_hint">词汇表文本</string>
+    <string name="import_or_paste">或粘贴文本内容</string>
     <string name="import_phrase_tip">词组建议不填词性。</string>
     <string name="import_prompt_tag">格式提示</string>
-    <string name="import_prompt_title">用 AI 整理成三列表格</string>
-    <string name="import_prompt_body">把单词发给常用 AI，附上下面的提示词，整理结果粘贴回本页；解析无误后保存导入。内容仅发送给所选的 AI。</string>
+    <string name="import_prompt_title">用 AI 整理成固定格式</string>
+    <string name="import_prompt_body">把单词发给常用 AI，附上下面的提示词，让它输出三字段的纯文本；结果粘贴回本页，解析无误后保存导入。内容仅发送给所选的 AI。</string>
     <string name="import_prompt_copy">复制提示词</string>
     <string name="import_prompt_expand">展开提示词</string>
     <string name="import_prompt_collapse">收起提示词</string>
     <string name="import_prompt_copied">提示词已复制，粘贴时在末尾附上单词</string>
-    <string name="import_prompt_text">请把下面的词汇整理成 Markdown 表格，固定三列，表头为：\n\n| 英文 | 词性 | 汉语 |\n|---|---|---|\n| competence | n. | 能力；胜任 |\n\n要求：\n1. 一行一个词，按原文顺序排列，不合并、不漏词；\n2. 词性用缩写加句点，如 n. v. adj. adv. prep. conj. pron. num. int. art. modal v.，多个词性用 &amp; 连接；\n3. 释义用中文，多个义项用「；」分隔，不加编号、例句和音标；\n4. 词组与短语保留原样，词性可留空；\n5. 只输出表格，不加解释、标题或代码块标记。\n\n词汇如下：\n（在此粘贴单词）</string>
+    <string name="import_prompt_text">请把下面的词汇整理成纯文本清单。只输出文本行，不要使用排版格式，也不要加代码块标记。\n\n输出格式：每行一个词条，用竖线 | 分隔三个字段，顺序固定为「英文 | 词性 | 汉语」。竖线是格式的一部分，每行都必须保留。\n\n第一行写：英文 | 词性 | 汉语\n第二行写：--- | --- | ---\n之后每行一个词条，例如：competence | n. | 能力；胜任\n\n要求：\n1. 只输出这些文本行，不要解释、标题或前后缀；\n2. 词性用缩写加句点，如 n. v. vt. vi. adj. adv. prep. conj. pron. num. int. art. modal v.，多个词性用 &amp; 连接；\n3. 释义用中文，多个义项用「；」分隔，不加编号、例句和音标；\n4. 词组与短语保留原样，词性可留空；\n5. 按原文顺序排列，不合并、不漏词。\n\n词汇如下：\n（在此粘贴单词）</string>
 
     <!-- 屏蔽 -->
     <string name="title_blocked">已屏蔽单词</string>
@@ -219,7 +241,7 @@
     <string name="import_ai_progress">正在整理第 %1$d/%2$d 段…</string>
     <string name="import_ai_start">开始整理</string>
     <string name="import_ai_done">已整理 %1$d 条，核对后保存导入</string>
-    <string name="import_ai_confirm">内容将发送至 AI 服务（商汤日日新）转换为表格，仅用于本次转换，不保存在本机。\n\n服务地址：%1$s</string>
+    <string name="import_ai_confirm">内容将发送至 AI 服务（商汤日日新）整理为纯文本，仅用于本次转换，不保存在本机。\n\n服务地址：%1$s</string>
 
     <!-- 更新 -->
     <string name="update_title">检查更新</string>
@@ -296,7 +318,7 @@
     <string name="about_developer_label">开发者</string>
     <string name="about_developer_value">zlt mtc</string>
     <string name="about_vocab_label">词库</string>
-    <string name="about_vocab_value">内置「高中 3500 词」，支持导入 Markdown 词汇表</string>
+    <string name="about_vocab_value">内置「高中 3500 词」，支持导入自建词表</string>
     <string name="about_data_label">数据</string>
     <string name="about_data_value">数据保存在本机，不收集个人信息</string>
     <string name="about_note">仅供学习交流使用，请勿用于商业用途。内置词库来自开源项目，准确性不做保证。</string>

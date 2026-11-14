@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.worddrill.app.BuildConfig
@@ -106,6 +107,25 @@ class MineFragment : Fragment() {
             Settings.setSelfRatingEnabled(requireContext(), checked)
         }
 
+        binding.swVaryDistractors.setOnCheckedChangeListener { _, checked ->
+            Settings.setVaryDistractors(requireContext(), checked)
+        }
+
+        binding.swRevealMeanings.setOnCheckedChangeListener { _, checked ->
+            Settings.setRevealOptionMeanings(requireContext(), checked)
+        }
+
+        binding.swAutoBackup.setOnCheckedChangeListener { _, checked ->
+            if (suppressSwitchEvent) return@setOnCheckedChangeListener
+            Settings.setAutoBackupEnabled(requireContext(), checked)
+            refreshBackupControls()
+        }
+        binding.rowTheme.setOnClickListener { pickTheme() }
+        binding.rowBackupInterval.setOnClickListener { editBackupInterval() }
+        binding.rowBackupKeep.setOnClickListener { editBackupKeep() }
+        binding.btnSnapshotNow.setOnClickListener { snapshotNow() }
+        binding.btnClearCache.setOnClickListener { confirmClearCache() }
+
         binding.rowAccent.setOnClickListener { pickAccent() }
         binding.rowRate.setOnClickListener { pickRate() }
         binding.rowQuota.setOnClickListener { editQuotas() }
@@ -164,6 +184,7 @@ class MineFragment : Fragment() {
         refreshReminderText()
         refreshAutoBackupTime()
         refreshSmartParseUrl()
+        refreshBackupControls()
     }
 
     private fun activity(): AppCompatActivity = requireActivity() as AppCompatActivity
@@ -179,6 +200,9 @@ class MineFragment : Fragment() {
         binding.swReminder.isChecked = Settings.reminderEnabled(context)
         binding.swExampleAi.isChecked = Settings.exampleAiEnabled(context)
         binding.swSelfRating.isChecked = Settings.selfRatingEnabled(context)
+        binding.swVaryDistractors.isChecked = Settings.varyDistractors(context)
+        binding.swRevealMeanings.isChecked = Settings.revealOptionMeanings(context)
+        binding.swAutoBackup.isChecked = Settings.autoBackupEnabled(context)
         suppressSwitchEvent = false
         refreshReminderText()
     }
@@ -195,6 +219,8 @@ class MineFragment : Fragment() {
             append(" · 错题 ").append(Settings.mistakeQuota(context))
         }
         binding.tvExam.text = examLabel()
+        binding.tvTheme.text = themeLabel(Settings.themeMode(requireContext()))
+        refreshBackupControls()
         Bg.run({ repo.achievementState().count { it.second > 0 } }) { result ->
             result.onSuccess { unlocked ->
                 if (_binding != null) {
@@ -490,9 +516,9 @@ class MineFragment : Fragment() {
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_restore_auto)
-            .setMessage("将合并自动备份中的词库、错题、星标、打卡与练习进度，不删除现有内容。")
+            .setMessage("将用自动备份覆盖当前数据：词库、错题、星标与练习记录都回到快照时刻。")
             .setPositiveButton("恢复") { _, _ ->
-                Bg.run({ repo.importBackupJson(text) }) { result ->
+                Bg.run({ repo.replaceFromBackupJson(text) }) { result ->
                     result.onSuccess { summary ->
                         AlertDialog.Builder(requireContext())
                             .setTitle("恢复完成")
@@ -550,6 +576,132 @@ class MineFragment : Fragment() {
                         toast("已清空练习记录")
                     }.onFailure { toast("清空失败：${it.message}") }
                 }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    // ---------- 主题 / 备份 ----------
+
+    private fun themeLabel(mode: Settings.ThemeMode): String = getString(
+        when (mode) {
+            Settings.ThemeMode.SYSTEM -> R.string.settings_theme_system
+            Settings.ThemeMode.LIGHT -> R.string.settings_theme_light
+            Settings.ThemeMode.DARK -> R.string.settings_theme_dark
+        },
+    )
+
+    private fun nightModeOf(mode: Settings.ThemeMode): Int = when (mode) {
+        Settings.ThemeMode.SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        Settings.ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+        Settings.ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+    }
+
+    private fun pickTheme() {
+        val context = requireContext()
+        val modes = Settings.ThemeMode.entries
+        val labels = modes.map { themeLabel(it) }.toTypedArray()
+        AlertDialog.Builder(context)
+            .setTitle(R.string.settings_theme)
+            .setSingleChoiceItems(labels, modes.indexOf(Settings.themeMode(context))) { dialog, which ->
+                Settings.setThemeMode(context, modes[which])
+                AppCompatDelegate.setDefaultNightMode(nightModeOf(modes[which]))
+                dialog.dismiss()
+                refreshVoiceSettings()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun refreshBackupControls() {
+        if (_binding == null) return
+        val context = requireContext()
+        val enabled = Settings.autoBackupEnabled(context)
+        suppressSwitchEvent = true
+        binding.swAutoBackup.isChecked = enabled
+        suppressSwitchEvent = false
+        binding.tvBackupInterval.text =
+            getString(R.string.settings_interval_format, Settings.backupIntervalHours(context))
+        binding.tvBackupKeep.text =
+            getString(R.string.settings_keep_format, Settings.backupKeepCount(context))
+        binding.rowBackupInterval.alpha = if (enabled) 1f else 0.45f
+        binding.rowBackupKeep.alpha = if (enabled) 1f else 0.45f
+        binding.rowBackupInterval.isEnabled = enabled
+        binding.rowBackupKeep.isEnabled = enabled
+    }
+
+    private fun numberInput(value: Int): EditText = EditText(requireContext()).apply {
+        setText(value.toString())
+        inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+    }
+
+    private fun wrapInput(input: EditText): FrameLayout {
+        val density = resources.displayMetrics.density
+        return FrameLayout(requireContext()).apply {
+            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), 0)
+            addView(input)
+        }
+    }
+
+    private fun editBackupInterval() {
+        val context = requireContext()
+        val input = numberInput(Settings.backupIntervalHours(context))
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.settings_backup_interval)
+            .setMessage("0 表示不自动保存，只能手动存快照。")
+            .setView(wrapInput(input))
+            .setPositiveButton("保存") { _, _ ->
+                val value = input.text?.toString()?.trim()?.toIntOrNull()
+                if (value == null) {
+                    toast("请输入数字")
+                    return@setPositiveButton
+                }
+                Settings.setBackupIntervalHours(context, value)
+                refreshBackupControls()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun editBackupKeep() {
+        val context = requireContext()
+        val input = numberInput(Settings.backupKeepCount(context))
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.settings_backup_keep)
+            .setMessage("超出份数的旧快照会自动删除。")
+            .setView(wrapInput(input))
+            .setPositiveButton("保存") { _, _ ->
+                val value = input.text?.toString()?.trim()?.toIntOrNull()
+                if (value == null) {
+                    toast("请输入数字")
+                    return@setPositiveButton
+                }
+                Settings.setBackupKeepCount(context, value)
+                refreshBackupControls()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun snapshotNow() {
+        AutoBackup.snapshotNow(requireContext()) { ok ->
+            if (_binding == null) return@snapshotNow
+            toast(if (ok) "已保存快照" else "保存失败")
+            refreshAutoBackupTime()
+            refreshBackupControls()
+        }
+    }
+
+    private fun confirmClearCache() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_clear_cache)
+            .setMessage("将删除全部自动备份快照，不影响学习数据。")
+            .setPositiveButton("清除") { _, _ ->
+                AutoBackup.clearAll(requireContext())
+                refreshAutoBackupTime()
+                refreshBackupControls()
+                toast("已清除备份缓存")
             }
             .setNegativeButton("取消", null)
             .show()

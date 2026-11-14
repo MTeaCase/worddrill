@@ -1,7 +1,7 @@
 # 智能解析服务部署（Netlify + 商汤日日新）
 
 导入页的「AI 智能解析」不会直接连大模型，而是先请求一个自建的小服务，由它把内容整理成
-`| 英文 | 词性 | 汉语 |` 表格再返回。这样 API Key 只存在服务端，不会被打包进 APK。
+`英文 | 词性 | 汉语` 三字段文本再返回。这样 API Key 只存在服务端，不会被打包进 APK。
 
 ```
 App ──POST /api/smart-parse──▶ Netlify Function ──▶ token.sensenova.cn（sensenova-6.8-flash-lite）
@@ -114,6 +114,16 @@ Netlify 函数 10 秒超时。所以：
   status = 200
   force = true
 ```
+
+## 8. 为什么不能放 GitHub Pages
+
+GitHub Pages 只托管静态文件，没有运行时，既不能转发 POST，也不能安全地保存
+`SENSENOVA_API_KEY`。把 Key 塞进 APK 或前端脚本等于公开泄露，所以网关必须留在
+能跑服务端函数的平台上。
+
+想减少对 Vercel / Netlify 的依赖，替代方案是 Cloudflare Workers：同一套代码
+（`aliyun/smart-parse.js` 的 handler 略改即可）部署到 Workers，密钥放 Worker Secret。
+该方案需要 `SENSENOVA_API_KEY`，仓库里不保存密钥，所以没有随版本自动迁移。
 
 ## 8. 隐私
 

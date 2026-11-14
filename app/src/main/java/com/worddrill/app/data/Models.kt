@@ -193,6 +193,18 @@ data class MasteryStats(
         get() = if (total <= 0) 0 else learning * 100 / total
 }
 
+/** 错题导出 CSV 的版式。 */
+enum class CsvFormat {
+    /** 英文,词性,中文释义,复习提示 */
+    REVIEW,
+
+    /** 单列出英文 */
+    PRACTICE_EN,
+
+    /** 单列出中文释义 */
+    PRACTICE_ZH,
+}
+
 /** 错题本的排序方式。 */
 enum class MistakeSort {
     /** 最近答错的排前面。 */

@@ -89,15 +89,22 @@ class LibraryFragment : Fragment() {
                     practiced = repo.practicedCount(book.id),
                     selected = book.id == current,
                 )
-            }
+            } to repo.storageBytes()
         }) { result ->
-            result.onSuccess { list ->
+            result.onSuccess { (list, bytes) ->
                 if (_binding == null || !isAdded) return@onSuccess
                 adapter?.submit(list)
+                binding.tvStorage.text = getString(R.string.library_storage, formatSize(bytes))
             }.onFailure {
                 if (_binding != null) toast("读取词库失败：${it.message}")
             }
         }
+    }
+
+    private fun formatSize(bytes: Long): String {
+        val mb = bytes / (1024.0 * 1024.0)
+        return if (mb >= 1) String.format(java.util.Locale.US, "%.1f MB", mb)
+        else String.format(java.util.Locale.US, "%.0f KB", bytes / 1024.0)
     }
 
     private fun selectBook(book: Book) {

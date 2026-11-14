@@ -66,6 +66,16 @@
         android:paddingEnd="16dp"
         android:paddingBottom="8dp" />
 
+    <TextView
+        android:id="@+id/tvStorage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="4dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnImport"
         android:layout_width="match_parent"

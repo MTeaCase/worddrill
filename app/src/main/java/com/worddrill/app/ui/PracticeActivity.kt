@@ -5,6 +5,10 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.os.SystemClock
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -159,6 +163,7 @@ class PracticeActivity : BaseActivity() {
                 mode = mode,
                 ttsEnabled = Settings.ttsEnabled(this),
                 allowRichModes = allowRichModes,
+                varyDistractors = Settings.varyDistractors(this),
             )
         }) { result ->
             binding.progressBar.isIndeterminate = false
@@ -280,6 +285,29 @@ class PracticeActivity : BaseActivity() {
         }
     }
 
+    /** 汉译英答对后，把其余选项的中文释义用小字补在下面（可在设置里关掉）。 */
+    private fun applyOptionMeanings(item: QuizItem) {
+        if (!Settings.revealOptionMeanings(this)) return
+        if (item.mode != PracticeMode.ZH_EN) return
+        if (item.optionMeanings.size != item.options.size) return
+        optionTexts.forEachIndexed { index, view ->
+            if (index == item.correctOption) return@forEachIndexed
+            val meaning = item.optionMeanings.getOrNull(index).orEmpty().trim()
+            if (meaning.isEmpty()) return@forEachIndexed
+            val text = SpannableStringBuilder(item.options.getOrNull(index).orEmpty())
+            val start = text.length
+            text.append("\n").append(meaning)
+            text.setSpan(RelativeSizeSpan(0.78f), start, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            text.setSpan(
+                ForegroundColorSpan(color(R.color.text_secondary)),
+                start,
+                text.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            view.text = text
+        }
+    }
+
     private fun resetOptionStyles() {
         optionRows.forEachIndexed { i, row ->
             row.setBackgroundResource(R.drawable.bg_option)
@@ -305,6 +333,7 @@ class PracticeActivity : BaseActivity() {
         }
         val elapsed = elapsedSinceShown()
         showFeedback(correct, item, userAnswer, elapsed)
+        if (correct) applyOptionMeanings(item)
         persist(correct, userAnswer, elapsed)
         holdForReading(correct)
     }

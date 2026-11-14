@@ -229,7 +229,7 @@ class WordRepository(context: Context) {
     }
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
-    fun allWords(limit: Int = 5000): List<Word> {
+    fun allWords(limit: Int = 12000): List<Word> {
         val sql = "SELECT $WORD_COLUMNS FROM words w WHERE w.blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
@@ -805,6 +805,82 @@ class WordRepository(context: Context) {
             "练习记录 $mergedPractice 条、已掌握 $mergedKnown 个、已屏蔽 $mergedBlocked 个"
     }
 
+    /**
+     * 把当前词库的错题导出成 CSV。带 BOM，Windows 版 Excel 打开中文才不乱码。
+     */
+    fun mistakesCsv(bookId: Long, format: CsvFormat): String {
+        val items = mistakes(bookId, MistakeSort.RECENT)
+        val out = StringBuilder()
+        out.append('\uFEFF')
+        fun cell(value: String): String {
+            val text = value.replace("\r\n", " ").replace('\n', ' ').replace('\r', ' ')
+            return if (text.contains(',') || text.contains('"')) {
+                "\"" + text.replace("\"", "\"\"") + "\""
+            } else {
+                text
+            }
+        }
+
+        fun line(vararg cells: String) {
+            out.append(cells.joinToString(",") { cell(it) }).append("\r\n")
+        }
+
+        when (format) {
+            CsvFormat.REVIEW -> {
+                line("英文", "词性", "中文释义", "复习提示")
+                for (item in items) {
+                    val note = buildList {
+                        if (item.wrongCount > 0) add("错 ${item.wrongCount} 次")
+                        if (item.streak > 0) add("已连对 ${item.streak} 次")
+                    }.joinToString("，")
+                    line(item.word.text, item.word.pos, item.word.meaning, note)
+                }
+            }
+
+            CsvFormat.PRACTICE_EN -> {
+                line("英文")
+                for (item in items) line(item.word.text)
+            }
+
+            CsvFormat.PRACTICE_ZH -> {
+                line("中文释义")
+                for (item in items) line(item.word.meaning)
+            }
+        }
+        return out.toString()
+    }
+
+    /**
+     * 用备份整体替换本机数据（覆盖语义），用于「恢复最近快照」。
+     * 与 [importBackupJson] 的区别：先清空进度与自建词库，再按快照重建，回到那个时间点。
+     */
+    fun replaceFromBackupJson(text: String): String {
+        db.beginTransaction()
+        try {
+            db.execSQL("DELETE FROM practice_event")
+            db.execSQL("DELETE FROM practice_log")
+            db.execSQL("DELETE FROM mistakes")
+            db.execSQL("DELETE FROM review")
+            db.execSQL("DELETE FROM daily")
+            db.execSQL("UPDATE words SET starred = 0, blocked = 0, known = 0")
+            db.execSQL("DELETE FROM books WHERE builtin = 0")
+            val summary = importBackupJson(text)
+            db.setTransactionSuccessful()
+            return summary
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    /** 数据库与快照占用，词库页展示用。 */
+    fun storageBytes(): Long {
+        var total = runCatching { java.io.File(db.path ?: "").length() }.getOrDefault(0L)
+        total += runCatching {
+            appContext.filesDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+        }.getOrDefault(0L)
+        return total
+    }
+
     // ---------- 复习（间隔重复） ----------
 
     /** 今天到期、且没被屏蔽的单词数。[bookId] 不为空时只统计该词库。 */
@@ -838,6 +914,20 @@ class WordRepository(context: Context) {
             FROM review r JOIN words w ON w._id = r.word_id
             WHERE r.due_at <= ? AND w.blocked = 0$bookClause
             ORDER BY r.level ASC, r.due_at ASC
+            LIMIT $limit
+            """.trimIndent()
+        return db.rawQuery(sql, args).use { c -> c.toWords() }
+    }
+
+    /** 练过的全部单词（不只看今天到期），用于复习范围切换。 */
+    fun allReviewWords(limit: Int = 200, bookId: Long? = null): List<Word> {
+        val bookClause = if (bookId == null) "" else " AND w.book_id = ?"
+        val args = if (bookId == null) emptyArray<String>() else arrayOf(bookId.toString())
+        val sql =
+            """
+            SELECT $WORD_COLUMNS FROM review r JOIN words w ON w._id = r.word_id
+            WHERE w.blocked = 0 AND w.known = 0$bookClause
+            ORDER BY r.due_at ASC, r.level ASC
             LIMIT $limit
             """.trimIndent()
         return db.rawQuery(sql, args).use { c -> c.toWords() }

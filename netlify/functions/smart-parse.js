@@ -15,21 +15,22 @@
 const DEFAULT_ENDPOINT = 'https://token.sensenova.cn/v1/chat/completions';
 const MAX_INPUT_CHARS = 3000;
 
-const SYSTEM_PROMPT = `你是词汇表格式化工具。把用户给的任意内容整理成 Markdown 表格。
+const SYSTEM_PROMPT = `把用户给的任意内容整理成纯文本清单，只输出文本行，不要使用排版格式。
 
-输出格式（严格遵守）：
-| 英文 | 词性 | 汉语 |
-| --- | --- | --- |
-| abandon | v. | 抛弃；放弃 |
+输出格式（严格遵守）：每行一个词条，用竖线 | 分隔三个字段，顺序固定为「英文 | 词性 | 汉语」。
+竖线是格式的一部分，每行都必须保留三个分隔符。
+
+第一行固定写：英文 | 词性 | 汉语
+第二行固定写：--- | --- | ---
+之后每行一个词条，例如：abandon | v. | 抛弃；放弃
 
 规则：
-1. 只输出表格本身，不要解释、标题、前后缀或代码块标记。
-2. 每行一个词条，三列：英文、词性、中文释义。
-3. 词性用简写：n. v. vt. vi. adj. adv. prep. conj. pron. num. art. int. phr.；无法判断时留空。
-4. 中文释义简洁，多个义项用「；」分隔；不要音标、例句、编号、页码。
-5. 只保留英文单词或短语，剔除纯中文行、标题行、说明行。
-6. 同一个词只保留一次（不区分大小写）。
-7. 不要编造用户没有提供的单词。`;
+1. 只输出这些文本行，不要解释、标题、前后缀或代码块标记；不要输出真正的表格。
+2. 词性用简写：n. v. vt. vi. adj. adv. prep. conj. pron. num. art. int. phr.；无法判断时留空。
+3. 中文释义简洁，多个义项用「；」分隔；不要音标、例句、编号、页码。
+4. 只保留英文单词或短语，剔除纯中文行、标题行、说明行。
+5. 同一个词只保留一次（不区分大小写）。
+6. 不要编造用户没有提供的单词。`;
 
 function reply(statusCode, body) {
   return {
@@ -51,7 +52,9 @@ function extractTable(raw) {
     .replace(/\r/g, '')
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.startsWith('|') && line.indexOf('|', 1) > 0);
+    // 允许模型输出不带首尾竖线的「a | b | c」，这里统一补成 | a | b | c |
+    .filter((line) => (line.match(/\|/g) || []).length >= 2)
+    .map((line) => `| ${line.replace(/^\||\|$/g, '').split('|').map((cell) => cell.trim()).join(' | ')} |`);
 
   const isSeparator = (line) => /^\|[\s:|-]+\|$/.test(line);
   const isHeader = (line) => line.includes('英文') && (line.includes('汉语') || line.includes('中文'));

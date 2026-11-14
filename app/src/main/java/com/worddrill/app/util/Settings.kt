@@ -23,6 +23,12 @@ object Settings {
     private const val KEY_MISTAKE_QUOTA = "quota_mistake"
     private const val KEY_EXAM_NAME = "exam_name"
     private const val KEY_EXAM_DATE = "exam_date"
+    private const val KEY_VARY = "vary_distractors"
+    private const val KEY_REVEAL = "reveal_option_meanings"
+    private const val KEY_THEME = "theme_mode"
+    private const val KEY_AUTO_BACKUP = "auto_backup"
+    private const val KEY_BACKUP_INTERVAL = "backup_interval_hours"
+    private const val KEY_BACKUP_KEEP = "backup_keep"
 
     const val DEFAULT_GOAL = 30
     const val MIN_GOAL = 5
@@ -37,6 +43,12 @@ object Settings {
     const val DEFAULT_MISTAKE_QUOTA = 10
     const val MIN_QUOTA = 0
     const val MAX_QUOTA = 100
+
+    const val DEFAULT_BACKUP_INTERVAL = 6
+    const val MAX_BACKUP_INTERVAL = 168
+    const val DEFAULT_BACKUP_KEEP = 3
+    const val MIN_BACKUP_KEEP = 1
+    const val MAX_BACKUP_KEEP = 50
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -161,5 +173,57 @@ object Settings {
 
     fun setExamDate(context: Context, millis: Long) {
         prefs(context).edit().putLong(KEY_EXAM_DATE, millis).apply()
+    }
+
+    // ---------- 出题与显示 ----------
+
+    /** 干扰项是否每次从最像的 9 个词里重新抽。 */
+    fun varyDistractors(context: Context): Boolean = prefs(context).getBoolean(KEY_VARY, true)
+
+    fun setVaryDistractors(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_VARY, enabled).apply()
+    }
+
+    /** 汉译英答对后，是否标出其余选项的中文。 */
+    fun revealOptionMeanings(context: Context): Boolean = prefs(context).getBoolean(KEY_REVEAL, false)
+
+    fun setRevealOptionMeanings(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_REVEAL, enabled).apply()
+    }
+
+    // ---------- 主题 ----------
+
+    enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+    fun themeMode(context: Context): ThemeMode {
+        val raw = prefs(context).getString(KEY_THEME, null) ?: return ThemeMode.SYSTEM
+        return runCatching { ThemeMode.valueOf(raw) }.getOrElse { ThemeMode.SYSTEM }
+    }
+
+    fun setThemeMode(context: Context, mode: ThemeMode) {
+        prefs(context).edit().putString(KEY_THEME, mode.name).apply()
+    }
+
+    // ---------- 自动备份 ----------
+
+    fun autoBackupEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_AUTO_BACKUP, true)
+
+    fun setAutoBackupEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_AUTO_BACKUP, enabled).apply()
+    }
+
+    /** 间隔小时；0 表示不定时写入，只能手动存。 */
+    fun backupIntervalHours(context: Context): Int =
+        prefs(context).getInt(KEY_BACKUP_INTERVAL, DEFAULT_BACKUP_INTERVAL).coerceIn(0, MAX_BACKUP_INTERVAL)
+
+    fun setBackupIntervalHours(context: Context, hours: Int) {
+        prefs(context).edit().putInt(KEY_BACKUP_INTERVAL, hours.coerceIn(0, MAX_BACKUP_INTERVAL)).apply()
+    }
+
+    fun backupKeepCount(context: Context): Int =
+        prefs(context).getInt(KEY_BACKUP_KEEP, DEFAULT_BACKUP_KEEP).coerceIn(MIN_BACKUP_KEEP, MAX_BACKUP_KEEP)
+
+    fun setBackupKeepCount(context: Context, count: Int) {
+        prefs(context).edit().putInt(KEY_BACKUP_KEEP, count.coerceIn(MIN_BACKUP_KEEP, MAX_BACKUP_KEEP)).apply()
     }
 }

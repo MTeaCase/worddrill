@@ -24,6 +24,8 @@ data class QuizItem(
     val longPrompt: Boolean = false,
     /** 这个词是第一次练（还没出现在 practice_log 里），可以顺手标「已掌握」。 */
     val firstTime: Boolean = false,
+    /** 汉译英答对后可展示其余选项的中文释义；其他题型为空。 */
+    val optionMeanings: List<String> = emptyList(),
 )
 
 /** 纯逻辑出题器，可在 JVM 单元测试中直接运行。 */
@@ -69,6 +71,8 @@ object QuizEngine {
         ttsEnabled: Boolean = true,
         /** 自建词库：不出例句填词、词形变化，混合也只混基础题型。 */
         allowRichModes: Boolean = true,
+        /** 干扰项是否每次从最像的 9 个词里重新抽；关闭后同一个词的选项固定。 */
+        varyDistractors: Boolean = true,
     ): List<QuizItem> {
         if (pool.isEmpty() || count <= 0) return emptyList()
         // 例句填词需要例句、词形变化需要能推断出词形；用不了的题型直接退回英译汉，
@@ -85,13 +89,15 @@ object QuizEngine {
         }
         if (usable.isEmpty()) return emptyList()
         val picked = usable.shuffled(random).distinctBy { it.id }.take(count)
+        // 一轮里干扰项候选池固定，预处理一次就够
+        val confusePool = Confuse.Pool(allWords)
         return picked.map { word ->
             val itemMode = if (effectiveMode == PracticeMode.MIXED) {
                 pickMixed(word, ttsEnabled, allowRichModes)
             } else {
                 effectiveMode
             }
-            makeItem(word, allWords, itemMode, random)
+            makeItem(word, allWords, itemMode, random, confusePool, varyDistractors)
         }
     }
 
@@ -120,6 +126,8 @@ object QuizEngine {
         allWords: List<Word>,
         mode: PracticeMode,
         random: Random = Random.Default,
+        confusePool: Confuse.Pool = Confuse.Pool(allWords),
+        varyDistractors: Boolean = true,
     ): QuizItem = when (mode) {
         PracticeMode.ZH_EN_SPELL -> QuizItem(
             word = word,
@@ -140,7 +148,8 @@ object QuizEngine {
 
         PracticeMode.EN_ZH -> {
             val correct = word.meaningWithPos
-            val options = buildOptions(correct, allWords, random) { it.meaningWithPos }
+            val pairs = optionPairs(word, allWords, confusePool, Confuse.Mode.EN_ZH, random, varyDistractors)
+            val options = pairs.map { it.first }
             QuizItem(
                 word = word,
                 prompt = word.text,
@@ -154,7 +163,8 @@ object QuizEngine {
         // 听音选义：题面不能露出单词，只给一个可以重复播放的提示
         PracticeMode.LISTEN_ZH -> {
             val correct = word.meaningWithPos
-            val options = buildOptions(correct, allWords, random) { it.meaningWithPos }
+            val pairs = optionPairs(word, allWords, confusePool, Confuse.Mode.EN_ZH, random, varyDistractors)
+            val options = pairs.map { it.first }
             QuizItem(
                 word = word,
                 prompt = "点这里再听一遍",
@@ -167,7 +177,8 @@ object QuizEngine {
 
         PracticeMode.ZH_EN -> {
             val correct = word.text
-            val options = buildOptions(correct, allWords, random) { it.text }
+            val pairs = optionPairs(word, allWords, confusePool, Confuse.Mode.ZH_EN, random, varyDistractors)
+            val options = pairs.map { it.first }
             QuizItem(
                 word = word,
                 prompt = word.meaningWithPos,
@@ -175,17 +186,18 @@ object QuizEngine {
                 options = options,
                 correctOption = options.indexOf(correct),
                 mode = mode,
+                optionMeanings = pairs.map { it.second },
             )
         }
 
         // 只有 build() 会把 MIXED 拆成具体题型；直接调到这里时按默认规则拆一次
-        PracticeMode.MIXED -> makeItem(word, allWords, pickMixed(word, true), random)
+        PracticeMode.MIXED -> makeItem(word, allWords, pickMixed(word, true), random, confusePool, varyDistractors)
 
         // 例句填词：中文句意 + 英文挖空；没有例句就退回英译汉，不让出题器空转
         PracticeMode.EX_SPELL -> {
             val blank = blankExample(word.exampleEn, word.text)
             if (blank == null) {
-                makeItem(word, allWords, PracticeMode.EN_ZH, random)
+                makeItem(word, allWords, PracticeMode.EN_ZH, random, confusePool, varyDistractors)
             } else {
                 val zh = word.exampleZh.ifBlank { "把这句话补完整" }
                 QuizItem(
@@ -204,7 +216,7 @@ object QuizEngine {
         PracticeMode.FORM -> {
             val form = com.worddrill.app.data.WordForms.questionFor(word)
             if (form == null) {
-                makeItem(word, allWords, PracticeMode.ZH_EN_SPELL, random)
+                makeItem(word, allWords, PracticeMode.ZH_EN_SPELL, random, confusePool, varyDistractors)
             } else {
                 QuizItem(
                     word = word,
@@ -243,6 +255,42 @@ object QuizEngine {
     }
 
     /** 正确项 + 最多 3 个来自全词库的干扰项，全部打乱且去重。 */
+    /**
+     * 组装四个选项：先用形近词做干扰项，挑不满再随机补齐。
+     * 返回「选项文本 to 中文释义」，汉译英答对后要拿后面那半展示释义。
+     */
+    private fun optionPairs(
+        word: Word,
+        allWords: List<Word>,
+        confusePool: Confuse.Pool,
+        mode: Confuse.Mode,
+        random: Random,
+        vary: Boolean,
+    ): List<Pair<String, String>> {
+        fun valueOf(candidate: Word): String =
+            if (mode == Confuse.Mode.EN_ZH) candidate.meaningWithPos else candidate.text
+
+        val pairs = ArrayList<Pair<String, String>>(OPTION_COUNT)
+        val seen = HashSet<String>()
+        fun add(candidate: Word) {
+            val value = valueOf(candidate)
+            if (value.isBlank() || !seen.add(value)) return
+            pairs.add(value to candidate.meaningWithPos)
+        }
+
+        add(word)
+        Confuse.pickDistractors(word, confusePool, mode, OPTION_COUNT - 1, random, vary).forEach(::add)
+        if (pairs.size < OPTION_COUNT) {
+            for (candidate in allWords.shuffled(random)) {
+                if (pairs.size >= OPTION_COUNT) break
+                if (candidate.id == word.id) continue
+                add(candidate)
+            }
+        }
+        pairs.shuffle(random)
+        return pairs
+    }
+
     private fun buildOptions(
         correct: String,
         allWords: List<Word>,

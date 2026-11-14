@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_export_mistakes"
+        android:title="@string/action_export_csv"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_menu"
         android:title="@string/mistake_sort_label"
