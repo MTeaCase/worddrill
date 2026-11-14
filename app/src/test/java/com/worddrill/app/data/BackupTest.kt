@@ -121,6 +121,27 @@ class BackupTest {
             repo.progressFor(longArrayOf(words.getValue("sort").id)).values.first().times,
         )
     }
+
+    /** 屏蔽状态也要能随备份恢复：内置词库不导 words，全靠 blocked 数组。 */
+    @Test
+    fun exportAndImportKeepsBlockedWords() {
+        val entries = listOf(
+            VocabEntry("zzkeep", "n.", "保留"),
+            VocabEntry("zzhide", "n.", "屏蔽"),
+        )
+        val bookId = repo.importEntries(null, "屏蔽备份词表", entries).bookId
+        val hide = repo.words(bookId).first { it.text == "zzhide" }
+        repo.setBlocked(hide.id, true)
+
+        val backup = repo.exportBackupJson()
+        assertTrue("备份要带 blocked 数组", backup.contains("\"blocked\""))
+
+        repo.unblockAll(bookId)
+        assertTrue("先确认恢复前是可见的", repo.words(bookId).any { it.text == "zzhide" })
+
+        repo.importBackupJson(backup)
+        assertEquals(listOf("zzhide"), repo.words(bookId, WordFilter.BLOCKED).map { it.text })
+    }
 }
 
 

@@ -84,6 +84,7 @@ class PracticeActivity : BaseActivity() {
             items.getOrNull(index)?.let { speakWord(it.word.text) }
         }
         binding.btnDontKnow.setOnClickListener { markUnknown() }
+        binding.btnSkipWord.setOnClickListener { markKnownWord() }
         binding.btnStar.setOnClickListener { toggleStar() }
 
         binding.btnRateKnow.setOnClickListener { applyRating(ReviewRating.KNOW) }
@@ -130,7 +131,7 @@ class PracticeActivity : BaseActivity() {
         val count = intent.getIntExtra(EXTRA_COUNT, 20)
         val start = intent.getIntExtra(EXTRA_START, 1)
         val end = intent.getIntExtra(EXTRA_END, 0)
-        val allowRepeat = intent.getBooleanExtra(EXTRA_ALLOW_REPEAT, true) || forceRepeat
+        val allowRepeat = intent.getBooleanExtra(EXTRA_ALLOW_REPEAT, false) || forceRepeat
         val filter = intent.getStringExtra(EXTRA_FILTER)
             ?.let { runCatching { WordFilter.valueOf(it) }.getOrNull() } ?: WordFilter.ALL
         val ids = intent.getLongArrayExtra(EXTRA_WORD_IDS)
@@ -163,8 +164,12 @@ class PracticeActivity : BaseActivity() {
                     showEmptyDialog(allowRepeat)
                     return@onSuccess
                 }
-                items = quiz
-                baseSize = quiz.size
+                // 首练标记：还没进 practice_log 的词，可以顺手标成「已掌握」
+                val practiced = repo.practicedWordIds()
+                items = quiz.map { item ->
+                    if (item.word.id in practiced) item else item.copy(firstTime = true)
+                }
+                baseSize = items.size
                 index = 0
                 render()
                 if (quiz.size < requested) {
@@ -182,7 +187,7 @@ class PracticeActivity : BaseActivity() {
             .setTitle("没有可练习的单词")
             .setMessage(
                 if (!allowRepeat) {
-                    "范围内的单词都练过了。可以清空练习记录后重新抽题，或换一个范围。"
+                    "这个范围里没练过的新词都练完了。可以去「复习」或「今日学习包」练已练过的词，也可以本轮强制重练。"
                 } else {
                     "当前词库或范围里没有单词，请返回调整。"
                 },
@@ -233,6 +238,7 @@ class PracticeActivity : BaseActivity() {
             },
         )
         binding.btnSpeak.isVisible = canHear
+        binding.btnSkipWord.visibility = if (item.firstTime) View.VISIBLE else View.GONE
         binding.btnDontKnow.isEnabled = true
         binding.tvPrompt.setOnClickListener {
             if (canHear) speakWord(item.word.text)
@@ -356,10 +362,35 @@ class PracticeActivity : BaseActivity() {
         binding.btnNext.visibility = View.VISIBLE
     }
 
+    /**
+     * 首练时点「不再练习此单词」：直接标成已掌握，从本轮移除并跳到下一题。
+     * 已经答过的题不给这个入口——不然答错之后一点，错题记录就白留了。
+     */
+    private fun markKnownWord() {
+        if (answered || items.isEmpty()) return
+        val item = items[index]
+        pendingNext?.let { binding.root.removeCallbacks(it) }
+        pendingNext = null
+        Bg.run({ repo.setKnown(item.word.id, true) }) { result ->
+            result.onSuccess {
+                items = items.toMutableList().apply { removeAt(index) }
+                toast(getString(R.string.skip_word_done, item.word.text))
+                if (items.isEmpty()) {
+                    // 一道题都没答就全标已掌握：直接回练习页，别给一张空成绩单
+                    if (records.isEmpty()) finish() else finishSession()
+                    return@onSuccess
+                }
+                if (index >= items.size) index = items.size - 1
+                render()
+            }.onFailure { toast("操作失败：${it.message}") }
+        }
+    }
+
     private fun elapsedSinceShown(): Long =
         if (shownAt <= 0L) 0L else (SystemClock.elapsedRealtime() - shownAt).coerceAtLeast(0L)
 
     private fun showFeedback(correct: Boolean, item: QuizItem, userAnswer: String, elapsed: Long) {
+        binding.btnSkipWord.visibility = View.GONE
         ratingWordId = item.word.id
         val word = item.word
         val phonetic = word.phonetic(Settings.accent(this))

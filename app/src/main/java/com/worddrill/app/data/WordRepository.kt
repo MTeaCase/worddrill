@@ -89,6 +89,20 @@ class WordRepository(context: Context) {
             arrayOf(bookId.toString()),
         ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
 
+    /** 这个词库里还没练过、也没标「已掌握」的新词数。新练习只抽这些词。 */
+    fun freshCount(bookId: Long): Int =
+        db.rawQuery(
+            """
+            SELECT COUNT(*) FROM words w
+            WHERE w.book_id = ? AND w.blocked = 0 AND w.known = 0
+              AND NOT EXISTS(SELECT 1 FROM practice_log p WHERE p.word_id = w._id)
+            """.trimIndent(),
+            arrayOf(bookId.toString()),
+        ).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+
+    /** 已经练过的词 id，用来判断当前这道题是不是「第一次见」。 */
+    fun practicedWordIds(): Set<Long> = practicedIds()
+
     fun blockedCount(bookId: Long): Int =
         db.rawQuery(
             "SELECT COUNT(*) FROM words WHERE book_id = ? AND blocked = 1",
@@ -505,6 +519,13 @@ class WordRepository(context: Context) {
         }
         root.put("known", known)
 
+        // 内置词库不导出 words，屏蔽状态也只能靠这个数组恢复
+        val blocked = org.json.JSONArray()
+        db.rawQuery("SELECT word FROM words WHERE blocked = 1", null).use { c ->
+            while (c.moveToNext()) blocked.put(c.getString(0))
+        }
+        root.put("blocked", blocked)
+
         val daily = org.json.JSONArray()
         db.rawQuery("SELECT date, answered, correct FROM daily ORDER BY date", null).use { c ->
             while (c.moveToNext()) {
@@ -572,6 +593,7 @@ class WordRepository(context: Context) {
         var mergedReview = 0
         var mergedPractice = 0
         var mergedKnown = 0
+        var mergedBlocked = 0
 
         db.beginTransaction()
         try {
@@ -765,6 +787,14 @@ class WordRepository(context: Context) {
                 )
                 mergedKnown++
             }
+
+            val blockedWords = root.optJSONArray("blocked") ?: org.json.JSONArray()
+            for (i in 0 until blockedWords.length()) {
+                val key = WordRenames.canonical(appContext, blockedWords.optString(i))
+                if (key.isEmpty()) continue
+                db.execSQL("UPDATE words SET blocked = 1 WHERE lower(word) = lower(?)", arrayOf<Any>(key))
+                mergedBlocked++
+            }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
@@ -772,7 +802,7 @@ class WordRepository(context: Context) {
 
         return "导入完成：新增词库 $addedBooks 个、单词 $addedWords 个；合并星标 $mergedStars 个、" +
             "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条、" +
-            "练习记录 $mergedPractice 条、已掌握 $mergedKnown 个"
+            "练习记录 $mergedPractice 条、已掌握 $mergedKnown 个、已屏蔽 $mergedBlocked 个"
     }
 
     // ---------- 复习（间隔重复） ----------

@@ -37,6 +37,7 @@ class PracticeFragment : Fragment() {
     private var mode: PracticeMode = PracticeMode.EN_ZH
     private var ordRange: IntRange? = null
     private var expanded = false
+    private var freshCount = 0
     private var loadedBookId = -1L
     private var pack: DailyPack? = null
     private var currentBookName = ""
@@ -72,6 +73,8 @@ class PracticeFragment : Fragment() {
         // 八种模式默认收起：先给推荐（混合），需要时再展开挑
         binding.rowMode.setOnClickListener { setModeGridOpen(binding.modeGrid.visibility != View.VISIBLE) }
         binding.rowSettings.setOnClickListener { setExpanded(!expanded) }
+        // 默认只抽没练过的词；勾上「允许重复」再放开
+        binding.cbAllowRepeat.setOnCheckedChangeListener { _, _ -> refreshStartButton() }
         binding.etCount.doAfterTextChanged { refreshSettingsSummary() }
         binding.etStart.doAfterTextChanged { refreshSettingsSummary() }
         binding.etEnd.doAfterTextChanged { refreshSettingsSummary() }
@@ -144,6 +147,20 @@ class PracticeFragment : Fragment() {
         binding.ivModeChevron.rotation = if (open) 270f else 90f
     }
 
+    /**
+     * 新练习默认只抽没练过的词：新词为 0 且没勾「允许重复」时，把开始按钮灰掉，
+     * 并在下面说清去哪儿接着练——比点一下弹「没有可练习的单词」友好。
+     */
+    private fun refreshStartButton() {
+        if (_binding == null) return
+        val max = ordRange?.last ?: 0
+        val allowRepeat = binding.cbAllowRepeat.isChecked
+        val canStart = max > 0 && (allowRepeat || freshCount > 0)
+        binding.btnStart.isEnabled = canStart
+        binding.tvFreshHint.isVisible = max > 0 && !canStart
+        if (max > 0 && !canStart) binding.tvFreshHint.setText(R.string.fresh_exhausted)
+    }
+
     private fun loadBooks() {
         Bg.run({ repo.books() }) { result ->
             result.onSuccess { list ->
@@ -195,6 +212,7 @@ class PracticeFragment : Fragment() {
                 range = repo.ordRange(book.id),
                 practiced = repo.practicedCount(book.id),
                 blocked = repo.blockedCount(book.id),
+                fresh = repo.freshCount(book.id),
                 total = book.wordCount,
                 summary = repo.studySummary(7, goal, book.id),
                 pack = repo.dailyPack(book.id, newQuota, reviewQuota, mistakeQuota),
@@ -235,6 +253,8 @@ class PracticeFragment : Fragment() {
                     }
                 }
                 binding.btnStart.isEnabled = max > 0
+                freshCount = stats.fresh
+                refreshStartButton()
                 if (resetRange) {
                     binding.etStart.setText(if (max > 0) "1" else "")
                     binding.etEnd.setText(if (max > 0) max.toString() else "")
@@ -360,6 +380,7 @@ class PracticeFragment : Fragment() {
         val range: IntRange?,
         val practiced: Int,
         val blocked: Int,
+        val fresh: Int,
         val total: Int,
         val summary: com.worddrill.app.data.StudySummary,
         val pack: DailyPack,

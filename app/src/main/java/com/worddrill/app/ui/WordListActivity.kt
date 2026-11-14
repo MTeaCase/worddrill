@@ -100,10 +100,11 @@ class WordListActivity : BaseActivity() {
             extraProvider = { word -> extraFor(word) },
             onStar = { word -> toggleStar(word) },
             showIndex = filter != WordFilter.BLOCKED,
-            onClick = if (filter == WordFilter.BLOCKED) {
-                { word -> askUnblock(word) }
-            } else {
-                null
+            onClick = when (filter) {
+                WordFilter.BLOCKED -> { word -> askUnblock(word) }
+                // 「已学过」里点一下手动标过已掌握的词，可以放回练习范围
+                WordFilter.LEARNED -> { word -> if (word.known) confirmRestoreKnown(word) }
+                else -> null
             },
             onLongClick = when (filter) {
                 WordFilter.ALL, WordFilter.LEARNED -> { word -> askBlock(word) }
@@ -505,20 +506,25 @@ class WordListActivity : BaseActivity() {
         }
 
         WordFilter.LEARNED -> {
-            val p = progress[word.id]
-            if (p == null) {
-                null
+            if (word.known) {
+                "首练时标为已掌握 · 不再抽到，也不进复习"
             } else {
-                val parts = mutableListOf<String>()
-                parts.add("${p.level} 级")
-                parts.add("练过 ${p.times} 次")
-                if (p.wrong > 0) parts.add("错 ${p.wrong} 次")
-                parts.add(dueLabel(p.dueAt))
-                parts.joinToString(" · ")
+                val p = progress[word.id]
+                if (p == null) {
+                    null
+                } else {
+                    val parts = mutableListOf<String>()
+                    parts.add("${p.level} 级")
+                    parts.add("练过 ${p.times} 次")
+                    if (p.wrong > 0) parts.add("错 ${p.wrong} 次")
+                    parts.add(dueLabel(p.dueAt))
+                    parts.joinToString(" · ")
+                }
             }
         }
 
-        else -> word.phonetic(Settings.accent(this)).takeIf { it.isNotBlank() }?.let { "/$it/" }
+        else -> (word.phonetic(Settings.accent(this)).takeIf { it.isNotBlank() }?.let { "/$it/" }
+            ?: "") + if (word.known) "已掌握" else ""
     }
 
     private fun modeLabel(modeName: String): String =
@@ -566,6 +572,23 @@ class WordListActivity : BaseActivity() {
                 }
             }.onFailure { toast("操作失败：${it.message}") }
         }
+    }
+
+    /** 手动标过「已掌握」的词：恢复后重新进抽题范围。 */
+    private fun confirmRestoreKnown(word: Word) {
+        AlertDialog.Builder(this)
+            .setTitle("恢复练习？")
+            .setMessage("「${word.text}」会重新进入抽题范围，复习等级从 0 级重新开始。")
+            .setPositiveButton("恢复") { _, _ ->
+                Bg.run({ repo.setKnown(word.id, known = false) }) { result ->
+                    result.onSuccess {
+                        toast("已恢复「${word.text}」")
+                        load()
+                    }.onFailure { toast("操作失败：${it.message}") }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun askBlock(word: Word) {

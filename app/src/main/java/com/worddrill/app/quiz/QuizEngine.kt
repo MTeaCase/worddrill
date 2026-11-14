@@ -22,6 +22,8 @@ data class QuizItem(
     val accept: List<String> = emptyList(),
     /** 长题面（整句例句）用小字号显示。 */
     val longPrompt: Boolean = false,
+    /** 这个词是第一次练（还没出现在 practice_log 里），可以顺手标「已掌握」。 */
+    val firstTime: Boolean = false,
 )
 
 /** 纯逻辑出题器，可在 JVM 单元测试中直接运行。 */

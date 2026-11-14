@@ -745,7 +745,7 @@
                             android:id="@+id/cbAllowRepeat"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                        android:checked="true"
+                        android:checked="false"
                             android:layout_marginTop="10dp"
                             android:minHeight="48dp"
                             android:text="@string/allow_repeat"
@@ -768,4 +768,16 @@
         android:text="@string/start_practice"
         android:textSize="16sp"
         app:cornerRadius="16dp" />
+
+    <TextView
+        android:id="@+id/tvFreshHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
 </LinearLayout>
