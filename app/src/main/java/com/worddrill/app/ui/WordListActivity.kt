@@ -12,6 +12,7 @@ import com.worddrill.app.R
 import com.worddrill.app.data.Book
 import com.worddrill.app.data.LearnedStats
 import com.worddrill.app.data.MistakeSort
+import com.worddrill.app.data.Pos
 import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.ReviewScheduler
 import com.worddrill.app.data.Word
@@ -335,10 +336,7 @@ class WordListActivity : BaseActivity() {
             val initial = word.text.firstOrNull()?.uppercaseChar() ?: return false
             if (initial !in range) return false
         }
-        if (posFilter.isNotBlank()) {
-            val pos = word.pos.trim().removeSuffix(".").lowercase()
-            if (!pos.startsWith(posFilter.lowercase().removeSuffix("."))) return false
-        }
+        if (posFilter.isNotBlank() && !Pos.matchesFilter(word.pos, posFilter)) return false
         levelFilter?.let { range ->
             val level = progress[word.id]?.level ?: 0
             if (level !in range) return false
@@ -393,7 +391,7 @@ class WordListActivity : BaseActivity() {
     }
 
     private fun pickPosFilter() {
-        val options = listOf("", "n", "v", "a", "ad", "conj", "prep", "pron")
+        val options = listOf("", "n", "v", "adj", "adv", "conj", "prep", "pron")
         val labels = options.map { if (it.isBlank()) "全部" else "$it." }
         val index = options.indexOf(posFilter).coerceAtLeast(0)
         androidx.appcompat.app.AlertDialog.Builder(this)

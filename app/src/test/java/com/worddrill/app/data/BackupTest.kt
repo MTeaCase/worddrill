@@ -80,6 +80,47 @@ class BackupTest {
         val error = runCatching { repo.importBackupJson("{\"format\":\"other\"}") }.exceptionOrNull()
         assertTrue(error is IllegalArgumentException)
     }
+
+    /**
+     * 修词库后 `v]` → `sort`、`ad.` → `either`，老备份里还是旧词头。
+     * 不套改名表的话，这些进度会「恢复成功但一条都没落上」。
+     */
+    @Test
+    fun importMapsRenamedHeadwordsFromOldBackup() {
+        val entries = listOf(
+            VocabEntry("sort", "n.", "种类"),
+            VocabEntry("either", "adj.&conj.&adv.", "两者之一"),
+            VocabEntry("best-seller", "n.", "畅销书"),
+            VocabEntry("after", "adv.&prep.&conj.", "在…之后"),
+        )
+        val bookId = repo.importEntries(null, "改名兼容词表", entries).bookId
+        val json = """
+            {
+              "format": "worddrill-backup",
+              "version": 2,
+              "starred": ["v]", "ad."],
+              "mistakes": [{"w": "best--seller", "wrong": 3, "mode": "EN_ZH", "lastAt": 1}],
+              "review": [{"w": "afte", "level": 4, "dueAt": 0, "lastAt": 1, "lapses": 0}],
+              "practice": [{"w": "v]", "times": 2, "lastAt": 1}, {"w": "afte", "times": 1, "lastAt": 1}]
+            }
+        """.trimIndent()
+        repo.importBackupJson(json)
+
+        val words = repo.words(bookId).associateBy { it.text }
+        assertTrue("v] 的星标应落到 sort", words.getValue("sort").starred)
+        assertTrue("ad. 的星标应落到 either", words.getValue("either").starred)
+        assertTrue("错题应落到 best-seller", repo.mistakes(bookId).any { it.word.text == "best-seller" })
+        assertEquals(
+            "旧词头 afte 的复习等级应落到 after",
+            4,
+            repo.progressFor(longArrayOf(words.getValue("after").id)).values.first().level,
+        )
+        assertEquals(
+            "旧词头 v] 的练习次数应落到 sort",
+            2,
+            repo.progressFor(longArrayOf(words.getValue("sort").id)).values.first().times,
+        )
+    }
 }
 
 

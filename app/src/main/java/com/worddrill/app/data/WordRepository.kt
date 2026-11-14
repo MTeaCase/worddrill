@@ -18,6 +18,7 @@ import java.util.Locale
  */
 class WordRepository(context: Context) {
 
+    private val appContext = context.applicationContext
     private val helper = WordDb(context.applicationContext)
     private val db: SQLiteDatabase get() = helper.writableDatabase
 
@@ -588,7 +589,7 @@ class WordRepository(context: Context) {
                             put("book_id", bookId)
                             put("ord", nextOrd)
                             put("word", text2)
-                            put("pos", w.optString("pos", ""))
+                            put("pos", Pos.normalize(w.optString("pos", "")))
                             put("meaning", w.optString("m", ""))
                             put("example", w.optString("ex", ""))
                             put("phonetic_us", w.optString("us", ""))
@@ -615,7 +616,7 @@ class WordRepository(context: Context) {
 
             val starred = root.optJSONArray("starred") ?: org.json.JSONArray()
             for (i in 0 until starred.length()) {
-                val key = starred.optString(i).trim()
+                val key = WordRenames.canonical(appContext, starred.optString(i))
                 if (key.isEmpty()) continue
                 db.execSQL(
                     "UPDATE words SET starred = 1 WHERE lower(word) = lower(?) AND starred = 0",
@@ -627,7 +628,7 @@ class WordRepository(context: Context) {
             val mistakes = root.optJSONArray("mistakes") ?: org.json.JSONArray()
             for (i in 0 until mistakes.length()) {
                 val m = mistakes.getJSONObject(i)
-                val key = m.optString("w").trim()
+                val key = WordRenames.canonical(appContext, m.optString("w"))
                 if (key.isEmpty()) continue
                 val wrong = m.optInt("wrong", 1)
                 val mode = m.optString("mode", PracticeMode.EN_ZH.name)
@@ -672,7 +673,7 @@ class WordRepository(context: Context) {
             val review = root.optJSONArray("review") ?: org.json.JSONArray()
             for (i in 0 until review.length()) {
                 val r = review.getJSONObject(i)
-                val key = r.optString("w").trim()
+                val key = WordRenames.canonical(appContext, r.optString("w"))
                 if (key.isEmpty()) continue
                 val ids = ArrayList<Long>()
                 db.rawQuery("SELECT _id FROM words WHERE lower(word) = lower(?)", arrayOf(key)).use { c ->
@@ -699,7 +700,7 @@ class WordRepository(context: Context) {
             (root.optJSONArray("practice") ?: org.json.JSONArray()).let { practice ->
                 for (i in 0 until practice.length()) {
                     val p = practice.getJSONObject(i)
-                    val key = p.optString("w").trim()
+                    val key = WordRenames.canonical(appContext, p.optString("w"))
                     if (key.isEmpty()) continue
                     val times = p.optInt("times", 0)
                     val lastAt = p.optLong("lastAt", System.currentTimeMillis())
@@ -1236,7 +1237,7 @@ class WordRepository(context: Context) {
                 insert.bindLong(1, targetId)
                 insert.bindLong(2, ord.toLong())
                 insert.bindString(3, entry.word)
-                insert.bindString(4, entry.pos)
+                insert.bindString(4, Pos.normalize(entry.pos))
                 insert.bindString(5, entry.meaning)
                 insert.bindString(6, extra?.get(3) ?: "")
                 insert.bindString(7, extra?.get(0) ?: "")
