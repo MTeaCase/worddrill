@@ -199,6 +199,7 @@ class ReviewFragment : Fragment() {
                         mode = mode,
                         bookName = label.ifBlank { "复习" },
                         wordIds = words.map { it.id }.toLongArray(),
+                        bookId = scopedBookId ?: -1L,
                     ),
                 )
             }.onFailure { toast("读取复习列表失败：${it.message}") }

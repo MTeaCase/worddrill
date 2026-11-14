@@ -406,16 +406,6 @@
                     android:textSize="13sp"
                     app:cornerRadius="12dp" />
             </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNext"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="16dp"
-                android:text="@string/action_next"
-                android:textSize="16sp"
-                android:visibility="gone"
-                app:cornerRadius="14dp" />
         </LinearLayout>
     </ScrollView>
 
@@ -427,6 +417,16 @@
         android:paddingTop="6dp"
         android:paddingEnd="16dp"
         android:paddingBottom="14dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNext"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/action_next"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:cornerRadius="14dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSkipWord"

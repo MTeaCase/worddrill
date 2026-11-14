@@ -150,12 +150,15 @@ class PracticeActivity : BaseActivity() {
                 repo.pickWords(bookId, start, end, count, allowRepeat, filter, require)
             }
             val all = repo.allWords()
+            // 自建词库没有例句/词形数据：不出例句填词、词形变化，混合也只混基础题型
+            val allowRichModes = repo.book(bookId)?.builtin != false
             QuizEngine.build(
                 pool = words,
                 allWords = all,
                 count = requested,
                 mode = mode,
                 ttsEnabled = Settings.ttsEnabled(this),
+                allowRichModes = allowRichModes,
             )
         }) { result ->
             binding.progressBar.isIndeterminate = false
@@ -239,6 +242,7 @@ class PracticeActivity : BaseActivity() {
         )
         binding.btnSpeak.isVisible = canHear
         binding.btnSkipWord.visibility = if (item.firstTime) View.VISIBLE else View.GONE
+        binding.btnDontKnow.visibility = View.VISIBLE
         binding.btnDontKnow.isEnabled = true
         binding.tvPrompt.setOnClickListener {
             if (canHear) speakWord(item.word.text)
@@ -391,6 +395,8 @@ class PracticeActivity : BaseActivity() {
 
     private fun showFeedback(correct: Boolean, item: QuizItem, userAnswer: String, elapsed: Long) {
         binding.btnSkipWord.visibility = View.GONE
+        // 答完之后「我不会」就没意义了，收起来把位置让给「下一题」
+        binding.btnDontKnow.visibility = View.GONE
         ratingWordId = item.word.id
         val word = item.word
         val phonetic = word.phonetic(Settings.accent(this))
@@ -623,8 +629,11 @@ class PracticeActivity : BaseActivity() {
             mode: PracticeMode,
             bookName: String,
             wordIds: LongArray,
+            /** 传入后才知道是不是自建词库：自建词库不出例句/词形题。 */
+            bookId: Long = -1L,
         ): Intent = Intent(context, PracticeActivity::class.java).apply {
             putExtra(EXTRA_MODE, mode.name)
+            putExtra(EXTRA_BOOK_ID, bookId)
             putExtra(EXTRA_BOOK_NAME, bookName)
             putExtra(EXTRA_COUNT, wordIds.size)
             putExtra(EXTRA_WORD_IDS, wordIds)

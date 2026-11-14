@@ -119,6 +119,26 @@ class QuizEngineTest {
         assertTrue(modes.none { it.needsTts })
     }
 
+    /** 自建词库：混合模式不能混进例句填词，也不能把整轮退成空题。 */
+    @Test
+    fun basicMixedNeverPicksExampleSpell() {
+        val words = (1L..60L).map { word(it, "w$it", "m$it") }
+        val modes = words.map { QuizEngine.pickMixed(it, ttsEnabled = true, allowRichModes = false) }.toSet()
+        assertFalse("自建词库不该出例句填词", modes.contains(PracticeMode.EX_SPELL))
+        assertFalse("自建词库不该出词形变化", modes.contains(PracticeMode.FORM))
+        assertTrue("混合至少还能出几种基础题型", modes.size >= 3)
+    }
+
+    /** 自建词库误传了例句填词/词形变化，也要退回英译汉而不是出空题。 */
+    @Test
+    fun richModesFallBackForCustomBooks() {
+        val example = QuizEngine.build(all, all, count = 1, mode = PracticeMode.EX_SPELL, allowRichModes = false)
+        assertEquals(listOf(PracticeMode.EN_ZH), example.map { it.mode })
+
+        val form = QuizEngine.build(all, all, count = 1, mode = PracticeMode.FORM, allowRichModes = false)
+        assertEquals(listOf(PracticeMode.EN_ZH), form.map { it.mode })
+    }
+
     @Test
     fun mixedBuildResolvesEveryItemToAConcreteMode() {
         val items = QuizEngine.build(all, all, all.size, PracticeMode.MIXED, Random(3), ttsEnabled = true)

@@ -171,6 +171,7 @@
     <string name="skip_word_done">「%1$s」已加入已掌握，不再抽到</string>
     <string name="fresh_exhausted">新词都练完了，去「复习」或「今日学习包」练已练过的词</string>
     <string name="allow_repeat_hint">勾上就会重新抽到练过的词</string>
+    <string name="mode_unavailable_custom">自建词库没有例句和词形数据，例句填词 / 词形变化 / 混合题型已停用</string>
     <string name="settings_tts_title">单词朗读</string>
     <string name="settings_tts_desc">练习时自动朗读单词，也可点喇叭重听；听力题依赖它，关掉后不会出听力题</string>
     <string name="settings_reminder">复习提醒</string>

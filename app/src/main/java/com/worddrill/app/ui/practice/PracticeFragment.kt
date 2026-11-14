@@ -38,6 +38,9 @@ class PracticeFragment : Fragment() {
     private var ordRange: IntRange? = null
     private var expanded = false
     private var freshCount = 0
+
+    /** 依赖例句 / 词形数据、自建词库用不了的题型。 */
+    private val RICH_MODES = setOf(PracticeMode.EX_SPELL, PracticeMode.FORM, PracticeMode.MIXED)
     private var loadedBookId = -1L
     private var pack: DailyPack? = null
     private var currentBookName = ""
@@ -151,6 +154,27 @@ class PracticeFragment : Fragment() {
      * 新练习默认只抽没练过的词：新词为 0 且没勾「允许重复」时，把开始按钮灰掉，
      * 并在下面说清去哪儿接着练——比点一下弹「没有可练习的单词」友好。
      */
+    /**
+     * 自建词库没有例句和词形数据：例句填词、词形变化、混合题型都停用。
+     * 卡片保留在原位（点了给解释），只把透明度压下去，避免整页重排。
+     */
+    private fun applyModeAvailability(builtin: Boolean) {
+        if (_binding == null) return
+        val richCards = listOf(binding.cardExample, binding.cardForm, binding.cardMixed)
+        val blockedHint: () -> Unit = { toast(getString(R.string.mode_unavailable_custom)) }
+        if (builtin) {
+            binding.cardExample.setOnClickListener { selectMode(PracticeMode.EX_SPELL) }
+            binding.cardForm.setOnClickListener { selectMode(PracticeMode.FORM) }
+            binding.cardMixed.setOnClickListener { selectMode(PracticeMode.MIXED) }
+        } else {
+            binding.cardExample.setOnClickListener { blockedHint() }
+            binding.cardForm.setOnClickListener { blockedHint() }
+            binding.cardMixed.setOnClickListener { blockedHint() }
+        }
+        richCards.forEach { card -> card.alpha = if (builtin) 1f else 0.45f }
+        if (!builtin && mode in RICH_MODES) selectMode(PracticeMode.EN_ZH)
+    }
+
     private fun refreshStartButton() {
         if (_binding == null) return
         val max = ordRange?.last ?: 0
@@ -203,6 +227,7 @@ class PracticeFragment : Fragment() {
 
     private fun applyBook(book: Book, resetRange: Boolean) {
         currentBookName = book.name
+        applyModeAvailability(book.builtin)
         val goal = Settings.dailyGoal(requireContext())
         val newQuota = Settings.newQuota(requireContext())
         val reviewQuota = Settings.reviewQuota(requireContext())
@@ -308,6 +333,7 @@ class PracticeFragment : Fragment() {
                 mode = PracticeMode.MIXED,
                 bookName = currentBookName,
                 wordIds = current.wordIds.toLongArray(),
+                bookId = selectedBookId,
             ),
         )
     }

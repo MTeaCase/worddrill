@@ -55,6 +55,11 @@ object QuizEngine {
         PracticeMode.EX_SPELL,
     )
 
+    /** 自建词库没有例句数据：混合模式只用基础题型，不出例句填词。 */
+    val BASIC_MIXED_MODES = MIXED_MODES - PracticeMode.EX_SPELL
+
+    val BASIC_MIXED_MODES_NO_TTS = MIXED_MODES_NO_TTS - PracticeMode.EX_SPELL
+
     fun build(
         pool: List<Word>,
         allWords: List<Word>,
@@ -62,10 +67,18 @@ object QuizEngine {
         mode: PracticeMode,
         random: Random = Random.Default,
         ttsEnabled: Boolean = true,
+        /** 自建词库：不出例句填词、词形变化，混合也只混基础题型。 */
+        allowRichModes: Boolean = true,
     ): List<QuizItem> {
         if (pool.isEmpty() || count <= 0) return emptyList()
+        // 例句填词需要例句、词形变化需要能推断出词形；用不了的题型直接退回英译汉，
+        // 别在自建词库上出一堆空题
+        val effectiveMode = when {
+            !allowRichModes && (mode == PracticeMode.EX_SPELL || mode == PracticeMode.FORM) -> PracticeMode.EN_ZH
+            else -> mode
+        }
         // 例句填词和词形变化有前提条件，先按条件筛一遍，宁可这轮题少也别出空题
-        val usable = when (mode) {
+        val usable = when (effectiveMode) {
             PracticeMode.EX_SPELL -> pool.filter { blankExample(it.exampleEn, it.text) != null }
             PracticeMode.FORM -> pool.filter { com.worddrill.app.data.WordForms.questionFor(it) != null }
             else -> pool
@@ -73,7 +86,11 @@ object QuizEngine {
         if (usable.isEmpty()) return emptyList()
         val picked = usable.shuffled(random).distinctBy { it.id }.take(count)
         return picked.map { word ->
-            val itemMode = if (mode == PracticeMode.MIXED) pickMixed(word, ttsEnabled) else mode
+            val itemMode = if (effectiveMode == PracticeMode.MIXED) {
+                pickMixed(word, ttsEnabled, allowRichModes)
+            } else {
+                effectiveMode
+            }
             makeItem(word, allWords, itemMode, random)
         }
     }
@@ -84,8 +101,12 @@ object QuizEngine {
      * 词本身不具备条件的题型（没例句 / 没词形）会先从候选里剔除，
      * 所以同一个词在不同词库里的落点可能不同，但在同一个库里是固定的。
      */
-    fun pickMixed(word: Word, ttsEnabled: Boolean): PracticeMode {
-        var modes = if (ttsEnabled) MIXED_MODES else MIXED_MODES_NO_TTS
+    fun pickMixed(word: Word, ttsEnabled: Boolean, allowRichModes: Boolean = true): PracticeMode {
+        var modes = when {
+            !allowRichModes -> if (ttsEnabled) BASIC_MIXED_MODES else BASIC_MIXED_MODES_NO_TTS
+            ttsEnabled -> MIXED_MODES
+            else -> MIXED_MODES_NO_TTS
+        }
         if (blankExample(word.exampleEn, word.text) == null) {
             modes = modes.filter { it != PracticeMode.EX_SPELL }
         }
