@@ -1,10 +1,12 @@
 package com.worddrill.app.ui
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +29,7 @@ class ImportActivity : BaseActivity() {
 
     private var appendBookId: Long? = null
     private var parsed: List<VocabEntry> = emptyList()
+    private var promptExpanded = false
 
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) loadFile(uri)
@@ -54,6 +57,8 @@ class ImportActivity : BaseActivity() {
         binding.btnPreview.setOnClickListener { preview() }
         binding.btnSave.setOnClickListener { save() }
         binding.btnAiParse.setOnClickListener { confirmSmartParse() }
+        binding.btnCopyPrompt.setOnClickListener { copyPrompt() }
+        binding.btnTogglePrompt.setOnClickListener { togglePrompt() }
 
         handleIntent(intent)
     }
@@ -240,6 +245,28 @@ class ImportActivity : BaseActivity() {
                 toast("导入失败：${it.message}")
             }
         }
+    }
+
+    /** 提示词默认收起，展开后完整显示，方便手抄或对着改两行。 */
+    private fun togglePrompt() {
+        promptExpanded = !promptExpanded
+        binding.tvPrompt.maxLines = if (promptExpanded) 100 else 4
+        binding.tvPrompt.ellipsize = if (promptExpanded) null else TextUtils.TruncateAt.END
+        binding.btnTogglePrompt.setText(
+            if (promptExpanded) R.string.import_prompt_collapse else R.string.import_prompt_expand,
+        )
+    }
+
+    /** 一键复制整段提示词：用户拿去丢给任意 AI，不用对着屏幕敲。 */
+    private fun copyPrompt() {
+        val clipboard = getSystemService<ClipboardManager>() ?: run {
+            toast("剪贴板不可用")
+            return
+        }
+        clipboard.setPrimaryClip(
+            ClipData.newPlainText(getString(R.string.import_prompt_tag), getString(R.string.import_prompt_text)),
+        )
+        toast(getString(R.string.import_prompt_copied))
     }
 
     private fun toast(message: String) {

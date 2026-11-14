@@ -145,6 +145,14 @@
     <string name="import_file_hint">支持 .md / .markdown / .txt，自动识别 UTF-8 与 GBK 编码</string>
     <string name="import_or_paste">或者直接粘贴表格内容</string>
     <string name="import_phrase_tip">尽量不要导入词组！就算导入词组，也不要填词性。</string>
+    <string name="import_prompt_tag">推荐做法</string>
+    <string name="import_prompt_title">先把单词交给你常用的 AI 排版</string>
+    <string name="import_prompt_body">把单词列表发给 AI，配上下面这段提示词，它就会排成三列 Markdown 表格；再把结果粘贴回本页，先「解析预览」再「保存导入」。全程只经过你自己选的那个 AI。</string>
+    <string name="import_prompt_copy">复制提示词</string>
+    <string name="import_prompt_expand">展开提示词</string>
+    <string name="import_prompt_collapse">收起提示词</string>
+    <string name="import_prompt_copied">提示词已复制，发给 AI 时把你的单词贴在最后</string>
+    <string name="import_prompt_text">你是一个词汇表整理助手。请把下面的词汇整理成 Markdown 表格，只要三列，表头固定为：\n\n| 英文 | 词性 | 汉语 |\n|---|---|---|\n| competence | n. | 能力；胜任 |\n\n规则：\n1. 一行一个词，按原文顺序排列，不要合并、不要漏词；\n2. 词性只写缩写加句点，可用 n. v. vt. vi. adj. adv. prep. conj. pron. num. int. art. modal v.；多个词性用 &amp; 连接，例如 n.&amp;v.；\n3. 汉语释义用中文，多个义项用「；」分隔，不要编号、例句和音标；\n4. 词组和短语照原样写，词性可以留空；\n5. 只输出表格本身，不要解释、不要标题、不要代码块标记。\n\n需要整理的词汇：\n（把你的单词粘贴到这里）</string>
 
     <!-- 屏蔽 -->
     <string name="title_blocked">已屏蔽单词</string>
