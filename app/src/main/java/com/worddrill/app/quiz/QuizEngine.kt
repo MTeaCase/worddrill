@@ -272,9 +272,16 @@ object QuizEngine {
 
         val pairs = ArrayList<Pair<String, String>>(OPTION_COUNT)
         val seen = HashSet<String>()
+        val correctEntry = confusePool.entryOf(word)
         fun add(candidate: Word) {
             val value = valueOf(candidate)
-            if (value.isBlank() || !seen.add(value)) return
+            if (value.isBlank()) return
+            // 兜底补齐时也要过歧义守卫，否则会出现两个「接受」
+            if (mode == Confuse.Mode.EN_ZH && candidate.id != word.id && correctEntry != null) {
+                val entry = confusePool.entryOf(candidate)
+                if (entry != null && Confuse.isAmbiguous(correctEntry, entry)) return
+            }
+            if (!seen.add(value)) return
             pairs.add(value to candidate.meaningWithPos)
         }
 
