@@ -37,6 +37,9 @@ object WordRenames {
     /** 表里有多少条，测试和「数据版本」提示用。 */
     fun size(context: Context): Int = load(context).count
 
+    /** 规范化词头，用于新旧词表对齐（大小写、星号、音标撇号、连字符、空白）。 */
+    fun normalizeKey(word: String): String = fold(word.trim())
+
     private fun load(context: Context): Table {
         cache?.let { return it }
         synchronized(this) {
@@ -68,6 +71,7 @@ object WordRenames {
     /** 折叠写法差异：重音符、双连字符、连字符两侧空格、多余空白。 */
     private fun fold(word: String): String = word
         .lowercase()
+        .replace("*", "")
         .replace('ˈ', '\'')
         .replace('ˌ', '\'')
         .replace("--", "-")

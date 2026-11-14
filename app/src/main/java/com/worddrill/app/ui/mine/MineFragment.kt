@@ -125,6 +125,7 @@ class MineFragment : Fragment() {
         binding.btnExport.setOnClickListener { startExport() }
         binding.btnImport.setOnClickListener { startImport() }
         binding.btnRestoreAuto.setOnClickListener { restoreAutoBackup() }
+        binding.btnRedeploy.setOnClickListener { confirmRedeploy() }
         binding.btnClearLog.setOnClickListener { confirmClearLog() }
         binding.btnDictionary.setOnClickListener {
             startActivity(DictionaryActivity.intent(requireContext()))
@@ -499,6 +500,40 @@ class MineFragment : Fragment() {
                             .setPositiveButton("好", null)
                             .show()
                     }.onFailure { toast("恢复失败：${it.message}") }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    /** 手动重建内置词库：两次确认，先把话说清楚。 */
+    private fun confirmRedeploy() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_redeploy)
+            .setMessage(R.string.settings_redeploy_confirm)
+            .setPositiveButton("继续") { _, _ -> confirmRedeployAgain() }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun confirmRedeployAgain() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_redeploy)
+            .setMessage(R.string.settings_redeploy_again)
+            .setPositiveButton("重建") { _, _ ->
+                Bg.run({ repo.redeployBuiltinBooks() }) { result ->
+                    result.onSuccess { summary ->
+                        if (_binding == null || !isAdded) return@onSuccess
+                        refresh()
+                        AlertDialog.Builder(requireContext())
+                            .setTitle(R.string.settings_redeploy)
+                            .setMessage(summary)
+                            .setPositiveButton("好", null)
+                            .show()
+                    }.onFailure {
+                        if (_binding == null) return@onFailure
+                        toast(getString(R.string.settings_redeploy_failed, it.message ?: "未知错误"))
+                    }
                 }
             }
             .setNegativeButton("取消", null)

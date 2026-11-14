@@ -24,6 +24,12 @@ class WordRepository(context: Context) {
 
     // ---------- 词库 ----------
 
+    /** 按最新内置词表重建两本内置词库；自建词库不动。设置页的手动入口。 */
+    fun redeployBuiltinBooks(): String = WordlistMigration.redeploy(appContext, db)
+
+    /** 当前内置词表的数据版本，用来提示「词表数据落后」。 */
+    fun wordlistVersion(): Int = WordlistMigration.storedVersion(appContext)
+
     fun books(): List<Book> {
         val sql = """
             SELECT b._id, b.name, b.builtin, COUNT(w._id) AS cnt

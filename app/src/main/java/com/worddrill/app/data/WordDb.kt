@@ -137,6 +137,14 @@ class WordDb(context: Context) : SQLiteOpenHelper(
             """.trimIndent(),
         )
         seedBuiltin(db)
+        // 新装就是最新词表，别再跑一遍重建
+        WordlistMigration.markCurrent(appContext)
+    }
+
+    /** 每次打开都看一眼词表版本：老用户的 3,793 条坏数据要靠这里换成新表。 */
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        WordlistMigration.maybeMigrate(appContext, db)
     }
 
     /** 只做增量迁移，避免升级安装时把用户导入的自组词库清掉。 */
