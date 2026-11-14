@@ -13,6 +13,11 @@ data class Word(
     val meaning: String,
     val starred: Boolean,
     val blocked: Boolean = false,
+    /**
+     * 首练时手动标了「已掌握」：不再抽到，也不进复习排期。
+     * 与「练过」（practice_log / LearnedStats）是两件事，所以不叫 learned。
+     */
+    val known: Boolean = false,
     /** 例句缓存，格式「英文例句||中文翻译」；没有则为空串。 */
     val example: String = "",
     /** 美式音标（不含斜杠）。 */

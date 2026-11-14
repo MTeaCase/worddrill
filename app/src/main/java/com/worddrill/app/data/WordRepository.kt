@@ -119,7 +119,7 @@ class WordRepository(context: Context) {
         val sb = StringBuilder("SELECT $WORD_COLUMNS FROM words w")
         when (filter) {
             WordFilter.MISTAKES -> sb.append(" JOIN mistakes m ON m.word_id = w._id")
-            WordFilter.LEARNED -> sb.append(" JOIN practice_log p ON p.word_id = w._id")
+            WordFilter.LEARNED -> sb.append(" LEFT JOIN practice_log p ON p.word_id = w._id")
             else -> Unit
         }
         if (filter == WordFilter.MISTAKES || filter == WordFilter.LEARNED) {
@@ -127,6 +127,8 @@ class WordRepository(context: Context) {
         }
         sb.append(" WHERE w.book_id = ?")
         sb.append(if (filter == WordFilter.BLOCKED) " AND w.blocked = 1" else " AND w.blocked = 0")
+        // 「已学过」= 练过 或 首练时手动标了已掌握，后者没有 practice_log 记录
+        if (filter == WordFilter.LEARNED) sb.append(" AND (p.word_id IS NOT NULL OR w.known = 1)")
         if (filter == WordFilter.STARRED) sb.append(" AND w.starred = 1")
         if (query.isNotBlank()) {
             sb.append(" AND (w.word LIKE ? OR w.meaning LIKE ?)")
@@ -143,7 +145,7 @@ class WordRepository(context: Context) {
                     MistakeSort.ALPHABET -> " ORDER BY w.word COLLATE NOCASE ASC"
                 }
 
-                WordFilter.LEARNED -> " ORDER BY p.last_at DESC"
+                WordFilter.LEARNED -> " ORDER BY COALESCE(p.last_at, 0) DESC"
                 else -> " ORDER BY w.ord ASC"
             },
         )
@@ -161,7 +163,7 @@ class WordRepository(context: Context) {
         if (ids.isEmpty()) return emptyList()
         val placeholders = ids.joinToString(",") { "?" }
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE blocked = 0 AND _id IN ($placeholders)"
+            "SELECT $WORD_COLUMNS FROM words w WHERE w.blocked = 0 AND w._id IN ($placeholders)"
         val byId = db.rawQuery(sql, ids.map { it.toString() }.toTypedArray()).use { c ->
             c.toWords().associateBy { it.id }
         }
@@ -172,7 +174,8 @@ class WordRepository(context: Context) {
         val sql = StringBuilder(
             """
             SELECT $WORD_COLUMNS, m.wrong, m.mode, m.last_at, m.streak,
-                   COALESCE(r.level, 0), COALESCE(r.due_at, 0), COALESCE(r.lapses, 0)
+                   COALESCE(r.level, 0) AS level, COALESCE(r.due_at, 0) AS due_at,
+                   COALESCE(r.lapses, 0) AS lapses
             FROM mistakes m
             JOIN words w ON w._id = m.word_id
             LEFT JOIN review r ON r.word_id = w._id
@@ -207,7 +210,7 @@ class WordRepository(context: Context) {
 
     /** 供选择题抽取干扰项：全库单词（跨词库），不含屏蔽词。 */
     fun allWords(limit: Int = 5000): List<Word> {
-        val sql = "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE blocked = 0 LIMIT $limit"
+        val sql = "SELECT $WORD_COLUMNS FROM words w WHERE w.blocked = 0 LIMIT $limit"
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
@@ -221,11 +224,11 @@ class WordRepository(context: Context) {
         val sql =
             """
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN COALESCE(r.level, 0) = 0 THEN 1 ELSE 0 END) AS fresh,
-                   SUM(CASE WHEN r.level BETWEEN 1 AND 2 THEN 1 ELSE 0 END) AS learning,
-                   SUM(CASE WHEN r.level BETWEEN 3 AND 4 THEN 1 ELSE 0 END) AS familiar,
-                   SUM(CASE WHEN r.level >= 5 THEN 1 ELSE 0 END) AS mastered,
-                   SUM(CASE WHEN p.word_id IS NULL THEN 1 ELSE 0 END) AS untouched
+                   SUM(CASE WHEN w.known = 0 AND COALESCE(r.level, 0) = 0 THEN 1 ELSE 0 END) AS fresh,
+                   SUM(CASE WHEN w.known = 0 AND r.level BETWEEN 1 AND 2 THEN 1 ELSE 0 END) AS learning,
+                   SUM(CASE WHEN w.known = 0 AND r.level BETWEEN 3 AND 4 THEN 1 ELSE 0 END) AS familiar,
+                   SUM(CASE WHEN w.known = 1 OR r.level >= 5 THEN 1 ELSE 0 END) AS mastered,
+                   SUM(CASE WHEN p.word_id IS NULL AND w.known = 0 THEN 1 ELSE 0 END) AS untouched
             FROM words w
             LEFT JOIN review r ON r.word_id = w._id
             LEFT JOIN practice_log p ON p.word_id = w._id
@@ -253,15 +256,15 @@ class WordRepository(context: Context) {
         val sql =
             """
             SELECT COUNT(*),
-                   SUM(CASE WHEN COALESCE(r.level, 0) BETWEEN 1 AND 4 THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN COALESCE(m.wrong, 0) > 0 OR COALESCE(r.lapses, 0) >= 2
+                   SUM(CASE WHEN w.known = 0 AND COALESCE(r.level, 0) BETWEEN 1 AND 4 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN w.known = 1 OR COALESCE(r.level, 0) >= 5 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN w.known = 0 AND (COALESCE(m.wrong, 0) > 0 OR COALESCE(r.lapses, 0) >= 2)
                             THEN 1 ELSE 0 END)
-            FROM practice_log p
-            JOIN words w ON w._id = p.word_id
-            LEFT JOIN review r ON r.word_id = p.word_id
-            LEFT JOIN mistakes m ON m.word_id = p.word_id
-            WHERE w.book_id = ? AND w.blocked = 0
+            FROM words w
+            LEFT JOIN practice_log p ON p.word_id = w._id
+            LEFT JOIN review r ON r.word_id = w._id
+            LEFT JOIN mistakes m ON m.word_id = w._id
+            WHERE w.book_id = ? AND w.blocked = 0 AND (p.word_id IS NOT NULL OR w.known = 1)
             """.trimIndent()
         return db.rawQuery(sql, arrayOf(bookId.toString())).use { c ->
             if (!c.moveToFirst()) {
@@ -310,7 +313,8 @@ class WordRepository(context: Context) {
         val sql = StringBuilder(
             """
             SELECT $WORD_COLUMNS, m.wrong, m.mode, m.last_at, m.streak,
-                   COALESCE(r.level, 0), COALESCE(r.due_at, 0), COALESCE(r.lapses, 0)
+                   COALESCE(r.level, 0) AS level, COALESCE(r.due_at, 0) AS due_at,
+                   COALESCE(r.lapses, 0) AS lapses
             FROM mistakes m
             JOIN words w ON w._id = m.word_id
             LEFT JOIN review r ON r.word_id = w._id
@@ -333,8 +337,8 @@ class WordRepository(context: Context) {
     /** 随机取一个未屏蔽的词，给桌面小组件用。 */
     fun randomWord(): Word? {
         val sql =
-            "SELECT _id, book_id, ord, word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words " +
-                "WHERE blocked = 0 ORDER BY RANDOM() LIMIT 1"
+            "SELECT $WORD_COLUMNS FROM words w " +
+                "WHERE w.blocked = 0 ORDER BY RANDOM() LIMIT 1"
         return db.rawQuery(sql, null).use { c -> if (c.moveToFirst()) c.toWord() else null }
     }
 
@@ -351,7 +355,7 @@ class WordRepository(context: Context) {
         val prefix = "$q%"
         val sql =
             """
-            SELECT w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, w.phonetic_us, w.phonetic_uk, w.phrases
+            SELECT $WORD_COLUMNS
             FROM words w
             WHERE w.blocked = 0 AND (w.word LIKE ? OR w.meaning LIKE ?)
             ORDER BY CASE
@@ -440,7 +444,7 @@ class WordRepository(context: Context) {
             entry.put("name", book.name)
             val wordArray = org.json.JSONArray()
             db.rawQuery(
-                "SELECT word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases FROM words WHERE book_id = ? ORDER BY ord",
+                "SELECT word, pos, meaning, starred, blocked, example, phonetic_us, phonetic_uk, phrases, known FROM words WHERE book_id = ? ORDER BY ord",
                 arrayOf(book.id.toString()),
             ).use { c ->
                 while (c.moveToNext()) {
@@ -454,6 +458,7 @@ class WordRepository(context: Context) {
                     item.put("us", c.getString(6) ?: "")
                     item.put("uk", c.getString(7) ?: "")
                     item.put("ph", c.getString(8) ?: "")
+                    item.put("known", c.getInt(9) == 1)
                     wordArray.put(item)
                 }
             }
@@ -485,6 +490,14 @@ class WordRepository(context: Context) {
             while (c.moveToNext()) starred.put(c.getString(0))
         }
         root.put("starred", starred)
+
+        // 手动标「已掌握」的词。内置词库不导出 words，所以老备份靠这个数组恢复；
+        // 少了它，恢复备份后用户会以为「已掌握」全丢了。
+        val known = org.json.JSONArray()
+        db.rawQuery("SELECT word FROM words WHERE known = 1", null).use { c ->
+            while (c.moveToNext()) known.put(c.getString(0))
+        }
+        root.put("known", known)
 
         val daily = org.json.JSONArray()
         db.rawQuery("SELECT date, answered, correct FROM daily ORDER BY date", null).use { c ->
@@ -552,6 +565,7 @@ class WordRepository(context: Context) {
         var mergedDays = 0
         var mergedReview = 0
         var mergedPractice = 0
+        var mergedKnown = 0
 
         db.beginTransaction()
         try {
@@ -609,6 +623,12 @@ class WordRepository(context: Context) {
                         }
                         if (w.optBoolean("block", false)) {
                             db.execSQL("UPDATE words SET blocked = 1 WHERE _id = ?", arrayOf<Any>(wordId))
+                        }
+                        if (w.optBoolean("known", false)) {
+                            db.execSQL("UPDATE words SET known = 1 WHERE _id = ?", arrayOf<Any>(wordId))
+                            db.execSQL("DELETE FROM review WHERE word_id = ?", arrayOf<Any>(wordId))
+                            db.execSQL("DELETE FROM mistakes WHERE word_id = ?", arrayOf<Any>(wordId))
+                            mergedKnown++
                         }
                     }
                 }
@@ -721,13 +741,32 @@ class WordRepository(context: Context) {
                     }
                 }
             }
+
+            // 手动标「已掌握」的词放在最后处理：先按上面把复习/错题并进来，
+            // 这里再统一清掉，免得顺序一变又把 review 写回去。
+            val knownWords = root.optJSONArray("known") ?: org.json.JSONArray()
+            for (i in 0 until knownWords.length()) {
+                val key = WordRenames.canonical(appContext, knownWords.optString(i))
+                if (key.isEmpty()) continue
+                db.execSQL("UPDATE words SET known = 1 WHERE lower(word) = lower(?)", arrayOf<Any>(key))
+                db.execSQL(
+                    "DELETE FROM review WHERE word_id IN (SELECT _id FROM words WHERE lower(word) = lower(?))",
+                    arrayOf<Any>(key),
+                )
+                db.execSQL(
+                    "DELETE FROM mistakes WHERE word_id IN (SELECT _id FROM words WHERE lower(word) = lower(?))",
+                    arrayOf<Any>(key),
+                )
+                mergedKnown++
+            }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
 
         return "导入完成：新增词库 $addedBooks 个、单词 $addedWords 个；合并星标 $mergedStars 个、" +
-            "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条、练习记录 $mergedPractice 条"
+            "错题 $mergedMistakes 条、打卡 $mergedDays 天、复习 $mergedReview 条、" +
+            "练习记录 $mergedPractice 条、已掌握 $mergedKnown 个"
     }
 
     // ---------- 复习（间隔重复） ----------
@@ -813,6 +852,31 @@ class WordRepository(context: Context) {
         )
     }
 
+    /**
+     * 首练时手动标「已掌握」：之后不再抽到、不进复习排期。
+     * 标记时顺手清掉这个词的复习排期和错题——它已经不需要练了。
+     */
+    fun setKnown(wordId: Long, known: Boolean) {
+        db.beginTransaction()
+        try {
+            db.execSQL(
+                "UPDATE words SET known = ? WHERE _id = ?",
+                arrayOf<Any>(if (known) 1 else 0, wordId),
+            )
+            if (known) {
+                db.delete("review", "word_id = ?", arrayOf(wordId.toString()))
+                db.delete("mistakes", "word_id = ?", arrayOf(wordId.toString()))
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    fun isKnown(wordId: Long): Boolean =
+        db.rawQuery("SELECT known FROM words WHERE _id = ?", arrayOf(wordId.toString()))
+            .use { if (it.moveToFirst()) it.getInt(0) == 1 else false }
+
     // ---------- 抽题 ----------
 
     /**
@@ -838,6 +902,8 @@ class WordRepository(context: Context) {
             else -> Unit
         }
         sb.append(" WHERE w.book_id = ? AND w.blocked = 0")
+        // 手动标过「已掌握」的词不再抽到，任何筛选条件都一样
+        sb.append(" AND w.known = 0")
         if (filter == WordFilter.STARRED) sb.append(" AND w.starred = 1")
         val index = visibleIndex(bookId)
         val candidates = db.rawQuery(sb.toString(), args.toTypedArray()).use { c -> c.toWords() }
@@ -861,26 +927,30 @@ class WordRepository(context: Context) {
 
     fun recordAnswer(wordId: Long, mode: PracticeMode, correct: Boolean, elapsedMs: Long = 0L) {
         val now = System.currentTimeMillis()
+        // 手动标过已掌握的词不排复习（界面上也不该再抽到它，这里兜底）
+        val known = isKnown(wordId)
         db.beginTransaction()
         try {
-            if (correct) {
-                // 连续答对够次数才移出错题本：蒙对一次不该把错题一笔勾销
-                db.execSQL(
-                    "UPDATE mistakes SET streak = streak + 1 WHERE word_id = ?",
-                    arrayOf<Any>(wordId),
-                )
-                db.execSQL(
-                    "DELETE FROM mistakes WHERE word_id = ? AND streak >= $MISTAKE_STREAK_TO_CLEAR",
-                    arrayOf<Any>(wordId),
-                )
-            } else {
-                db.execSQL(
-                    """
-                    INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at, streak)
-                    VALUES(?, ?, COALESCE((SELECT wrong FROM mistakes WHERE word_id = ?), 0) + 1, ?, 0)
-                    """.trimIndent(),
-                    arrayOf<Any>(wordId, mode.name, wordId, now),
-                )
+            if (!known) {
+                if (correct) {
+                    // 连续答对够次数才移出错题本：蒙对一次不该把错题一笔勾销
+                    db.execSQL(
+                        "UPDATE mistakes SET streak = streak + 1 WHERE word_id = ?",
+                        arrayOf<Any>(wordId),
+                    )
+                    db.execSQL(
+                        "DELETE FROM mistakes WHERE word_id = ? AND streak >= $MISTAKE_STREAK_TO_CLEAR",
+                        arrayOf<Any>(wordId),
+                    )
+                } else {
+                    db.execSQL(
+                        """
+                        INSERT OR REPLACE INTO mistakes(word_id, mode, wrong, last_at, streak)
+                        VALUES(?, ?, COALESCE((SELECT wrong FROM mistakes WHERE word_id = ?), 0) + 1, ?, 0)
+                        """.trimIndent(),
+                        arrayOf<Any>(wordId, mode.name, wordId, now),
+                    )
+                }
             }
             db.execSQL(
                 """
@@ -898,25 +968,27 @@ class WordRepository(context: Context) {
                 """.trimIndent(),
                 arrayOf<Any>(day, day, day, if (correct) 1 else 0),
             )
-            val (currentLevel, currentLapses, currentEase) = db.rawQuery(
-                "SELECT level, lapses, ease FROM review WHERE word_id = ?",
-                arrayOf(wordId.toString()),
-            ).use { c ->
-                if (c.moveToFirst()) {
-                    Triple(c.getInt(0), c.getInt(1), c.getDouble(2))
-                } else {
-                    Triple(0, 0, ReviewScheduler.DEFAULT_EASE)
+            if (!known) {
+                val (currentLevel, currentLapses, currentEase) = db.rawQuery(
+                    "SELECT level, lapses, ease FROM review WHERE word_id = ?",
+                    arrayOf(wordId.toString()),
+                ).use { c ->
+                    if (c.moveToFirst()) {
+                        Triple(c.getInt(0), c.getInt(1), c.getDouble(2))
+                    } else {
+                        Triple(0, 0, ReviewScheduler.DEFAULT_EASE)
+                    }
                 }
+                val rating = if (correct) ReviewRating.KNOW else ReviewRating.FORGOT
+                val nextLevel = ReviewScheduler.nextLevel(currentLevel, rating)
+                val ease = ReviewScheduler.nextEase(currentEase, rating)
+                val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now, currentEase)
+                val lapses = if (correct) currentLapses else currentLapses + 1
+                db.execSQL(
+                    "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses, ease) VALUES(?,?,?,?,?,?)",
+                    arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses, ease),
+                )
             }
-            val rating = if (correct) ReviewRating.KNOW else ReviewRating.FORGOT
-            val nextLevel = ReviewScheduler.nextLevel(currentLevel, rating)
-            val ease = ReviewScheduler.nextEase(currentEase, rating)
-            val dueAt = ReviewScheduler.nextDueAt(currentLevel, rating, now, currentEase)
-            val lapses = if (correct) currentLapses else currentLapses + 1
-            db.execSQL(
-                "INSERT OR REPLACE INTO review(word_id, level, due_at, last_at, lapses, ease) VALUES(?,?,?,?,?,?)",
-                arrayOf<Any>(wordId, nextLevel, dueAt, now, lapses, ease),
-            )
             // 题型级统计：只留最近 90 天，避免这张表无限长
             db.execSQL(
                 "INSERT INTO practice_event(word_id, mode, correct, elapsed_ms, at) VALUES(?,?,?,?,?)",
@@ -937,6 +1009,8 @@ class WordRepository(context: Context) {
      * 「忘了」同时记进错题本，「认识」则按连续答对把错题冲掉。
      */
     fun rateWord(wordId: Long, rating: ReviewRating) {
+        // 手动标过已掌握的词不参与复习排期
+        if (isKnown(wordId)) return
         val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
@@ -1001,7 +1075,7 @@ class WordRepository(context: Context) {
             db.rawQuery(
                 """
                 SELECT w._id FROM words w JOIN review r ON r.word_id = w._id
-                WHERE w.book_id = ? AND w.blocked = 0 AND r.due_at <= ?
+                WHERE w.book_id = ? AND w.blocked = 0 AND w.known = 0 AND r.due_at <= ?
                 ORDER BY r.due_at ASC LIMIT ?
                 """.trimIndent(),
                 arrayOf(bookId.toString(), now.toString(), reviewLimit.toString()),
@@ -1015,7 +1089,7 @@ class WordRepository(context: Context) {
             val rows = db.rawQuery(
                 """
                 SELECT w._id FROM mistakes m JOIN words w ON w._id = m.word_id
-                WHERE w.book_id = ? AND w.blocked = 0
+                WHERE w.book_id = ? AND w.blocked = 0 AND w.known = 0
                 ORDER BY m.wrong DESC, m.last_at DESC
                 """.trimIndent(),
                 arrayOf(bookId.toString()),
@@ -1030,7 +1104,7 @@ class WordRepository(context: Context) {
             val rows = db.rawQuery(
                 """
                 SELECT w._id FROM words w
-                WHERE w.book_id = ? AND w.blocked = 0
+                WHERE w.book_id = ? AND w.blocked = 0 AND w.known = 0
                   AND NOT EXISTS(SELECT 1 FROM practice_log p WHERE p.word_id = w._id)
                 ORDER BY w.ord ASC
                 """.trimIndent(),
@@ -1304,33 +1378,37 @@ class WordRepository(context: Context) {
 
         const val WORD_COLUMNS =
             "w._id, w.book_id, w.ord, w.word, w.pos, w.meaning, w.starred, w.blocked, w.example, " +
-            "w.phonetic_us, w.phonetic_uk, w.phrases"
+            "w.phonetic_us, w.phonetic_uk, w.phrases, w.known"
     }
+
+    /** 按列名取值：加列时不用再数下标，错题本也不会悄悄串位。 */
+    private fun Cursor.column(name: String): Int = getColumnIndexOrThrow(name)
 
     private fun Cursor.toMistake(): MistakeItem = MistakeItem(
         word = toWord(),
-        wrongCount = getInt(12),
-        mode = getString(13) ?: "",
-        lastAt = getLong(14),
-        streak = getInt(15),
-        level = getInt(16),
-        dueAt = getLong(17),
-        lapses = getInt(18),
+        wrongCount = getInt(column("wrong")),
+        mode = getString(column("mode")) ?: "",
+        lastAt = getLong(column("last_at")),
+        streak = getInt(column("streak")),
+        level = getInt(column("level")),
+        dueAt = getLong(column("due_at")),
+        lapses = getInt(column("lapses")),
     )
 
     private fun Cursor.toWord(): Word = Word(
-        id = getLong(0),
-        bookId = getLong(1),
-        ord = getInt(2),
-        text = getString(3),
-        pos = getString(4) ?: "",
-        meaning = getString(5) ?: "",
-        starred = getInt(6) == 1,
-        blocked = getInt(7) == 1,
-        example = getString(8) ?: "",
-        phoneticUs = getString(9) ?: "",
-        phoneticUk = getString(10) ?: "",
-        phrases = getString(11) ?: "",
+        id = getLong(column("_id")),
+        bookId = getLong(column("book_id")),
+        ord = getInt(column("ord")),
+        text = getString(column("word")) ?: "",
+        pos = getString(column("pos")) ?: "",
+        meaning = getString(column("meaning")) ?: "",
+        starred = getInt(column("starred")) == 1,
+        blocked = getInt(column("blocked")) == 1,
+        known = getInt(column("known")) == 1,
+        example = getString(column("example")) ?: "",
+        phoneticUs = getString(column("phonetic_us")) ?: "",
+        phoneticUk = getString(column("phonetic_uk")) ?: "",
+        phrases = getString(column("phrases")) ?: "",
     )
 
     private fun Cursor.toWords(): List<Word> = buildList {

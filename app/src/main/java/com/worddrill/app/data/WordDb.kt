@@ -61,6 +61,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 meaning TEXT NOT NULL,
                 starred INTEGER NOT NULL DEFAULT 0,
                 blocked INTEGER NOT NULL DEFAULT 0,
+                known INTEGER NOT NULL DEFAULT 0,
                 example TEXT NOT NULL DEFAULT '',
                 phonetic_us TEXT NOT NULL DEFAULT '',
                 phonetic_uk TEXT NOT NULL DEFAULT '',
@@ -71,6 +72,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
         )
         db.execSQL("CREATE INDEX idx_words_book ON words(book_id, ord)")
         db.execSQL("CREATE INDEX idx_words_star ON words(starred)")
+        db.execSQL("CREATE INDEX idx_words_book_known ON words(book_id, known)")
         db.execSQL(
             """
             CREATE TABLE mistakes(
@@ -237,6 +239,15 @@ class WordDb(context: Context) : SQLiteOpenHelper(
                 )
             }
         }
+        if (oldVersion < 10) {
+            // v10：首练时手动标「已掌握」的词，不再抽到、也不进复习排期。
+            runCatching {
+                db.execSQL("ALTER TABLE words ADD COLUMN known INTEGER NOT NULL DEFAULT 0")
+            }
+            runCatching {
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_words_book_known ON words(book_id, known)")
+            }
+        }
     }
 
     private fun seedBuiltin(db: SQLiteDatabase) {
@@ -340,7 +351,7 @@ class WordDb(context: Context) : SQLiteOpenHelper(
 
     companion object {
         const val NAME = "worddrill.db"
-        const val VERSION = 9
+        const val VERSION = 10
         const val BUILTIN_NAME = "高中 3500 词"
         const val CET4_NAME = "大学英语四级"
         private const val ASSET_3500 = "words3500.json"
