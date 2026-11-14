@@ -16,15 +16,17 @@ object WordRenames {
 
     private const val ASSET = "word_renames.json"
 
-    /** 进/出两张表都按小写键存，查的时候先试原样、再试折叠后的写法。 */
+    /** 查表用的小写键表 + 表里原始条数（同一条会同时挂「原样键」和「折叠键」，不是条数）。 */
+    private class Table(val lookup: Map<String, String>, val count: Int)
+
     @Volatile
-    private var cache: Map<String, String>? = null
+    private var cache: Table? = null
 
     /** 旧词头换算成新词头；不在表里就原样返回（只去掉首尾空白）。 */
     fun canonical(context: Context, word: String): String {
         val raw = word.trim()
         if (raw.isEmpty()) return raw
-        val table = load(context)
+        val table = load(context).lookup
         if (table.isEmpty()) return raw
         val lower = raw.lowercase()
         table[lower]?.let { return it }
@@ -33,9 +35,9 @@ object WordRenames {
     }
 
     /** 表里有多少条，测试和「数据版本」提示用。 */
-    fun size(context: Context): Int = load(context).size
+    fun size(context: Context): Int = load(context).count
 
-    private fun load(context: Context): Map<String, String> {
+    private fun load(context: Context): Table {
         cache?.let { return it }
         synchronized(this) {
             cache?.let { return it }
@@ -45,13 +47,13 @@ object WordRenames {
         }
     }
 
-    private fun readAsset(context: Context): Map<String, String> = runCatching {
+    private fun readAsset(context: Context): Table = runCatching {
         val text = context.applicationContext.assets
             .open(ASSET)
             .bufferedReader(Charsets.UTF_8)
             .use { it.readText() }
         val root = JSONObject(text)
-        buildMap {
+        val pairs = buildMap {
             for (key in root.keys()) {
                 val target = root.optString(key).trim()
                 if (target.isEmpty()) continue
@@ -60,7 +62,8 @@ object WordRenames {
                 put(fold(normalizedKey), target)
             }
         }
-    }.getOrDefault(emptyMap())
+        Table(pairs, root.length())
+    }.getOrDefault(Table(emptyMap(), 0))
 
     /** 折叠写法差异：重音符、双连字符、连字符两侧空格、多余空白。 */
     private fun fold(word: String): String = word
