@@ -78,7 +78,7 @@ class ConfuseTest {
         val dirtyWords = listOf(
             word(1, "adapt", "适应"),
             word(2, "v]", "种类"),
-            word(3, "afte", "在后"),
+            word(3, "afte]", "在后"),
         )
         val picked = Confuse.pickDistractors(
             dirtyWords.first(),
@@ -88,7 +88,7 @@ class ConfuseTest {
             Random(4),
             vary = false,
         )
-        assertTrue("坏词头不能当选项", picked.none { it.text == "v]" || it.text == "afte" })
+        assertTrue("坏词头不能当选项", picked.none { it.text == "v]" || it.text == "afte]" })
     }
 
     @Test

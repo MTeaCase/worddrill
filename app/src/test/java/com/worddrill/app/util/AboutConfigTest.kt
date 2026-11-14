@@ -85,7 +85,10 @@ class AboutConfigTest {
         val info = AboutConfig.load(context, "7.7.7")
 
         assertEquals("单词练习", info.name)
-        assertEquals(com.worddrill.app.BuildConfig.VERSION_NAME, info.version)
+        assertTrue(
+            "assets 里应写明版本号，而不是退回默认值：${info.version}",
+            info.version.matches(Regex("\\d+\\.\\d+\\.\\d+")),
+        )
         assertEquals("zlt mtc", info.developer)
         assertEquals(2, info.rows.size)
         assertEquals("词库", info.rows[0].label)

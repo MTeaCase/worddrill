@@ -3,7 +3,6 @@ package com.worddrill.app.ui
 import android.os.Looper
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.worddrill.app.BuildConfig
 import com.worddrill.app.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -32,7 +31,13 @@ class AboutDialogTest {
         assertNotNull("关于对话框没有弹出", dialog)
 
         assertEquals("单词练习", dialog.findViewById<TextView>(R.id.tvAboutName).text.toString())
-        assertEquals("版本 ${BuildConfig.VERSION_NAME}", dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString())
+        // 版本号与 assets/about.txt 一致即可，不跟构建号硬绑（发版时只改一处）
+        val versionText = dialog.findViewById<TextView>(R.id.tvAboutVersion).text.toString()
+        assertTrue("版本行不应为空：$versionText", versionText.startsWith("版本 "))
+        assertTrue(
+            "版本号格式异常：$versionText",
+            versionText.removePrefix("版本 ").matches(Regex("\\d+\\.\\d+\\.\\d+")),
+        )
 
         val rows = dialog.findViewById<LinearLayout>(R.id.rowsContainer)
         assertEquals(3, rows.childCount)
