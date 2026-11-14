@@ -118,13 +118,13 @@ class ReviewFragment : Fragment() {
                 if (isNotEmpty()) append(" · ")
                 append("全部词库共 ${data.allDue} 个")
             }
-            if (isEmpty()) append("选一个词库开始练习后这里会显示复习任务")
+            if (isEmpty()) append("选择词库后显示复习任务")
         }
         binding.btnReview.isVisible = true
         binding.btnReview.text = if (data.allDue > 0) {
             "${getString(R.string.action_review)}（${data.allDue} 个）"
         } else {
-            "${getString(R.string.review_none)} · 去练新词"
+            "${getString(R.string.review_none)} · 去练习新词"
         }
 
         val total = data.forecast.sum()
@@ -133,7 +133,7 @@ class ReviewFragment : Fragment() {
         binding.tvForecast.text = if (total == 0) {
             getString(R.string.report_forecast_empty)
         } else {
-            "未来 7 天共 $total 个复习任务，今天 ${data.forecast.getOrElse(0) { 0 }} 个（含逾期）"
+            "未来 7 天共 $total 个复习任务，今日 ${data.forecast.getOrElse(0) { 0 }} 个（含逾期）"
         }
 
         binding.tvLearnedCount.text = data.learned.learned.toString()
@@ -148,13 +148,13 @@ class ReviewFragment : Fragment() {
         binding.tvMasteryDetail.text = buildString {
             append("新词 ${mastery.fresh} · 学习中 ${mastery.learning} · 较熟 ${mastery.familiar} · 已掌握 ${mastery.mastered}")
             append("\n其中还没练过 ${mastery.untouched} 词")
-            append("\n复习等级到 5 级（约 30 天）算掌握；答对升级，答错归零重来")
+            append("\n等级达到 5 级视为掌握；答对升级，答错归零。")
         }
     }
 
     private fun openList(filter: WordFilter) {
         if (bookId <= 0) {
-            toast("还没有可用的词库")
+            toast("暂无可用词库")
             return
         }
         startActivity(WordListActivity.intent(requireContext(), bookId, bookName, filter))
