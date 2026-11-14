@@ -176,7 +176,7 @@ class PracticeActivity : BaseActivity() {
                 index = 0
                 render()
                 if (quiz.size < requested) {
-                    toast("可抽的单词不足，本轮只有 ${quiz.size} 题")
+                    toast("可用单词不足，本轮共 ${quiz.size} 题")
                 }
             }.onFailure {
                 toast("加载失败：${it.message}")
@@ -187,19 +187,19 @@ class PracticeActivity : BaseActivity() {
 
     private fun showEmptyDialog(allowRepeat: Boolean) {
         val builder = AlertDialog.Builder(this)
-            .setTitle("没有可练习的单词")
+            .setTitle("无可用单词")
             .setMessage(
                 if (!allowRepeat) {
-                    "这个范围里没练过的新词都练完了。可以去「复习」或「今日学习包」练已练过的词，也可以本轮强制重练。"
+                    "该范围内新词已练完。可在「复习」或「今日学习包」中练习已练过的词，或本轮重练。"
                 } else {
-                    "当前词库或范围里没有单词，请返回调整。"
+                    "当前词库或范围内没有单词。"
                 },
             )
             .setCancelable(false)
             .setNegativeButton("返回") { _, _ -> finish() }
 
         if (!allowRepeat) {
-            builder.setPositiveButton("本轮重练已练过的词") { _, _ ->
+            builder.setPositiveButton("本轮重练") { _, _ ->
                 // 不删练习记录：把「允许重复」在本轮强制打开就够了
                 forceRepeat = true
                 loadSession()
@@ -225,10 +225,10 @@ class PracticeActivity : BaseActivity() {
         val isListen = itemMode == PracticeMode.LISTEN_SPELL || itemMode == PracticeMode.LISTEN_ZH
         val canHear = isListen || itemMode == PracticeMode.EN_ZH
         binding.tvPromptLabel.text = when {
-            isListen -> "听 发 音"
-            itemMode == PracticeMode.EN_ZH -> "英 文"
-            itemMode == PracticeMode.EX_SPELL -> "例 句"
-            else -> "中 文 释 义"
+            isListen -> "发音"
+            itemMode == PracticeMode.EN_ZH -> "英文"
+            itemMode == PracticeMode.EX_SPELL -> "例句"
+            else -> "中文释义"
         }
         binding.tvPrompt.text = item.prompt
         binding.tvPrompt.setTextSize(
@@ -352,7 +352,7 @@ class PracticeActivity : BaseActivity() {
         val item = items[index]
         val input = binding.etAnswer.text?.toString().orEmpty()
         if (input.isBlank()) {
-            toast("先输入你记得的英文")
+            toast("请输入英文")
             return
         }
         answered = true
@@ -404,18 +404,18 @@ class PracticeActivity : BaseActivity() {
 
         val title = if (correct) {
             buildString {
-                append("✓ 答对了")
+                append("答对了")
                 if (QuizEngine.isFast(elapsed, true)) {
-                    append("  ⚡ ${(elapsed / 1000.0).toSecondsShort()} 秒")
+                    append(" · ${(elapsed / 1000.0).toSecondsShort()} 秒")
                 }
             }
         } else {
-            "✗ 正确答案：${item.answer}"
+            "正确答案：${item.answer}"
         }
 
         val detail = buildString {
             if (!correct) {
-                append("\n你作答的是：").append(userAnswer)
+                append("\n你的作答：").append(userAnswer)
                 if (item.spell) {
                     QuizEngine.diagnose(userAnswer, item.answer)?.let { append("\n提示：").append(it) }
                 }
@@ -482,7 +482,7 @@ class PracticeActivity : BaseActivity() {
             repo.checkAchievements()
         }) { result ->
             result.onSuccess { fresh ->
-                fresh.firstOrNull()?.let { toast("🏅 解锁成就：${it.title}") }
+                fresh.firstOrNull()?.let { toast("解锁成就：${it.title}") }
             }
         }
         if (!correct) requeueForRetry(item)
@@ -498,7 +498,7 @@ class PracticeActivity : BaseActivity() {
         items = items + item
         if (!retryHintShown) {
             retryHintShown = true
-            toast("答错的词会在本轮末尾再出现一次")
+            toast("答错的单词会在本轮末尾再出现一次")
         }
     }
 
@@ -524,7 +524,7 @@ class PracticeActivity : BaseActivity() {
         pendingNext?.let { binding.root.removeCallbacks(it) }
         pendingNext = null
         Bg.run({ repo.rateWord(wordId, rating) }) { }
-        toast("记为「${rating.label}」，已重排复习时间")
+        toast("已记为「${rating.label}」，复习时间已更新")
         advance()
     }
 
@@ -577,8 +577,8 @@ class PracticeActivity : BaseActivity() {
             return
         }
         AlertDialog.Builder(this)
-            .setTitle("退出练习？")
-            .setMessage("已答的 ${records.size} 道题会记入错题与练习记录。")
+            .setTitle("退出练习")
+            .setMessage("已答 ${records.size} 题将计入错题与练习记录。")
             .setPositiveButton("退出") { _, _ -> finish() }
             .setNegativeButton("继续练习", null)
             .show()

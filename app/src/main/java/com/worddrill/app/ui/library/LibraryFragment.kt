@@ -114,8 +114,8 @@ class LibraryFragment : Fragment() {
 
     private fun confirmDelete(book: Book) {
         AlertDialog.Builder(requireContext())
-            .setTitle("删除「${book.name}」？")
-            .setMessage("词库里的 ${book.wordCount} 个单词会一起删除，无法恢复。")
+            .setTitle("删除「${book.name}」")
+            .setMessage("该词库的 ${book.wordCount} 个单词将一并删除，无法恢复。")
             .setPositiveButton("删除") { _, _ ->
                 Bg.run({ repo.deleteBook(book.id) }) { result ->
                     result.onSuccess {

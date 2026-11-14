@@ -207,7 +207,7 @@ class WordListActivity : BaseActivity() {
         binding.tvHint.text = if (custom) {
             getString(R.string.learned_hint)
         } else {
-            "按最近练过的时间排序。点「练习这些」直接练这批词"
+            getString(R.string.learned_hint)
         }
     }
 
@@ -507,7 +507,7 @@ class WordListActivity : BaseActivity() {
 
         WordFilter.LEARNED -> {
             if (word.known) {
-                "首练时标为已掌握 · 不再抽到，也不进复习"
+                "已标记掌握 · 不再抽取，也不进复习计划"
             } else {
                 val p = progress[word.id]
                 if (p == null) {
@@ -524,7 +524,7 @@ class WordListActivity : BaseActivity() {
         }
 
         else -> (word.phonetic(Settings.accent(this)).takeIf { it.isNotBlank() }?.let { "/$it/" }
-            ?: "") + if (word.known) "已掌握" else ""
+            ?: "") + if (word.known) " · 已掌握" else ""
     }
 
     private fun modeLabel(modeName: String): String =
@@ -577,8 +577,8 @@ class WordListActivity : BaseActivity() {
     /** 手动标过「已掌握」的词：恢复后重新进抽题范围。 */
     private fun confirmRestoreKnown(word: Word) {
         AlertDialog.Builder(this)
-            .setTitle("恢复练习？")
-            .setMessage("「${word.text}」会重新进入抽题范围，复习等级从 0 级重新开始。")
+            .setTitle("恢复练习")
+            .setMessage("「${word.text}」将重新进入抽取范围，复习等级从 0 级开始。")
             .setPositiveButton("恢复") { _, _ ->
                 Bg.run({ repo.setKnown(word.id, known = false) }) { result ->
                     result.onSuccess {
@@ -595,7 +595,7 @@ class WordListActivity : BaseActivity() {
         if (book?.builtin != false) return
         AlertDialog.Builder(this)
             .setTitle(word.text)
-            .setMessage("${word.meaningWithPos}\n\n屏蔽后这个词不会再出现在词表和练习里，后面的单词索引会自动前移。")
+            .setMessage("${word.meaningWithPos}\n\n屏蔽后不再出现在词表与练习中，序号自动重排。")
             .setPositiveButton(R.string.action_block) { _, _ ->
                 setBlocked(word, true)
             }
@@ -606,7 +606,7 @@ class WordListActivity : BaseActivity() {
     private fun askUnblock(word: Word) {
         AlertDialog.Builder(this)
             .setTitle(word.text)
-            .setMessage("${word.meaningWithPos}\n\n恢复后回到它在词库里的原位置，索引会重新排。")
+            .setMessage("${word.meaningWithPos}\n\n恢复后回到原位置，序号重新排列。")
             .setPositiveButton(R.string.action_unblock) { _, _ ->
                 setBlocked(word, false)
             }
@@ -632,7 +632,7 @@ class WordListActivity : BaseActivity() {
 
     private fun confirmClearMistakes() {
         if (items.isEmpty()) {
-            toast("错题本是空的")
+            toast("暂无错题")
             return
         }
         AlertDialog.Builder(this)
@@ -661,12 +661,12 @@ class WordListActivity : BaseActivity() {
 
     private fun confirmUnblockAll() {
         if (blockedTotal == 0) {
-            toast("没有被屏蔽的单词")
+            toast("没有已屏蔽的单词")
             return
         }
         AlertDialog.Builder(this)
-            .setTitle("恢复全部屏蔽单词？")
-            .setMessage("会把 ${bookName.ifBlank { "本词库" }} 里被屏蔽的 $blockedTotal 个单词全部恢复。")
+            .setTitle("恢复全部屏蔽单词")
+            .setMessage("将恢复 ${bookName.ifBlank { "本词库" }} 中已屏蔽的 $blockedTotal 个单词。")
             .setPositiveButton(R.string.action_unblock_all) { _, _ ->
                 Bg.run({ repo.unblockAll(bookId) }) { result ->
                     result.onSuccess {
@@ -681,7 +681,7 @@ class WordListActivity : BaseActivity() {
 
     private fun pickModeAndCount() {
         if (items.isEmpty()) {
-            toast("还没有可练习的单词")
+            toast("没有可练习的单词")
             return
         }
         val modes = PracticeMode.entries.map { it.label }.toTypedArray()

@@ -12,8 +12,12 @@
     <string name="mine_section_study">学习</string>
     <string name="mine_section_data">数据</string>
     <string name="mine_section_other">其他</string>
+    <string name="mine_section_speech">语音</string>
+    <string name="mine_section_rhythm">提醒</string>
+    <string name="mine_section_more">更多</string>
     <string name="title_practice">练习</string>
     <string name="title_result">练习结果</string>
+    <string name="result_wrong_label">错题</string>
     <string name="title_books">词库管理</string>
     <string name="title_import">导入词汇表</string>
 
@@ -21,15 +25,15 @@
     <string name="mode_zh_en">汉译英</string>
     <string name="mode_spell">单词默写</string>
     <string name="mode_listen">听音拼写</string>
-    <string name="mode_listen_desc">听发音，自己拼出英文单词</string>
+    <string name="mode_listen_desc">听发音，拼写英文</string>
     <string name="mode_listen_zh">听音选义</string>
-    <string name="mode_listen_zh_desc">听发音，从四个中文释义中选</string>
+    <string name="mode_listen_zh_desc">听发音，选中文释义</string>
     <string name="mode_mixed">混合题型</string>
-    <string name="mode_mixed_desc">一轮里混着来，同一个词每次都是同一题</string>
+    <string name="mode_mixed_desc">一轮内轮换多种题型</string>
     <string name="mode_example">例句填词</string>
-    <string name="mode_example_desc">看中文句意，把例句里挖掉的词填上</string>
+    <string name="mode_example_desc">补全例句中缺少的单词</string>
     <string name="mode_form">词形变化</string>
-    <string name="mode_form_desc">填动词过去式，或常见名词的复数</string>
+    <string name="mode_form_desc">填写动词或名词的词形变化</string>
 
     <!-- 三档自评 -->
     <string name="rating_know">认识</string>
@@ -37,31 +41,31 @@
     <string name="rating_forgot">忘了</string>
 
     <!-- 每日学习包 -->
-    <string name="daily_pack_title">开始今日学习包</string>
+    <string name="daily_pack_title">今日学习包</string>
     <string name="daily_pack_sub">复习 0 · 错题 0 · 新词 0</string>
-    <string name="daily_pack_empty">今天没有新词也没有到期复习</string>
+    <string name="daily_pack_empty">今天没有新词，也没有到期复习</string>
     <string name="daily_pack_start">开始学习包</string>
 
     <!-- 统计 / 分享 -->
     <string name="report_heatmap">近一年打卡</string>
-    <string name="action_share_card">生成打卡图分享</string>
+    <string name="action_share_card">分享打卡图</string>
 
     <!-- 考试倒计时 -->
     <string name="settings_exam">考试倒计时</string>
-    <string name="settings_exam_desc">填考试名和日期，练习页会按剩余天数反推每日任务</string>
+    <string name="settings_exam_desc">设置考试名称与日期，练习页按剩余天数给出每日建议</string>
 
     <!-- 成就 -->
     <string name="settings_achievements">成就徽章</string>
-    <string name="settings_achievements_desc">连续打卡、掌握词数、秒答次数都会解锁徽章</string>
+    <string name="settings_achievements_desc">连续打卡、掌握词数、快速答对可解锁</string>
 
     <!-- 词汇量自测 -->
     <string name="settings_vocab_test">词汇量自测</string>
-    <string name="settings_vocab_test_desc">抽 30 个词自评，估算当前词库的词汇量</string>
+    <string name="settings_vocab_test_desc">抽取 30 个词自评，估算词汇量</string>
     <string name="vocab_test_title">词汇量自测</string>
-    <string name="vocab_test_hint">认识的词点「认识」，不认识点「跳过」，30 个词估算一次</string>
+    <string name="vocab_test_hint">逐词判断是否认识，30 个词估算一次</string>
     <string name="vocab_test_known">认识</string>
     <string name="vocab_test_skip">不认识</string>
-    <string name="vocab_test_result">估算词汇量约 %1$d 词（样本 %2$d 个，认识 %3$d 个）</string>
+    <string name="vocab_test_result">估算词汇量 %1$d 词（样本 %2$d，认识 %3$d）</string>
 
     <!-- 生词本筛选 -->
     <string name="action_filter">筛选</string>
@@ -72,10 +76,10 @@
 
     <!-- 发音设置 -->
     <string name="settings_accent">口音</string>
-    <string name="settings_accent_desc">音标显示和单词朗读都跟着这个走</string>
+    <string name="settings_accent_desc">影响音标显示与朗读发音</string>
     <string name="settings_speech_rate">语速</string>
     <string name="settings_self_rating">答完题后自评</string>
-    <string name="settings_self_rating_desc">答完一题可以标「认识 / 模糊 / 忘了」，直接决定下次复习时间；关闭时自动按对错排期</string>
+    <string name="settings_self_rating_desc">答完可标认识 / 模糊 / 忘了，用于调整下次复习时间</string>
     <string name="settings_quota">每日学习包题量</string>
 
     <!-- 桌面快捷方式 -->
@@ -84,11 +88,11 @@
     <string name="shortcut_dict">词典</string>
     <string name="shortcut_dict_long">查词、听发音</string>
     <string name="shortcut_report">学习报告</string>
-    <string name="shortcut_report_long">看打卡和掌握度</string>
+    <string name="shortcut_report_long">查看打卡与掌握度</string>
 
-    <string name="mode_en_zh_desc">看英文，从四个中文释义中选</string>
-    <string name="mode_zh_en_desc">看中文，从四个英文单词中选</string>
-    <string name="mode_spell_desc">看中文，自己拼写英文</string>
+    <string name="mode_en_zh_desc">看英文，选中文释义</string>
+    <string name="mode_zh_en_desc">看释义，选英文单词</string>
+    <string name="mode_spell_desc">看释义，拼写英文</string>
 
     <string name="start_practice">开始练习</string>
     <string name="action_review">复习今日到期的单词</string>
@@ -97,13 +101,13 @@
     <string name="mistake_book">错题本</string>
     <string name="learned_words">已学过</string>
     <string name="title_learned">已学过</string>
-    <string name="learned_summary">已学过 %1$d / %2$d 词 · 已掌握 %3$d · 易忘 %4$d</string>
-    <string name="learned_empty">这个词库还没有练过的单词</string>
+    <string name="learned_summary">已学 %1$d / %2$d 词 · 掌握 %3$d · 易忘 %4$d</string>
+    <string name="learned_empty">该词库暂无练习记录</string>
     <string name="learned_scope_all">全部</string>
     <string name="learned_scope_learning">还没掌握</string>
     <string name="learned_scope_mastered">已掌握</string>
     <string name="learned_scope_weak">易忘</string>
-    <string name="learned_hint">按最近练过的时间排序。长按可屏蔽；点「练习这些」直接练这批词</string>
+    <string name="learned_hint">按最近练习时间排序。长按可屏蔽。</string>
 
     <!-- 错题本 -->
     <string name="mistake_sort_recent">最近错的</string>
@@ -113,27 +117,27 @@
     <string name="mistake_sort_label">排序</string>
     <string name="action_remove_mistake">移出错题本</string>
     <string name="action_clear_mistakes">清空错题本</string>
-    <string name="mistake_empty">还没有错题</string>
-    <string name="mistake_clear_confirm">会把当前词库的错题记录全部删除，单词和复习进度不受影响。</string>
-    <string name="mistake_remove_confirm">移出后这个词不再出现在错题本，复习安排不变。</string>
+    <string name="mistake_empty">暂无错题</string>
+    <string name="mistake_clear_confirm">删除当前词库的错题记录，单词与复习进度不受影响。</string>
+    <string name="mistake_remove_confirm">仅移出错题本，复习安排不变。</string>
     <string name="mistake_cleared_after_two">答对 2 次后自动移出</string>
 
     <string name="label_book">词库</string>
     <string name="label_mode">练习方式</string>
     <string name="label_count">每次题量</string>
     <string name="label_count_range">题量与范围</string>
-    <string name="label_range">练习范围（词库索引）</string>
+    <string name="label_range">练习范围（按词库序号）</string>
     <string name="range_start">起始</string>
     <string name="range_end">结束</string>
-    <string name="allow_repeat">允许重复抽到已练过的单词</string>
-    <string name="empty_range_hint">留空表示整本词库</string>
+    <string name="allow_repeat">重复抽取练过的单词</string>
+    <string name="empty_range_hint">留空为整本词库</string>
 
     <string name="action_next">下一题</string>
     <string name="action_submit">提交</string>
     <string name="action_retry_wrong">重练错题</string>
     <string name="action_back_home">完成</string>
     <string name="action_practice_these">练习这些单词</string>
-    <string name="action_import">导入自组词汇库</string>
+    <string name="action_import">导入自建词表</string>
     <string name="action_paste">从剪贴板粘贴</string>
     <string name="action_preview">解析预览</string>
     <string name="action_save">保存导入</string>
@@ -142,17 +146,21 @@
     <string name="action_unstar">取消星标</string>
 
     <string name="import_pick_file">选择 Markdown 文件</string>
-    <string name="import_file_hint">支持 .md / .markdown / .txt，自动识别 UTF-8 与 GBK 编码</string>
-    <string name="import_or_paste">或者直接粘贴表格内容</string>
-    <string name="import_phrase_tip">尽量不要导入词组！就算导入词组，也不要填词性。</string>
-    <string name="import_prompt_tag">推荐做法</string>
-    <string name="import_prompt_title">先把单词交给你常用的 AI 排版</string>
-    <string name="import_prompt_body">把单词列表发给 AI，配上下面这段提示词，它就会排成三列 Markdown 表格；再把结果粘贴回本页，先「解析预览」再「保存导入」。全程只经过你自己选的那个 AI。</string>
+    <string name="import_file_hint">支持 .md / .markdown / .txt，自动识别 UTF-8 与 GBK</string>
+    <string name="import_file_title">从文件导入</string>
+    <string name="import_name_hint">词库名称</string>
+    <string name="import_columns_hint">支持三列或四列表格，序号列可省略。</string>
+    <string name="import_markdown_hint">Markdown 词汇表</string>
+    <string name="import_or_paste">或粘贴表格内容</string>
+    <string name="import_phrase_tip">词组建议不填词性。</string>
+    <string name="import_prompt_tag">格式提示</string>
+    <string name="import_prompt_title">用 AI 整理成三列表格</string>
+    <string name="import_prompt_body">把单词发给常用 AI，附上下面的提示词，整理结果粘贴回本页；解析无误后保存导入。内容仅发送给所选的 AI。</string>
     <string name="import_prompt_copy">复制提示词</string>
     <string name="import_prompt_expand">展开提示词</string>
     <string name="import_prompt_collapse">收起提示词</string>
-    <string name="import_prompt_copied">提示词已复制，发给 AI 时把你的单词贴在最后</string>
-    <string name="import_prompt_text">你是一个词汇表整理助手。请把下面的词汇整理成 Markdown 表格，只要三列，表头固定为：\n\n| 英文 | 词性 | 汉语 |\n|---|---|---|\n| competence | n. | 能力；胜任 |\n\n规则：\n1. 一行一个词，按原文顺序排列，不要合并、不要漏词；\n2. 词性只写缩写加句点，可用 n. v. vt. vi. adj. adv. prep. conj. pron. num. int. art. modal v.；多个词性用 &amp; 连接，例如 n.&amp;v.；\n3. 汉语释义用中文，多个义项用「；」分隔，不要编号、例句和音标；\n4. 词组和短语照原样写，词性可以留空；\n5. 只输出表格本身，不要解释、不要标题、不要代码块标记。\n\n需要整理的词汇：\n（把你的单词粘贴到这里）</string>
+    <string name="import_prompt_copied">提示词已复制，粘贴时在末尾附上单词</string>
+    <string name="import_prompt_text">请把下面的词汇整理成 Markdown 表格，固定三列，表头为：\n\n| 英文 | 词性 | 汉语 |\n|---|---|---|\n| competence | n. | 能力；胜任 |\n\n要求：\n1. 一行一个词，按原文顺序排列，不合并、不漏词；\n2. 词性用缩写加句点，如 n. v. adj. adv. prep. conj. pron. num. int. art. modal v.，多个词性用 &amp; 连接；\n3. 释义用中文，多个义项用「；」分隔，不加编号、例句和音标；\n4. 词组与短语保留原样，词性可留空；\n5. 只输出表格，不加解释、标题或代码块标记。\n\n词汇如下：\n（在此粘贴单词）</string>
 
     <!-- 屏蔽 -->
     <string name="title_blocked">已屏蔽单词</string>
@@ -160,72 +168,72 @@
     <string name="action_block">屏蔽</string>
     <string name="action_unblock">恢复</string>
     <string name="action_unblock_all">全部恢复</string>
-    <string name="hint_block">长按单词可屏蔽；被屏蔽的词不参与练习，索引会自动重排</string>
-    <string name="hint_unblock">点击单词即可恢复</string>
+    <string name="hint_block">长按可屏蔽。屏蔽后不参与练习，序号自动重排。</string>
+    <string name="hint_unblock">点击恢复</string>
     <string name="label_word_list">词表</string>
 
     <!-- 设置 -->
     <string name="title_settings">设置</string>
     <string name="action_dont_know">我不会</string>
     <string name="action_skip_word">不再练习此单词</string>
-    <string name="skip_word_done">「%1$s」已加入已掌握，不再抽到</string>
-    <string name="fresh_exhausted">新词都练完了，去「复习」或「今日学习包」练已练过的词</string>
-    <string name="allow_repeat_hint">勾上就会重新抽到练过的词</string>
-    <string name="mode_unavailable_custom">自建词库没有例句和词形数据，例句填词 / 词形变化 / 混合题型已停用</string>
+    <string name="skip_word_done">「%1$s」已标记为掌握，不再抽取</string>
+    <string name="fresh_exhausted">新词已练完，可在「复习」或「今日学习包」中练习已练过的词</string>
+    <string name="allow_repeat_hint">勾选后可重复抽取练过的词</string>
+    <string name="mode_unavailable_custom">自建词库缺少例句与词形数据，该题型不可用</string>
     <string name="settings_tts_title">单词朗读</string>
-    <string name="settings_tts_desc">练习时自动朗读单词，也可点喇叭重听；听力题依赖它，关掉后不会出听力题</string>
+    <string name="settings_tts_desc">练习时自动朗读，可点扬声器重听。关闭后不出听力题。</string>
     <string name="settings_reminder">复习提醒</string>
-    <string name="settings_reminder_on">每天 %1$s 提醒（点这里改时间）</string>
-    <string name="settings_reminder_off">开启后每天固定时间提醒你复习到期的单词</string>
-    <string name="settings_example_ai">AI 例句生成</string>
-    <string name="settings_example_ai_desc">开启后，词典里打开没有例句的单词会自动生成英中例句并缓存在本机；关闭时完全不联网</string>
+    <string name="settings_reminder_on">每天 %1$s 提醒，点击修改</string>
+    <string name="settings_reminder_off">每日固定时间提醒到期复习</string>
+    <string name="settings_example_ai">例句生成</string>
+    <string name="settings_example_ai_desc">为缺少例句的单词生成参考例句并缓存到本机。关闭后不联网。</string>
     <string name="settings_about">关于</string>
     <string name="settings_check_update">检查更新</string>
-    <string name="settings_update_desc">启动时自动检查；有新版本可在应用内直接下载并安装</string>
+    <string name="settings_update_desc">启动时检查新版本，可在应用内下载安装</string>
     <string name="settings_section_study">学习</string>
     <string name="settings_section_other">其他</string>
     <string name="settings_backup">备份与恢复</string>
     <string name="settings_export">导出备份</string>
-    <string name="settings_export_desc">非默认词库、错题本、星标、打卡记录、练习进度</string>
+    <string name="settings_export_desc">自建词库、错题、星标、打卡与练习进度</string>
     <string name="settings_import">导入备份</string>
-    <string name="settings_import_desc">与手机上的数据合并，不会覆盖已有内容</string>
+    <string name="settings_import_desc">与现有数据合并，不覆盖已有内容</string>
     <string name="settings_restore_auto">从自动备份恢复</string>
     <string name="settings_redeploy">重新部署内置词库</string>
-    <string name="settings_redeploy_desc">按最新词表重建两本内置词库：补缺失词、修正坏词条；自建词库不动</string>
-    <string name="settings_redeploy_confirm">会重建「高中 3500 词」和「大学英语四级」两本内置词库。\n星标、错题、复习排期和练习记录会尽量跟着词条走；导入的自建词库完全不动。\n\n建议先「导出备份」再操作。继续吗？</string>
-    <string name="settings_redeploy_again">真的重建吗？这一步会改动内置词库的几千条数据，无法撤销。</string>
+    <string name="settings_redeploy_desc">按最新词表重建两本内置词库，自建词库不受影响</string>
+    <string name="settings_redeploy_confirm">将重建「高中 3500 词」与「大学英语四级」。星标、错题、复习与练习记录尽量保留，自建词库不受影响。\n\n建议先导出备份。</string>
+    <string name="settings_redeploy_again">将修改内置词库数千条数据，且无法撤销。</string>
     <string name="settings_redeploy_failed">重建失败：%1$s</string>
-    <string name="settings_auto_backup_none">还没有自动备份（每次打开应用，6 小时内最多存一份）</string>
+    <string name="settings_auto_backup_none">暂无自动备份。应用每 6 小时最多保存一份。</string>
     <string name="settings_auto_backup_time">最近一次自动备份：%1$s</string>
     <string name="settings_smart_parse">智能解析服务地址</string>
-    <string name="settings_smart_parse_desc">导入页「AI 智能解析」调用的接口，默认用内置地址</string>
+    <string name="settings_smart_parse_desc">导入页「智能解析」使用的接口，留空使用内置地址</string>
     <string name="privacy_title">隐私政策</string>
     <string name="settings_privacy">隐私政策</string>
-    <string name="settings_privacy_desc">本应用收集哪些信息、什么时候联网</string>
+    <string name="settings_privacy_desc">说明收集的信息与联网场景</string>
     <string name="settings_license">开放源代码许可</string>
-    <string name="settings_license_desc">本应用的 GPLv3 协议与内置词库的来源说明</string>
+    <string name="settings_license_desc">GPLv3 许可与内置词库来源</string>
 
     <!-- 智能解析 -->
-    <string name="import_ai_parse">AI 智能解析</string>
-    <string name="import_ai_running">AI 正在整理，请稍候…</string>
-    <string name="import_ai_progress">AI 正在整理第 %1$d/%2$d 段…</string>
+    <string name="import_ai_parse">智能解析</string>
+    <string name="import_ai_running">正在整理…</string>
+    <string name="import_ai_progress">正在整理第 %1$d/%2$d 段…</string>
     <string name="import_ai_start">开始整理</string>
-    <string name="import_ai_done">已整理 %1$d 条，确认无误后点「保存」导入</string>
-    <string name="import_ai_confirm">会把这段内容发送到 AI 服务（商汤日日新）整理成表格，只用于本次转换，不会保存在手机上。\n\n服务地址：%1$s</string>
+    <string name="import_ai_done">已整理 %1$d 条，核对后保存导入</string>
+    <string name="import_ai_confirm">内容将发送至 AI 服务（商汤日日新）转换为表格，仅用于本次转换，不保存在本机。\n\n服务地址：%1$s</string>
 
     <!-- 更新 -->
     <string name="update_title">检查更新</string>
-    <string name="update_ok">知道了</string>
+    <string name="update_ok">关闭</string>
     <string name="update_checking">正在检查更新…</string>
-    <string name="update_latest">已经是最新版本（当前 %1$s）</string>
+    <string name="update_latest">已是最新版本（%1$s）</string>
     <string name="update_check_failed_title">检查更新失败</string>
     <string name="update_failed">%1$s</string>
     <string name="update_found_title">发现新版本 %1$s</string>
     <string name="update_size">更新包大小：%1$s</string>
-    <string name="update_default_content">建议更新到最新版本。</string>
-    <string name="update_download">立即更新</string>
-    <string name="update_later">以后再说</string>
-    <string name="update_no_url">没有配置更新地址</string>
+    <string name="update_default_content">建议更新至最新版本。</string>
+    <string name="update_download">下载更新</string>
+    <string name="update_later">稍后</string>
+    <string name="update_no_url">未配置更新地址</string>
     <string name="update_downloading">正在下载 %1$s</string>
     <string name="update_connecting">正在连接下载服务器…</string>
     <string name="update_progress">已下载 %1$d%%（%2$s / %3$s）</string>
@@ -237,13 +245,13 @@
     <string name="update_no_storage">没有可用的存储空间，无法保存更新包</string>
     <string name="update_apk_invalid_title">安装包校验未通过</string>
     <string name="update_apk_missing">安装包不存在或已被删除，请重新下载</string>
-    <string name="update_installing_hint">下载完成，正在打开安装界面…</string>
-    <string name="update_install_no_installer">找不到系统安装程序，请手动到文件管理器里点击安装包安装</string>
+    <string name="update_installing_hint">下载完成，正在打开安装程序…</string>
+    <string name="update_install_no_installer">未找到系统安装程序，请在文件管理器中手动安装</string>
     <string name="update_grant_title">需要「安装未知应用」权限</string>
-    <string name="update_grant_message">Android 8.0 以上，系统要求先允许本应用安装应用，才能完成自动更新。\n\n点「去设置」后，在列表里允许本应用「安装未知应用」，返回即可自动继续安装。</string>
+    <string name="update_grant_message">Android 8.0 及以上需允许本应用安装应用，才能完成自动更新。\n\n点「去设置」后在列表中允许「安装未知应用」，返回后继续安装。</string>
     <string name="update_grant_go">去设置</string>
     <string name="update_grant_cancel">取消</string>
-    <string name="update_grant_no_settings">没能打开系统设置，请手动到「设置 → 应用 → 特殊权限 → 安装未知应用」中允许本应用</string>
+    <string name="update_grant_no_settings">无法打开系统设置，请手动前往「设置 → 应用 → 特殊权限 → 安装未知应用」允许本应用</string>
 
     <!-- 词典 -->
     <string name="title_dictionary">词典</string>
@@ -258,7 +266,7 @@
     <string name="report_total">累计答题</string>
     <string name="report_week">近 7 天练习量</string>
     <string name="report_forecast">未来 7 天复习量</string>
-    <string name="report_forecast_empty">还没有排上复习的单词</string>
+    <string name="report_forecast_empty">暂无复习安排</string>
     <string name="review_today_label">今天到期</string>
     <string name="report_mastery">掌握度</string>
     <string name="report_top_wrong">最该复习的词</string>
@@ -266,38 +274,41 @@
     <string name="setting_tts">练习时自动发音</string>
     <string name="action_test_tts">测试发音</string>
     <string name="action_clear_log">清空练习记录</string>
-    <string name="settings_clear_log_desc">清空后所有单词重新算「没练过」，星标和错题不受影响</string>
+    <string name="settings_clear_log_desc">清空后所有单词计为未练习，星标与错题保留</string>
 
     <!-- 桌面小组件 -->
     <string name="widget_description">今日练习进度与连续打卡天数</string>
     <string name="widget_word_label">今日一词</string>
-    <string name="widget_word_description">显示一个单词和释义，点击进词典</string>
+    <string name="widget_word_description">显示一个单词和释义，点击进入词典</string>
     <string name="widget_due_label">待复习</string>
-    <string name="widget_due_description">显示今天到期的复习数量，点击进复习</string>
+    <string name="widget_due_description">显示今天到期的复习数量，点击进入复习</string>
     <string name="widget_streak_label">连续打卡</string>
-    <string name="widget_streak_description">显示连续打卡天数，点击进 App</string>
+    <string name="widget_streak_description">显示连续打卡天数，点击打开应用</string>
+    <string name="widget_today_progress">今日进度</string>
+    <string name="widget_streak_none">尚未打卡</string>
+    <string name="widget_due_zero">待复习 0</string>
 
     <!-- 关于 -->
     <string name="about">关于</string>
     <string name="about_version">版本 %1$s</string>
     <string name="about_version_placeholder">版本 1.1.0</string>
-    <string name="about_summary">看单词、记释义、练拼写\n内置高中 3500 词，也可导入自己的词汇表</string>
+    <string name="about_summary">看单词、记释义、练拼写、听发音\n内置高中 3500 词，支持导入自建词表</string>
     <string name="about_developer_label">开发者</string>
     <string name="about_developer_value">zlt mtc</string>
     <string name="about_vocab_label">词库</string>
     <string name="about_vocab_value">内置「高中 3500 词」，支持导入 Markdown 词汇表</string>
     <string name="about_data_label">数据</string>
-    <string name="about_data_value">全部保存在本机，不联网、不收集个人信息</string>
-    <string name="about_note">仅供学习交流使用，不应将本软件用于商业用途。默认3500词库来自github开源项目，准确性不100%保证。</string>
+    <string name="about_data_value">数据保存在本机，不收集个人信息</string>
+    <string name="about_note">仅供学习交流使用，请勿用于商业用途。内置词库来自开源项目，准确性不做保证。</string>
     <string name="placeholder_zero_progress">0 / 0 题</string>
     <string name="placeholder_zero_words">0 个单词</string>
     <string name="placeholder_zero_days">0 天</string>
     <string name="placeholder_zero_count">0 题</string>
     <string name="placeholder_spell_input">在这里输入英文</string>
     <string name="action_undo">撤销</string>
-    <string name="undo_marked_unknown">已记为「我不会」</string>
-    <string name="undo_ai_replaced">已用 AI 结果替换原文</string>    <string name="settings_help">使用帮助</string>
+    <string name="undo_marked_unknown">已标记为「我不会」</string>
+    <string name="undo_ai_replaced">已用 AI 结果替换</string>
+    <string name="settings_help">使用帮助</string>
     <string name="help_title">使用帮助</string>
-    <string name="help_body">一、学习包是什么\n把「今天到期该复习的」「做错还没掌握的」「还没练过的新词」按三类配额拼成一轮，点一下就能开练。配额在「我的 → 每日学习包题量」里改。\n\n二、复习等级怎么算\n每答对一次升一级，间隔按 1、2、4、7、15、30、60 天递增；答错归零、明天重来。等级到 5 级（约 30 天）算掌握。开启「答完题后自评」后，可以自己标认识 / 模糊 / 忘了来改写排期。\n\n三、八种题型\n英译汉、汉译英、单词默写、听音拼写、听音选义、例句填词、词形变化、混合题型。混合会在同一轮里轮换，同一个词每次固定同一题。\n\n四、小技巧\n练习页长按可收藏；答题页点喇叭重听；词表长按可屏蔽；「我的」里可导出备份。</string></resources>
-
-
+    <string name="help_body">一、学习包\n按当日配额组合「到期复习」「错题」「未练习的新词」，一次开始。配额在「我的 → 每日学习包题量」中调整。\n\n二、复习等级\n每次答对升一级，间隔依次为 1、2、4、7、15、30、60 天；答错归零，次日重来。等级达到 5 级视为掌握。开启「答完题后自评」后，可按认识 / 模糊 / 忘了调整排期。\n\n三、题型\n英译汉、汉译英、单词默写、听音拼写、听音选义、例句填词、词形变化、混合题型。混合模式在同一轮内轮换题型，同一个单词题型固定。\n\n四、操作\n练习页长按可加星标；答题页点扬声器重听；词表长按屏蔽；「我的」中可导出备份。</string>
+</resources>

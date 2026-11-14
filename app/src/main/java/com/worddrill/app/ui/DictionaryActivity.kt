@@ -98,7 +98,7 @@ class DictionaryActivity : BaseActivity() {
                 adapter.submit(found)
                 binding.tvEmpty.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
                 binding.tvEmpty.text = if (found.isEmpty()) {
-                    "没有找到「$query」\n试试只输入几个字母，或直接搜中文释义"
+                    "未找到「$query」\n可尝试部分字母或中文释义"
                 } else {
                     ""
                 }
@@ -111,7 +111,7 @@ class DictionaryActivity : BaseActivity() {
 
     private fun renderEmpty() {
         binding.tvEmpty.visibility = View.VISIBLE
-        binding.tvEmpty.text = "输入英文或中文都能搜\n比如 abandon、放弃、抛弃"
+        binding.tvEmpty.text = "输入英文或中文释义"
         binding.tvCount.text = ""
     }
 
@@ -137,7 +137,7 @@ class DictionaryActivity : BaseActivity() {
             result.onSuccess { list ->
                 if (list.isEmpty() || !dialog.isShowing || isFinishing) return@onSuccess
                 val text = list.joinToString("\n") { "· ${it.text}  ${it.meaningWithPos}" }
-                dialog.setMessage("${buildDetailText(word)}\n\n易混词（拼写相近）：\n$text")
+                dialog.setMessage("${buildDetailText(word)}\n\n易混词：\n$text")
             }
         }
     }
@@ -153,8 +153,8 @@ class DictionaryActivity : BaseActivity() {
             }
 
             busy -> append("\n\n正在生成例句…")
-            Settings.exampleAiEnabled(this@DictionaryActivity) -> append("\n\n还没有例句，点「更多 → 生成例句」试试")
-            else -> append("\n\n例句：未开启（设置 → AI 例句生成）")
+            Settings.exampleAiEnabled(this@DictionaryActivity) -> append("\n\n暂无例句，可在「更多」中生成")
+            else -> append("\n\n例句：未启用")
         }
         if (word.hasPhrase) {
             append("\n\n搭配：").append(word.phraseEn)
@@ -167,7 +167,7 @@ class DictionaryActivity : BaseActivity() {
         val actions = buildList {
             add("练这个词")
             when {
-                !canGenerate -> add("去设置里开启 AI 例句")
+                !canGenerate -> add("在设置中启用例句生成")
                 word.hasExample -> add("重新生成例句")
                 else -> add("生成例句")
             }
@@ -177,7 +177,7 @@ class DictionaryActivity : BaseActivity() {
             .setItems(actions.toTypedArray()) { _, which ->
                 when {
                     which == 0 -> practiceWord(word)
-                    !canGenerate -> toast("到「我的 → AI 例句生成」里开启后才行")
+                    !canGenerate -> toast("请先在「我的 → 例句生成」中开启")
                     else -> showDetail(word.copy(example = ""))
                 }
             }
@@ -219,7 +219,7 @@ class DictionaryActivity : BaseActivity() {
                     if (dialog.isShowing) {
                         dialog.setMessage(
                             buildDetailText(word) +
-                                "\n\n生成失败：${error.message ?: "未知错误"}（可以稍后再试）",
+                                "\n\n生成失败：${error.message ?: "未知错误"}",
                         )
                     }
                 }

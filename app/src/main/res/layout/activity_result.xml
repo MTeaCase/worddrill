@@ -91,7 +91,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="18dp"
-        android:text="错题" />
+        android:text="@string/result_wrong_label" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler"

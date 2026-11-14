@@ -126,7 +126,7 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="词库名称">
+                android:hint="@string/import_name_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etName"
@@ -170,7 +170,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="从文件导入" />
+                            android:text="@string/import_file_title" />
                     </LinearLayout>
 
                     <TextView
@@ -218,7 +218,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="2dp"
-                android:text="支持 | # | 英文 | 词性 | 汉语 | 四列，也支持三列表格。序号会被忽略，入库顺序按单词出现顺序递增。"
+                android:text="@string/import_columns_hint"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
@@ -239,7 +239,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Markdown 词汇表">
+                android:hint="@string/import_markdown_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etMarkdown"

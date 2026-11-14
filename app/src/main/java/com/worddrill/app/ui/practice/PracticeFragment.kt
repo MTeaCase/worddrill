@@ -192,7 +192,7 @@ class PracticeFragment : Fragment() {
                 books = list
                 if (list.isEmpty()) {
                     binding.tvHeroTitle.text = "0 / 0 题"
-                    binding.tvHeroSub.text = "去「词库」页导入自组词汇库"
+                    binding.tvHeroSub.text = "前往「词库」导入自建词表"
                     binding.btnStart.isEnabled = false
                     binding.btnReviewNow.isVisible = false
                     return@onSuccess
@@ -259,7 +259,7 @@ class PracticeFragment : Fragment() {
                 binding.pbHero.setProgressCompat(todayPercent.coerceIn(0, 100), true)
                 binding.tvHeroTitle.text = "${stats.summary.todayAnswered} / $goal 题"
                 binding.tvHeroSub.text = buildString {
-                    append("已练 ${stats.practiced} / ${stats.total} 词")
+                    append("已学 ${stats.practiced} / ${stats.total} 词")
                     if (stats.summary.streak > 0) append(" · 连续 ${stats.summary.streak} 天")
                     if (stats.summary.dueReview > 0) append(" · 待复习 ${stats.summary.dueReview} 词")
                     if (stats.blocked > 0) append(" · 屏蔽 ${stats.blocked}")
@@ -300,7 +300,7 @@ class PracticeFragment : Fragment() {
         val count = binding.etCount.text?.toString()?.trim()?.toIntOrNull()
         val start = binding.etStart.text?.toString()?.trim()?.toIntOrNull()
         val end = binding.etEnd.text?.toString()?.trim()?.toIntOrNull()
-        val countLabel = if (count != null && count > 0) "$count 题" else "未设定题量"
+        val countLabel = if (count != null && count > 0) "$count 题" else "未设置"
         val rangeLabel = when {
             start == null && end == null -> "全部范围"
             start != null && end != null && start == end -> "第 $start 个"
@@ -314,7 +314,7 @@ class PracticeFragment : Fragment() {
     private fun openList(filter: WordFilter) {
         val book = books.firstOrNull { it.id == selectedBookId }
         if (book == null) {
-            toast("还没有可用的词库")
+            toast("暂无可用词库")
             return
         }
         startActivity(WordListActivity.intent(requireContext(), book.id, book.name, filter))
@@ -340,32 +340,32 @@ class PracticeFragment : Fragment() {
 
     private fun startPractice() {
         val book = books.firstOrNull { it.id == selectedBookId } ?: run {
-            toast("还没有可用的词库")
+            toast("暂无可用词库")
             return
         }
         val count = binding.etCount.text?.toString()?.trim()?.toIntOrNull() ?: 0
         if (count !in 1..200) {
-            toast("题量请填 1 – 200")
+            toast("题量范围为 1–200")
             setExpanded(true)
             return
         }
         val max = ordRange?.last ?: 0
         if (max == 0) {
-            toast("这个词库里没有可练习的单词")
+            toast("该词库没有可练习的单词")
             return
         }
         val startText = binding.etStart.text?.toString()?.trim().orEmpty()
         val endText = binding.etEnd.text?.toString()?.trim().orEmpty()
         val start = if (startText.isEmpty()) 1 else startText.toIntOrNull() ?: run {
-            toast("起始索引无效")
+            toast("起始序号无效")
             return
         }
         val end = if (endText.isEmpty()) max else endText.toIntOrNull() ?: run {
-            toast("结束索引无效")
+            toast("结束序号无效")
             return
         }
         if (start < 1 || end > max || start > end) {
-            toast("索引范围应在 1 – $max 之间，且起始不大于结束")
+            toast("序号范围为 1–$max，且起始不大于结束")
             setExpanded(true)
             return
         }
@@ -394,7 +394,7 @@ class PracticeFragment : Fragment() {
         if (days <= 0) return "$name 倒计时已到"
         val remaining = (total - practiced).coerceAtLeast(0)
         val perDay = (remaining + days - 1) / days
-        return "距$name $days 天 · 每天 $perDay 词"
+        return "距$name $days 天 · 每日 $perDay 词"
     }
 
     private fun dp(value: Int): Int =

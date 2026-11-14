@@ -64,7 +64,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:layout_marginBottom="2dp"
-                        android:text="发音与朗读" />
+                        android:text="@string/mine_section_speech" />
 <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swTts"
                         android:layout_width="match_parent"
@@ -88,7 +88,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:layout_marginBottom="2dp"
-                        android:text="提醒与节奏" />
+                        android:text="@string/mine_section_rhythm" />
 <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swReminder"
                         android:layout_width="match_parent"
@@ -254,7 +254,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:layout_marginBottom="2dp"
-                        android:text="更多" />
+                        android:text="@string/mine_section_more" />
 <LinearLayout
                         android:id="@+id/rowExam"
                         android:layout_width="match_parent"

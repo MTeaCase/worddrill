@@ -80,7 +80,7 @@ class ReportActivity : BaseActivity() {
 
     /** 分题型正确率 + 平均用时，没有答题事件时给一句说明。 */
     private fun buildModeStats(data: ReportData): String {
-        if (data.modes.isEmpty()) return "最近 30 天还没有答题记录，练几道就能看到分题型正确率"
+        if (data.modes.isEmpty()) return "最近 30 天暂无答题记录"
         return buildString {
             append("最近 30 天分题型正确率\n")
             data.modes.sortedByDescending { it.total }.forEach { stat ->
@@ -103,7 +103,7 @@ class ReportActivity : BaseActivity() {
         binding.tvForecast.text = if (total == 0) {
             getString(R.string.report_forecast_empty)
         } else {
-            "未来 7 天共 $total 个复习任务，今天 $today 个（含逾期的）"
+            "未来 7 天共 $total 个复习任务，今日 $today 个（含逾期）"
         }
     }
 
@@ -118,7 +118,7 @@ class ReportActivity : BaseActivity() {
             append("\n复习等级到 5 级（约 30 天）算掌握；答对升级，答错归零重来")
         }
         binding.tvTopWrong.text = if (wrong.isEmpty()) {
-            "还没有错题，继续保持"
+            "暂无错题"
         } else {
             wrong.joinToString("\n") { item ->
                 "· ${item.word.text}  ${item.word.meaningWithPos}  · 错 ${item.wrongCount} 次"
@@ -133,16 +133,16 @@ class ReportActivity : BaseActivity() {
         binding.pbToday.max = goal
         binding.pbToday.setProgressCompat(summary.todayAnswered.coerceAtMost(goal), true)
         binding.tvTodaySub.text = when {
-            summary.todayAnswered >= goal -> "今天的目标已经完成，继续保持"
-            summary.todayAnswered == 0 -> "今天还没开始，先来 10 道题？"
-            else -> "还差 ${goal - summary.todayAnswered} 题完成今日目标"
+            summary.todayAnswered >= goal -> "今日目标已完成"
+            summary.todayAnswered == 0 -> "今日尚未练习"
+            else -> "距今日目标还差 ${goal - summary.todayAnswered} 题"
         }
         binding.tvStreak.text = "${summary.streak} 天"
         binding.tvTotal.text = "${summary.totalAnswered} 题"
         val accuracy = if (summary.totalAnswered == 0) 0 else summary.totalCorrect * 100 / summary.totalAnswered
         binding.tvAccuracy.text = buildString {
             append("累计正确率 $accuracy% · 答对 ${summary.totalCorrect} / ${summary.totalAnswered} 题")
-            append("\n待复习 ${summary.dueReview} 词（按遗忘曲线安排）")
+            append("\n待复习 ${summary.dueReview} 词")
         }
         binding.chart.setStats(summary.days, goal)
     }
@@ -182,32 +182,32 @@ class ReportActivity : BaseActivity() {
             if (isFinishing || isDestroyed) return@postDelayed
             val message = buildString {
                 if (error != null) {
-                    append("❌ ").append(error).append("\n\n")
+                    append(error).append("\n\n")
                 } else {
-                    append("✅ 已调用系统语音引擎；能听到声音说明正常。\n\n")
+                    append("已调用系统语音引擎，听到声音即为正常。\n\n")
                 }
                 append(Tts.diagnose(this@ReportActivity))
             }
             MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.action_test_tts)
                 .setMessage(message)
-                .setPositiveButton("好", null)
+                .setPositiveButton("关闭", null)
                 .show()
         }, 900)
     }
 
     private fun shareCard() {
         val summary = lastSummary ?: run {
-            toast("数据还没加载好，稍等一下")
+            toast("数据尚未加载完成")
             return
         }
         val accuracy = if (summary.totalAnswered == 0) 0 else summary.totalCorrect * 100 / summary.totalAnswered
         val bitmap = ShareCard.render(
             context = this,
             title = "连续 ${summary.streak} 天",
-            subtitle = "今天 ${summary.todayAnswered} / ${summary.dailyGoal} 题",
+            subtitle = "今日 ${summary.todayAnswered} / ${summary.dailyGoal} 题",
             lines = listOf(
-                "#累计 ${summary.totalAnswered} 题",
+                "累计 ${summary.totalAnswered} 题",
                 "正确率 $accuracy%",
                 "待复习 ${summary.dueReview} 词",
                 "已掌握 ${mastery?.mastered ?: 0} / ${mastery?.total ?: 0} 词",

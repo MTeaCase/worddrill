@@ -31,7 +31,7 @@ object TextFiles {
     fun read(context: Context, uri: Uri): String {
         val bytes = context.contentResolver.openInputStream(uri)?.use { stream ->
             val buffer = stream.readBytes()
-            require(buffer.size <= MAX_BYTES) { "文件超过 4 MB，请拆分后再导入" }
+            require(buffer.size <= MAX_BYTES) { "文件超过 4 MB，请拆分后导入" }
             buffer
         } ?: throw IllegalArgumentException("无法读取这个文件")
         require(bytes.isNotEmpty()) { "文件是空的" }

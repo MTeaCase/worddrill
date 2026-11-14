@@ -28,14 +28,14 @@ data class AchievementSnapshot(
 object Achievements {
 
     val ALL = listOf(
-        AchievementDef("first_word", "第一步", "练会第一个词", AchievementMetric.PRACTICED_WORDS, 1),
-        AchievementDef("words_100", "一百词", "练过 100 个词", AchievementMetric.PRACTICED_WORDS, 100),
-        AchievementDef("words_500", "五百词", "练过 500 个词", AchievementMetric.PRACTICED_WORDS, 500),
-        AchievementDef("streak_3", "三天不辍", "连续打卡 3 天", AchievementMetric.STREAK, 3),
-        AchievementDef("streak_7", "一周坚持", "连续打卡 7 天", AchievementMetric.STREAK, 7),
-        AchievementDef("streak_30", "月度全勤", "连续打卡 30 天", AchievementMetric.STREAK, 30),
-        AchievementDef("mastered_50", "小有所成", "掌握 50 个词", AchievementMetric.MASTERED_WORDS, 50),
-        AchievementDef("fast_20", "秒答高手", "3 秒内答对 20 题", AchievementMetric.FAST_CORRECT, 20),
+        AchievementDef("first_word", "首个单词", "练会 1 个单词", AchievementMetric.PRACTICED_WORDS, 1),
+        AchievementDef("words_100", "100 词", "练过 100 个单词", AchievementMetric.PRACTICED_WORDS, 100),
+        AchievementDef("words_500", "500 词", "练过 500 个单词", AchievementMetric.PRACTICED_WORDS, 500),
+        AchievementDef("streak_3", "连续 3 天", "连续打卡 3 天", AchievementMetric.STREAK, 3),
+        AchievementDef("streak_7", "连续 7 天", "连续打卡 7 天", AchievementMetric.STREAK, 7),
+        AchievementDef("streak_30", "连续 30 天", "连续打卡 30 天", AchievementMetric.STREAK, 30),
+        AchievementDef("mastered_50", "掌握 50 词", "掌握 50 个单词", AchievementMetric.MASTERED_WORDS, 50),
+        AchievementDef("fast_20", "快速答对", "3 秒内答对 20 题", AchievementMetric.FAST_CORRECT, 20),
     )
 
     fun valueOf(metric: AchievementMetric, snapshot: AchievementSnapshot): Int = when (metric) {

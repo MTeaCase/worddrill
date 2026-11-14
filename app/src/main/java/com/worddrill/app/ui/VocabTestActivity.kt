@@ -38,7 +38,7 @@ class VocabTestActivity : BaseActivity() {
         binding.btnKnown.setOnClickListener { answer(true) }
         binding.btnSkip.setOnClickListener { answer(false) }
         binding.progressBar.max = SAMPLE_SIZE
-        binding.tvProgress.text = "准备中…"
+        binding.tvProgress.text = "正在准备…"
         loadSamples()
     }
 
@@ -74,7 +74,7 @@ class VocabTestActivity : BaseActivity() {
                 book = target
                 samples = words.distinctBy { it.id }
                 if (samples.isEmpty()) {
-                    binding.tvProgress.text = "这个词库还没有单词"
+                    binding.tvProgress.text = "该词库没有单词"
                     binding.answerRow.isVisible = false
                     return@onSuccess
                 }
@@ -120,8 +120,8 @@ class VocabTestActivity : BaseActivity() {
         binding.tvResult.isVisible = true
         binding.tvResult.text = buildString {
             append(getString(R.string.vocab_test_result, estimate, samples.size, known))
-            append("\n词库总词数 $total，按认识率 ${(ratio * 100).toInt()}% 外推。")
-            append("\n抽样的三段分别是词库前 / 中 / 后 1/3，越靠后越生僻。")
+            append("\n词库共 $total 词，按认识率 ${(ratio * 100).toInt()}% 估算。")
+            append("\n样本取自词库前、中、后三段。")
         }
     }
 

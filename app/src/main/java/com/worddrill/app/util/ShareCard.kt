@@ -64,7 +64,7 @@ object ShareCard {
 
         sub.textSize = 32f
         sub.isFakeBoldText = false
-        canvas.drawText("WordDrill · 每天一点", margin + 66f, SIZE - margin - 64f, sub)
+        canvas.drawText("WordDrill 单词练习", margin + 66f, SIZE - margin - 64f, sub)
 
         return bitmap
     }

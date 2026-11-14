@@ -55,7 +55,7 @@ class MineFragment : Fragment() {
             if (granted) {
                 ReviewReminder.schedule(requireContext())
             } else {
-                toast("没有通知权限，无法提醒")
+                toast("未获得通知权限，无法提醒")
             }
             suppressSwitchEvent = true
             if (_binding != null) binding.swReminder.isChecked = granted
@@ -99,7 +99,7 @@ class MineFragment : Fragment() {
 
         binding.swExampleAi.setOnCheckedChangeListener { _, checked ->
             Settings.setExampleAiEnabled(requireContext(), checked)
-            toast(if (checked) "已开启，打开词条时会自动生成例句" else "已关闭，不再请求例句")
+            toast(if (checked) "已启用例句生成" else "已关闭例句生成")
         }
 
         binding.swSelfRating.setOnCheckedChangeListener { _, checked ->
@@ -113,7 +113,7 @@ class MineFragment : Fragment() {
             AlertDialog.Builder(requireContext())
                 .setTitle(R.string.help_title)
                 .setMessage(R.string.help_body)
-                .setPositiveButton("好", null)
+                .setPositiveButton("关闭", null)
                 .show()
         }
         binding.rowExam.setOnClickListener { pickExam() }
@@ -217,7 +217,7 @@ class MineFragment : Fragment() {
         val context = requireContext()
         val input = EditText(context).apply {
             setText(Settings.examName(context))
-            hint = "考试名称，比如 考研 / 四级"
+            hint = "考试名称"
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
         }
         val density = resources.displayMetrics.density
@@ -261,7 +261,7 @@ class MineFragment : Fragment() {
                 }
                 Settings.setExamDate(context, picked.timeInMillis)
                 refreshVoiceSettings()
-                toast("已设置：${Settings.examName(context)} ${year}-${month + 1}-${day}")
+                toast("已保存：${Settings.examName(context)} ${year}-${month + 1}-${day}")
             },
             calendar.get(java.util.Calendar.YEAR),
             calendar.get(java.util.Calendar.MONTH),
@@ -274,18 +274,18 @@ class MineFragment : Fragment() {
             result.onSuccess { list ->
                 if (_binding == null || !isAdded) return@onSuccess
                 val text = list.joinToString("\n") { (def, at) ->
-                    val mark = if (at > 0L) "✅" else "🔒"
+                    val mark = if (at > 0L) "已获得" else "未获得"
                     val whenText = if (at > 0L) {
                         SimpleDateFormat("MM-dd", Locale.US).format(Date(at))
                     } else {
-                        "未解锁"
+                        "待解锁"
                     }
-                    "$mark ${def.title} · ${def.detail}（$whenText）"
+                    "$mark · ${def.title}：${def.detail}（$whenText）"
                 }
                 AlertDialog.Builder(requireContext())
                     .setTitle(R.string.settings_achievements)
                     .setMessage(text)
-                    .setPositiveButton("好", null)
+                    .setPositiveButton("关闭", null)
                     .show()
             }
         }
@@ -354,7 +354,7 @@ class MineFragment : Fragment() {
         }
         MaterialAlertDialogBuilder(context)
             .setTitle(R.string.settings_quota)
-            .setMessage("三类配额彼此独立，三个都是 0 时学习包为空")
+            .setMessage("三类配额相互独立；均为 0 时学习包为空。")
             .setView(container)
             .setPositiveButton("保存") { _, _ ->
                 fun parse(view: EditText, fallback: Int): Int =
@@ -376,7 +376,7 @@ class MineFragment : Fragment() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
-                toast("系统里关掉了本应用的通知，去设置里打开后才能提醒")
+                toast("系统通知已关闭，请在设置中开启")
                 suppressSwitchEvent = true
                 binding.swReminder.isChecked = false
                 suppressSwitchEvent = false
@@ -397,7 +397,7 @@ class MineFragment : Fragment() {
     private fun pickReminderTime() {
         val context = requireContext()
         if (!Settings.reminderEnabled(context)) {
-            toast("先打开上面的开关")
+            toast("请先开启复习提醒")
             return
         }
         TimePickerDialog(context, { _, picked, _ ->
@@ -445,7 +445,7 @@ class MineFragment : Fragment() {
     private fun startImport() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_import)
-            .setMessage("会把备份里的词库、错题、星标、打卡记录合并到本机，已有的单词不会被删除或覆盖。")
+            .setMessage("将合并备份中的词库、错题、星标与打卡记录，不删除或覆盖已有单词。")
             .setPositiveButton("选择文件") { _, _ ->
                 importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
             }
@@ -465,7 +465,7 @@ class MineFragment : Fragment() {
                 AlertDialog.Builder(requireContext())
                     .setTitle("导入完成")
                     .setMessage(summary)
-                    .setPositiveButton("好", null)
+                    .setPositiveButton("关闭", null)
                     .show()
             }.onFailure { toast("导入失败：${it.message}") }
         }
@@ -490,14 +490,14 @@ class MineFragment : Fragment() {
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_restore_auto)
-            .setMessage("会把自动备份里的词库、错题、星标、打卡、练习进度合并回本机，不会删除现有内容。")
+            .setMessage("将合并自动备份中的词库、错题、星标、打卡与练习进度，不删除现有内容。")
             .setPositiveButton("恢复") { _, _ ->
                 Bg.run({ repo.importBackupJson(text) }) { result ->
                     result.onSuccess { summary ->
                         AlertDialog.Builder(requireContext())
                             .setTitle("恢复完成")
                             .setMessage(summary)
-                            .setPositiveButton("好", null)
+                            .setPositiveButton("关闭", null)
                             .show()
                     }.onFailure { toast("恢复失败：${it.message}") }
                 }
@@ -528,7 +528,7 @@ class MineFragment : Fragment() {
                         AlertDialog.Builder(requireContext())
                             .setTitle(R.string.settings_redeploy)
                             .setMessage(summary)
-                            .setPositiveButton("好", null)
+                            .setPositiveButton("关闭", null)
                             .show()
                     }.onFailure {
                         if (_binding == null) return@onFailure
@@ -542,8 +542,8 @@ class MineFragment : Fragment() {
 
     private fun confirmClearLog() {
         AlertDialog.Builder(requireContext())
-            .setTitle("清空练习记录？")
-            .setMessage("清空后所有单词都会重新被视为「没练过」，星标和错题不受影响。")
+            .setTitle("清空练习记录")
+            .setMessage("清空后所有单词计为未练习，星标与错题保留。")
             .setPositiveButton("清空") { _, _ ->
                 Bg.run({ repo.clearPracticeLog() }) { result ->
                     result.onSuccess {
@@ -578,7 +578,7 @@ class MineFragment : Fragment() {
         }
         MaterialAlertDialogBuilder(context)
             .setTitle(R.string.settings_smart_parse)
-            .setMessage("填部署好的接口地址，多个地址用英文逗号分隔，会按顺序回退")
+            .setMessage("填写已部署的接口地址，多个地址以英文逗号分隔，按顺序回退。")
             .setView(container)
             .setPositiveButton("保存") { _, _ ->
                 Settings.setSmartParseUrl(context, input.text.toString())

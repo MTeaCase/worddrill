@@ -62,7 +62,7 @@ object SmartParser {
             }
         }
         if (rows.isEmpty()) {
-            throw IllegalStateException(lastError?.message ?: "AI 没有返回可用的词条")
+            throw IllegalStateException(lastError?.message ?: "服务未返回可用词条")
         }
         // 有部分块失败时，这里仍然返回已解析到的内容，界面上会提示条数
         return Result(joinTable(header, rows), rows.size)
@@ -151,7 +151,7 @@ object SmartParser {
     /** 解析服务返回的 JSON。抽出来方便单测，不碰网络。 */
     internal fun parseResponse(body: String): Result {
         val part = parsePart(body)
-        if (part.rows.isEmpty()) throw IllegalStateException("AI 没有返回可用的词条")
+        if (part.rows.isEmpty()) throw IllegalStateException("服务未返回可用词条")
         return Result(joinTable(part.header, part.rows), part.rows.size)
     }
 

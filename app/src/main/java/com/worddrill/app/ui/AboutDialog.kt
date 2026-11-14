@@ -22,7 +22,7 @@ object AboutDialog {
         bind(activity, view, info)
         MaterialAlertDialogBuilder(activity)
             .setView(view)
-            .setPositiveButton("知道了", null)
+            .setPositiveButton("关闭", null)
             .show()
     }
 

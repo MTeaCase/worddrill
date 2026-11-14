@@ -46,7 +46,7 @@ class WordDrillWidget : AppWidgetProvider() {
             views.setProgressBar(R.id.pbWidget, goal, today.coerceIn(0, goal), false)
             views.setTextViewText(
                 R.id.tvWidgetStreak,
-                if (streak > 0) "连续 $streak 天" else "今天开始打卡",
+                if (streak > 0) "连续 $streak 天" else "尚未打卡",
             )
             views.setTextViewText(
                 R.id.tvWidgetDue,

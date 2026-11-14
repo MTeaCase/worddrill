@@ -72,7 +72,7 @@ object ExampleClient {
             }
             val en = json.optString("en").trim()
             val zh = json.optString("zh").trim()
-            if (en.isEmpty()) throw IllegalStateException("没有生成出可用的例句")
+            if (en.isEmpty()) throw IllegalStateException("未生成可用例句")
             return Example(en, zh)
         } finally {
             runCatching { conn.disconnect() }

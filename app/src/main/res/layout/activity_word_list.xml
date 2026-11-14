@@ -24,7 +24,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
-        android:hint="搜索单词或释义"
+        android:hint="@string/search_bar_hint"
         app:endIconMode="clear_text">
 
         <com.google.android.material.textfield.TextInputEditText

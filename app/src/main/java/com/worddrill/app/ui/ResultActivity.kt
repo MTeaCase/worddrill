@@ -65,8 +65,8 @@ class ResultActivity : BaseActivity() {
         binding.pbScore.setProgressCompat(percent, true)
         binding.tvScoreDetail.text = buildString {
             append("答对 $correctCount / ${records.size} 题 · ${mode.label} · $bookName")
-            if (fast > 0) append("\n⚡ 3 秒内答对 $fast 题")
-            if (records.isNotEmpty() && wrong.isEmpty()) append("\n全部答对，这一轮干净")
+            if (fast > 0) append("\n3 秒内答对 $fast 题")
+            if (records.isNotEmpty() && wrong.isEmpty()) append("\n全部答对")
         }
         // 训练记录：总用时与配速，比只有百分比更像一张成绩单
         val totalMs = records.sumOf { it.elapsedMs }

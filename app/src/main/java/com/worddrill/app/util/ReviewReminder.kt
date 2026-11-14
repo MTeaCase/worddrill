@@ -88,7 +88,7 @@ object ReviewReminder {
                 CHANNEL_ID,
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply { description = "每天提醒你复习即将遗忘的单词" }
+            ).apply { description = "每日提醒到期的复习单词" }
             manager.createNotificationChannel(channel)
         }
 
@@ -104,8 +104,8 @@ object ReviewReminder {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_logo)
-            .setContentTitle("该复习了")
-            .setContentText("今天有 $due 个单词到期，按遗忘曲线该见一面了")
+            .setContentTitle("复习提醒")
+            .setContentText("今天有 $due 个单词到期")
             .setContentIntent(pending)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

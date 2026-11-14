@@ -64,7 +64,7 @@ object Tts {
     private fun createEngine(application: Context) {
         engine = TextToSpeech(application) { status ->
             if (status != TextToSpeech.SUCCESS) {
-                fail("系统没有可用的语音引擎（初始化返回 $status），请在系统设置里安装或启用「文字转语音」")
+                fail("系统未提供语音引擎（初始化返回 $status），请在系统设置中安装或启用「文字转语音」")
                 return@TextToSpeech
             }
             engine?.let { configure(it) }
@@ -109,7 +109,7 @@ object Tts {
     private var missingAccent = false
 
     fun accentFallbackWarning(): String? =
-        if (missingAccent) "设备没有装对应的英语语音包，暂时用的是通用英语发音" else null
+        if (missingAccent) "未安装对应英语语音包，暂用通用发音" else null
 
     /** 设置里改了口音或语速后调用，下一次朗读就按新设置走。 */
     fun refreshVoice() {
@@ -125,7 +125,7 @@ object Tts {
             current.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
         }.getOrElse { TextToSpeech.ERROR }
         if (code == TextToSpeech.ERROR) {
-            onError?.invoke("语音播放失败：系统引擎没有英语发音（可在系统设置 → 文字转语音 里下载英语语音包）")
+            onError?.invoke("播放失败：系统语音引擎缺少英语发音，可在「设置 → 文字转语音」中下载英语语音包")
         }
     }
 
@@ -166,7 +166,7 @@ object Tts {
                     else -> "初始化中"
                 },
             )
-            append("\n提示：若显示「缺少语音数据」，请到 系统设置 → 文字转语音(TTS) → 安装对应英语语音包")
+            append("\n如显示「缺少语音数据」，请在「设置 → 文字转语音」中安装对应英语语音包")
         }
     }
 

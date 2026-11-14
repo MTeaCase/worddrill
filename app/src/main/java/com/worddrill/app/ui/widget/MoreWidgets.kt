@@ -62,7 +62,7 @@ class DailyWordWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.tvWord, word.ifBlank { "—" })
             views.setTextViewText(
                 R.id.tvWordMeaning,
-                meaning.ifBlank { "打开 App 开始练习" },
+                meaning.ifBlank { "打开应用开始练习" },
             )
             views.setTextViewText(
                 R.id.tvWordPhrase,
@@ -97,7 +97,7 @@ class DueReviewWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.tvDueCount, due.toString())
             views.setTextViewText(
                 R.id.tvDueHint,
-                if (due > 0) "个单词待复习" else "今天已完成",
+                if (due > 0) "个单词待复习" else "今日已完成",
             )
             val intent = Intent(context, MainActivity::class.java)
                 .putExtra(ReviewReminder.EXTRA_OPEN_REVIEW, true)
@@ -130,7 +130,7 @@ class StreakWidget : AppWidgetProvider() {
             views.setTextViewText(
                 R.id.tvStreakHint,
                 when {
-                    streak <= 0 -> "今天开始"
+                    streak <= 0 -> "尚未开始"
                     today >= goal -> "今日目标已完成"
                     else -> "今日 $today / $goal 题"
                 },

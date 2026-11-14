@@ -90,7 +90,7 @@ class ImportActivity : BaseActivity() {
             binding.etName.setText(name)
         }
         preview()
-        if (parsed.isNotEmpty()) toast("从分享内容解析到 ${parsed.size} 条")
+        if (parsed.isNotEmpty()) toast("已从分享内容解析 ${parsed.size} 条")
     }
 
     private fun loadSharedFile(uri: Uri) {
@@ -130,7 +130,7 @@ class ImportActivity : BaseActivity() {
             ?.coerceToText(this)
             ?.toString()
         if (text.isNullOrBlank()) {
-            toast("剪贴板里没有文本")
+            toast("剪贴板中没有文本")
             return
         }
         binding.etMarkdown.setText(text)
@@ -143,21 +143,21 @@ class ImportActivity : BaseActivity() {
         parsed = VocabMarkdownParser.parse(text)
         binding.previewCard.visibility = View.VISIBLE
         if (parsed.isEmpty()) {
-            binding.tvPreview.text = "没有解析到单词。请确认内容是 Markdown 表格（| 英文 | 词性 | 汉语 |）。"
+            binding.tvPreview.text = "未解析到单词，请确认为 Markdown 表格。"
             return
         }
         val sample = parsed.take(5).joinToString("\n") { entry ->
             "· ${entry.word}  ${entry.pos}  ${entry.meaning}"
         }
         val more = if (parsed.size > 5) "\n…" else ""
-        binding.tvPreview.text = "解析到 ${parsed.size} 条（按出现顺序入库）：\n$sample$more"
+        binding.tvPreview.text = "解析 ${parsed.size} 条，按出现顺序入库：\n$sample$more"
     }
 
     /** AI 智能解析：把当前内容发给自建服务整理成表格，再走原来的导入流程。 */
     private fun confirmSmartParse() {
         val text = binding.etMarkdown.text?.toString()?.trim().orEmpty()
         if (text.isEmpty()) {
-            toast("先把要整理的内容粘贴或读进来")
+            toast("请先粘贴或导入要整理的内容")
             return
         }
         val url = Settings.smartParseUrl(this)
