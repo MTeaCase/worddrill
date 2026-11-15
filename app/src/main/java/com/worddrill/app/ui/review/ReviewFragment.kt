@@ -147,7 +147,6 @@ class ReviewFragment : Fragment() {
         val mastery: MasteryStats = data.mastery
         binding.tvMasteryTitle.text =
             "已掌握 ${mastery.mastered} / ${mastery.total} 词（${mastery.masteredPercent}%）"
-        binding.pbMastery.setProgressCompat(mastery.masteredPercent, true)
         binding.masteryBar.setStats(mastery)
         binding.tvMasteryDetail.text = buildString {
             append("新词 ${mastery.fresh} · 学习中 ${mastery.learning} · 较熟 ${mastery.familiar} · 已掌握 ${mastery.mastered}")

@@ -296,18 +296,6 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
-                        android:id="@+id/pbMastery"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:max="100"
-                        app:indicatorColor="@color/brand"
-                        app:trackColor="@color/divider"
-                        app:trackCornerRadius="4dp"
-                        app:trackStopIndicatorSize="0dp"
-                        app:trackThickness="10dp" />
-
                     <com.worddrill.app.ui.widget.MasteryBarView
                         android:id="@+id/masteryBar"
                         android:layout_width="match_parent"
