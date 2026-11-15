@@ -90,7 +90,7 @@ class ReviewFragment : Fragment() {
                 multipleBooks = books.size > 1,
                 bookDue = if (id > 0) repo.dueReviewCount(bookId = id) else 0,
                 allDue = repo.dueReviewCount(),
-                forecast = repo.reviewForecast(FORECAST_DAYS),
+                forecast = repo.reviewForecast(FORECAST_DAYS, bookId = id.takeIf { it > 0 }),
                 learned = repo.learnedStats(id),
                 mistakes = repo.mistakeCount(id),
                 starred = repo.starredCount(id),

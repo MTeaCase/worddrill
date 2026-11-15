@@ -139,7 +139,20 @@ class PracticeFragment : Fragment() {
             card.strokeColor = color(if (selected) R.color.brand else R.color.divider)
             card.setCardBackgroundColor(color(if (selected) R.color.brand_soft else R.color.surface))
         }
-        }
+        binding.tvModeDesc.setText(modeDescription(target))
+    }
+
+    /** 题型的说明只留一行，跟着当前选中的题型变，八张卡片不用各挂一句。 */
+    private fun modeDescription(mode: PracticeMode): Int = when (mode) {
+        PracticeMode.EN_ZH -> R.string.mode_en_zh_desc
+        PracticeMode.ZH_EN -> R.string.mode_zh_en_desc
+        PracticeMode.ZH_EN_SPELL -> R.string.mode_spell_desc
+        PracticeMode.LISTEN_SPELL -> R.string.mode_listen_desc
+        PracticeMode.LISTEN_ZH -> R.string.mode_listen_zh_desc
+        PracticeMode.EX_SPELL -> R.string.mode_example_desc
+        PracticeMode.FORM -> R.string.mode_form_desc
+        PracticeMode.MIXED -> R.string.mode_mixed_desc
+    }
 
     /**
      * 新练习默认只抽没练过的词：新词为 0 且没勾「允许重复」时，把开始按钮灰掉，

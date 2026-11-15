@@ -91,7 +91,7 @@ class BarChartView @JvmOverloads constructor(
             val top = paddingTop + usableHeight - barHeight
             val rect = RectF(cx - barWidth / 2f, top, cx + barWidth / 2f, paddingTop + usableHeight)
             val paint = if (goal > 0 && value >= goal) barPaint else barSoftPaint
-            val radius = barWidth / 2f
+            val radius = minOf(barWidth / 2f, 4f * resources.displayMetrics.density)
             canvas.drawRoundRect(rect, radius, radius, paint)
 
             if (value > 0) {

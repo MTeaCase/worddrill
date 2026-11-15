@@ -942,20 +942,37 @@ class WordRepository(context: Context) {
     }
 
     /** 未来若干天每天到期的复习量（今天含已逾期的），用于报告页提示。 */
-    fun reviewForecast(days: Int, now: Long = System.currentTimeMillis()): List<Int> {
+    fun reviewForecast(
+        days: Int,
+        now: Long = System.currentTimeMillis(),
+        bookId: Long? = null,
+    ): List<Int> {
         if (days <= 0) return emptyList()
         val counts = IntArray(days)
         val end = now + days * ReviewScheduler.DAY_MS
+        val bookClause = if (bookId == null) "" else " AND w.book_id = ?"
+        val args = if (bookId == null) {
+            arrayOf(end.toString())
+        } else {
+            arrayOf(end.toString(), bookId.toString())
+        }
         db.rawQuery(
             """
             SELECT r.due_at FROM review r JOIN words w ON w._id = r.word_id
-            WHERE r.due_at <= ? AND w.blocked = 0
+            WHERE r.due_at <= ? AND w.blocked = 0$bookClause
             """.trimIndent(),
-            arrayOf(end.toString()),
+            args,
         ).use { c ->
             while (c.moveToNext()) {
-                // 已经逾期的词也算今天的任务，否则「今天 0 个、明天 3 个」会很奇怪
-                val index = ((c.getLong(0) - now) / ReviewScheduler.DAY_MS).coerceAtLeast(0L).toInt()
+                val delta = c.getLong(0) - now
+                // 已经逾期的词算今天；还没到的向上取整到「第几天」。
+                // 第 0 格必须和「今天到期」用同一个判断（due_at <= now），
+                // 否则会出现「今天到期 0 个」而柱状图说今天有 8 个。
+                val index = if (delta <= 0L) {
+                    0
+                } else {
+                    ((delta + ReviewScheduler.DAY_MS - 1) / ReviewScheduler.DAY_MS).toInt()
+                }
                 if (index in 0 until days) counts[index]++
             }
         }

@@ -57,6 +57,25 @@ class ReviewQueueTest {
     }
 
     @Test
+    fun forecastTodayBucketAgreesWithDueCount() {
+        val word = firstWord()
+        repo.recordAnswer(word.id, PracticeMode.EN_ZH, correct = false)
+        val bookId = word.bookId
+
+        val now = System.currentTimeMillis()
+        // 「今天到期」和柱状图第 0 格必须是同一个判断，否则会出现「0 个单词」配「今日 8 个」
+        assertEquals(0, repo.dueReviewCount(now = now, bookId = bookId))
+        val forecast = repo.reviewForecast(7, now = now, bookId = bookId)
+        assertEquals(0, forecast[0])
+        assertEquals(1, forecast[1])
+
+        // 过了到期时间，两边同时变成「今天 1 个」
+        val later = now + ReviewScheduler.DAY_MS + 60_000
+        assertEquals(1, repo.dueReviewCount(now = later, bookId = bookId))
+        assertEquals(1, repo.reviewForecast(7, now = later, bookId = bookId)[0])
+    }
+
+    @Test
     fun forecastHasSevenBuckets() {
         assertEquals(7, repo.reviewForecast(7).size)
     }
