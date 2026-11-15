@@ -11,12 +11,17 @@
     <color name="surface_variant">#F1F3FA</color>
     <color name="text_primary">#17181C</color>
     <color name="text_secondary">#5B6172</color>
-    <color name="text_hint">#6A7280</color>
+    <!-- 提示文字要满足 4.5:1（在 bg 上是 4.78，在 surface_variant 上是 4.70） -->
+    <color name="text_hint">#656D7C</color>
     <color name="divider">#E6E8F0</color>
-    <color name="correct">#1E8E5A</color>
+    <!-- 语义色同时用于「文字 / 描边 / 底色 + 白字」，所以取值要保证白字和正文都够看 -->
+    <color name="correct">#187A4B</color>
     <color name="correct_bg">#E4F6EC</color>
-    <color name="wrong">#D14343</color>
+    <color name="wrong">#B93636</color>
     <color name="wrong_bg">#FDEBEB</color>
+    <!-- 语义色徽章上的字母：浅色下白字，深色下换深字（深色模式语义色是浅色） -->
+    <color name="on_correct">#FFFFFF</color>
+    <color name="on_wrong">#FFFFFF</color>
     <color name="warn">#A8620A</color>
     <color name="white">#FFFFFF</color>
     <!-- hero 卡片：浅色用品牌蓝配白字，深色用深底配浅字，避免夜间白字压浅蓝 -->

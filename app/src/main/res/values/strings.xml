@@ -199,6 +199,7 @@
     <string name="action_dont_know">我不会</string>
     <string name="action_skip_word">不再练习此单词</string>
     <string name="skip_word_done">「%1$s」已标记为掌握，不再抽取</string>
+    <string name="practice_preparing">正在准备下一题…</string>
     <string name="fresh_exhausted">新词已练完，可在「复习」或「今日学习包」中练习已练过的词</string>
     <string name="allow_repeat_hint">勾选后可重复抽取练过的词</string>
     <string name="mode_unavailable_custom">自建词库缺少例句与词形数据，该题型不可用</string>

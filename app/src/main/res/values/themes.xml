@@ -6,6 +6,10 @@
         <item name="colorPrimaryContainer">@color/brand_container</item>
         <item name="colorOnPrimaryContainer">@color/brand_dark</item>
         <item name="colorSecondary">@color/accent</item>
+        <!-- 不补这两个角色的话，TonalButton 会落到 Material 默认的淡紫色容器上，
+             和品牌蓝完全不搭（「开始练习」就曾经因此像禁用态）。 -->
+        <item name="colorSecondaryContainer">@color/brand_container</item>
+        <item name="colorOnSecondaryContainer">@color/brand_dark</item>
         <item name="colorSurface">@color/surface</item>
         <item name="android:colorBackground">@color/bg</item>
         <item name="android:windowBackground">@color/bg</item>

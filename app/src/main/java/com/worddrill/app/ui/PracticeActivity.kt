@@ -267,11 +267,15 @@ class PracticeActivity : BaseActivity() {
     private fun waitForItems() {
         waitingForItems = true
         binding.progressBar.isIndeterminate = true
-        binding.tvProgress.text = "正在准备下一题…"
-        binding.optionContainer.visibility = View.GONE
-        binding.spellContainer.visibility = View.GONE
+        // 位置信息（第 N 题 / 共 M 题）保留，等待提示放到题干上方的说明位，
+        // 别把「第几题」冲掉——等待只是几秒，用户不该失去自己走到哪儿了。
+        binding.tvPromptLabel.text = getString(R.string.practice_preparing)
         binding.btnDontKnow.isEnabled = false
         binding.btnNext.visibility = View.GONE
+        // 等待期间删词无论如何都执行不了，别留一个点了没反应的按钮
+        binding.btnSkipWord.visibility = View.GONE
+        // 刚答完题的对错高亮、讲解都留在屏幕上：把选项区藏起来会让整屏塌一截，
+        // 新题到了再跳回来，读讲解的时候尤其难看。
     }
 
     private fun showEmptyDialog(allowRepeat: Boolean) {
@@ -443,7 +447,8 @@ class PracticeActivity : BaseActivity() {
         optionRows[index].setBackgroundResource(background)
         optionTexts[index].setTextColor(color(tone))
         optionBadges[index].backgroundTintList = ColorStateList.valueOf(color(tone))
-        optionBadges[index].setTextColor(color(R.color.white))
+        // 徽章底色是语义色本身：浅色模式下用白字，深色模式的语义色偏浅，要用深字
+        optionBadges[index].setTextColor(color(if (tone == R.color.correct) R.color.on_correct else R.color.on_wrong))
     }
 
     private fun color(id: Int): Int = ContextCompat.getColor(this, id)
