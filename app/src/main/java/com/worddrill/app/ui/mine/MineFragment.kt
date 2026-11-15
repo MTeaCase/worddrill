@@ -151,7 +151,6 @@ class MineFragment : Fragment() {
             startActivity(DictionaryActivity.intent(requireContext()))
         }
         binding.btnCheckUpdate.setOnClickListener { Updater.check(activity(), manual = true) }
-        binding.btnSmartParseUrl.setOnClickListener { editSmartParseUrl() }
         binding.btnPrivacy.setOnClickListener { startActivity(PrivacyActivity.intent(requireContext())) }
         binding.btnLicense.setOnClickListener { startActivity(PrivacyActivity.licenseIntent(requireContext())) }
         binding.btnAbout.setOnClickListener { AboutDialog.show(activity()) }
@@ -159,7 +158,6 @@ class MineFragment : Fragment() {
         binding.tvVersion.text = "WordDrill ${BuildConfig.VERSION_NAME}"
         refreshSwitches()
         refreshVoiceSettings()
-        refreshSmartParseUrl()
         refreshAutoBackupTime()
     }
 
@@ -183,7 +181,6 @@ class MineFragment : Fragment() {
         refreshVoiceSettings()
         refreshReminderText()
         refreshAutoBackupTime()
-        refreshSmartParseUrl()
         refreshBackupControls()
     }
 
@@ -702,45 +699,6 @@ class MineFragment : Fragment() {
                 refreshAutoBackupTime()
                 refreshBackupControls()
                 toast("已清除备份缓存")
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-
-    // ---------- 其他 ----------
-
-    private fun refreshSmartParseUrl() {
-        if (_binding == null) return
-        val current = Settings.smartParseUrl(requireContext())
-        val isDefault = current == BuildConfig.SMART_PARSE_URL
-        binding.tvSmartParseUrl.text = if (isDefault) "默认：$current" else "$current（已自定义）"
-    }
-
-    private fun editSmartParseUrl() {
-        val context = requireContext()
-        val input = EditText(context).apply {
-            setText(Settings.smartParseUrl(context))
-            setSingleLine(false)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        }
-        val density = resources.displayMetrics.density
-        val container = FrameLayout(context).apply {
-            setPadding((20 * density).toInt(), (8 * density).toInt(), (20 * density).toInt(), 0)
-            addView(input)
-        }
-        MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.settings_smart_parse)
-            .setMessage("填写已部署的接口地址，多个地址以英文逗号分隔，按顺序回退。")
-            .setView(container)
-            .setPositiveButton("保存") { _, _ ->
-                Settings.setSmartParseUrl(context, input.text.toString())
-                refreshSmartParseUrl()
-                toast("已保存")
-            }
-            .setNeutralButton("恢复默认") { _, _ ->
-                Settings.setSmartParseUrl(context, "")
-                refreshSmartParseUrl()
-                toast("已恢复默认地址")
             }
             .setNegativeButton("取消", null)
             .show()

@@ -11,8 +11,8 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 24
-        versionName = "1.6.3"
+        versionCode = 25
+        versionName = "1.6.4"
 
         // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
         // 支持用英文逗号分隔配多个镜像，会按顺序尝试，第一个可用即返回，例如：
@@ -28,7 +28,7 @@ android {
         buildConfigField(
             "String",
             "SMART_PARSE_URL",
-            "\"https://worddrill-vercel.vercel.app/api/smart-parse,https://worddrill-ai.netlify.app/api/smart-parse\"",
+            "\"https://api.zzlltt.xyz/api/smart-parse,https://worddrill-vercel.vercel.app/api/smart-parse,https://worddrill-ai.netlify.app/api/smart-parse\"",
         )
     }
 

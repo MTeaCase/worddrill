@@ -177,7 +177,7 @@
     <string name="import_phrase_tip">词组建议不填词性。</string>
     <string name="import_prompt_tag">格式提示</string>
     <string name="import_prompt_title">用 AI 整理成固定格式</string>
-    <string name="import_prompt_body">把单词发给常用 AI，附上下面的提示词，让它输出三字段的纯文本；结果粘贴回本页，解析无误后保存导入。内容仅发送给所选的 AI。</string>
+    <string name="import_prompt_body">把单词发给常用 AI，附上下面的提示词，让它输出三字段的纯文本；结果粘贴回本页，解析无误后保存导入。也可以直接用下方的「AI 智能解析」，不必手动复制提示词。</string>
     <string name="import_prompt_copy">复制提示词</string>
     <string name="import_prompt_expand">展开提示词</string>
     <string name="import_prompt_collapse">收起提示词</string>
@@ -236,7 +236,7 @@
     <string name="settings_license_desc">GPLv3 许可与内置词库来源</string>
 
     <!-- 智能解析 -->
-    <string name="import_ai_parse">智能解析</string>
+    <string name="import_ai_parse">AI 智能解析</string>
     <string name="import_ai_running">正在整理…</string>
     <string name="import_ai_progress">正在整理第 %1$d/%2$d 段…</string>
     <string name="import_ai_start">开始整理</string>
