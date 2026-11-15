@@ -73,8 +73,6 @@ class PracticeFragment : Fragment() {
         // 学习包：每天一个「复习 + 错题 + 新词」的组合，点一下直接开练
         binding.cardDailyPack.setOnClickListener { startDailyPack() }
 
-        // 八种模式默认收起：先给推荐（混合），需要时再展开挑
-        binding.rowMode.setOnClickListener { setModeGridOpen(binding.modeGrid.visibility != View.VISIBLE) }
         binding.rowSettings.setOnClickListener { setExpanded(!expanded) }
         // 默认只抽没练过的词；勾上「允许重复」再放开
         binding.cbAllowRepeat.setOnCheckedChangeListener { _, _ -> refreshStartButton() }
@@ -93,7 +91,6 @@ class PracticeFragment : Fragment() {
         }
 
         selectMode(mode)
-        setModeGridOpen(false)
         setExpanded(false)
         loadBooks()
     }
@@ -142,13 +139,7 @@ class PracticeFragment : Fragment() {
             card.strokeColor = color(if (selected) R.color.brand else R.color.divider)
             card.setCardBackgroundColor(color(if (selected) R.color.brand_soft else R.color.surface))
         }
-        binding.tvModeValue.text = target.label
-    }
-
-    private fun setModeGridOpen(open: Boolean) {
-        binding.modeGrid.isVisible = open
-        binding.ivModeChevron.rotation = if (open) 270f else 90f
-    }
+        }
 
     /**
      * 新练习默认只抽没练过的词：新词为 0 且没勾「允许重复」时，把开始按钮灰掉，

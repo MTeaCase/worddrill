@@ -55,6 +55,15 @@ class ScreenshotTest {
         switchTab(activity, R.id.tab_mine, "tab_mine.png")
     }
 
+    /** 练习页一屏放不下四个模式网格，用高画布确认下半部分也整齐。 */
+    @Test
+    @Config(sdk = [34], qualifiers = "w411dp-h2000dp-xxhdpi")
+    fun renderPracticeTabFullPage() {
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        waitForBooks(activity)
+        capture(activity.window.decorView, "tab_practice_full.png")
+    }
+
     /** 设置页很长，用一块高画布把整页拍下来，才看得到备份 / 其他两段。 */
     @Test
     @Config(sdk = [34], qualifiers = "w411dp-h2400dp-xxhdpi")
@@ -62,6 +71,43 @@ class ScreenshotTest {
         val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
         waitForBooks(activity)
         switchTab(activity, R.id.tab_mine, "tab_mine_full.png")
+    }
+
+    /** 复习页有排期时的样子：逾期、明天、后天都要在折线/柱状里看得见。 */
+    @Test
+    fun renderReviewWithForecast() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bookId = seedForecastData(context)
+        com.worddrill.app.util.Settings.setSelectedBookId(context, bookId)
+
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        waitForBooks(activity)
+        switchTab(activity, R.id.tab_review, "tab_review_forecast.png")
+    }
+
+    /** 造一批排期：7 个逾期词 + 几个未来几天的词。 */
+    private fun seedForecastData(context: Context): Long {
+        val repo = WordRepository(context)
+        val latch = CountDownLatch(1)
+        var bookId = -1L
+        Thread {
+            val entries = (1..12).map { VocabEntry("forecast$it", "n.", "预测词 $it") }
+            bookId = repo.importEntries(null, "复习预测测试", entries).bookId
+            val words = repo.words(bookId)
+            // 答错归零，到期时间落在「今天」，也就是逾期
+            words.take(7).forEach { word ->
+                repo.recordAnswer(word.id, com.worddrill.app.data.PracticeMode.EN_ZH, correct = false)
+            }
+            // 连续答对升级，到期时间分别落到 1、2、4 天后
+            words.drop(7).forEachIndexed { index, word ->
+                repeat(index + 1) {
+                    repo.recordAnswer(word.id, com.worddrill.app.data.PracticeMode.EN_ZH, correct = true)
+                }
+            }
+            latch.countDown()
+        }.start()
+        latch.await(60, TimeUnit.SECONDS)
+        return bookId
     }
 
     /** 切到底部某个页签，等布局跑完再截图。 */

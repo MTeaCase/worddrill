@@ -130,6 +130,8 @@ class ReviewFragment : Fragment() {
         }
 
         val total = data.forecast.sum()
+        // 逾期也算今天：数字都给到图里，别只把图露出来却空着
+        binding.chartForecast.setForecast(data.forecast)
         // 没有排期时不画空柱状图，直接给一句说明，省一大块空白
         binding.chartForecast.isVisible = total > 0
         binding.tvForecast.text = if (total == 0) {
