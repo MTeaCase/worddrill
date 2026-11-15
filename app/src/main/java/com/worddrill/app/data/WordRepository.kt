@@ -234,6 +234,14 @@ class WordRepository(context: Context) {
         return db.rawQuery(sql, null).use { c -> c.toWords() }
     }
 
+    /** 只取本轮涉及的那几本书：干扰项更贴题，建池也快得多。 */
+    fun wordsOfBooks(bookIds: Set<Long>, limit: Int = 12000): List<Word> {
+        if (bookIds.isEmpty()) return emptyList()
+        val placeholders = bookIds.joinToString(",") { "?" }
+        val sql = "SELECT $WORD_COLUMNS FROM words w WHERE w.blocked = 0 AND w.book_id IN ($placeholders) LIMIT $limit"
+        return db.rawQuery(sql, bookIds.map { it.toString() }.toTypedArray()).use { c -> c.toWords() }
+    }
+
     /**
      * 掌握度：按复习等级分四档（0 级 / 1–2 级 / 3–4 级 / 5 级以上），
      * 另外单独统计「从没练过」的词数——0 级里混着这两种，分开看更准。

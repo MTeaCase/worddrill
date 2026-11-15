@@ -112,6 +112,22 @@ class QuizEngineTest {
         assertTrue("实际只分到 $modes", modes.size >= 3)
     }
 
+    /** 先锁词、后分批出题：两次的题号顺序要完全一致。 */
+    @Test
+    fun selectThenBuildKeepsTheSameOrder() {
+        val selected = QuizEngine.selectWords(all, 3, PracticeMode.EN_ZH, Random(5))
+        assertEquals(3, selected.size)
+        val built = QuizEngine.buildItems(
+            words = selected,
+            allWords = all,
+            mode = PracticeMode.EN_ZH,
+            random = Random(5),
+            confusePool = Confuse.Pool(all),
+        )
+        assertEquals(selected.map { it.id }, built.map { it.word.id })
+        assertEquals(3, built.map { it.options.size }.min())
+    }
+
     @Test
     fun mixedModeWithoutTtsNeverPicksListening() {
         val words = (1L..40L).map { word(it, "w$it", "m$it") }

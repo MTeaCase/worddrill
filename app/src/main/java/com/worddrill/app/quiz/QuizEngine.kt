@@ -74,24 +74,63 @@ object QuizEngine {
         /** 干扰项是否每次从最像的 9 个词里重新抽；关闭后同一个词的选项固定。 */
         varyDistractors: Boolean = true,
     ): List<QuizItem> {
+        val selected = selectWords(pool, count, mode, random, allowRichModes)
+        if (selected.isEmpty()) return emptyList()
+        return buildItems(
+            words = selected,
+            allWords = allWords,
+            mode = mode,
+            random = random,
+            ttsEnabled = ttsEnabled,
+            allowRichModes = allowRichModes,
+            varyDistractors = varyDistractors,
+        )
+    }
+
+    /**
+     * 抽题这一步先做：洗牌、按题型条件过滤、取前 N 个。
+     * 抽到的词一旦确定就不再变，后面的出题可以分批慢慢算。
+     */
+    fun selectWords(
+        pool: List<Word>,
+        count: Int,
+        mode: PracticeMode,
+        random: Random = Random.Default,
+        allowRichModes: Boolean = true,
+    ): List<Word> {
         if (pool.isEmpty() || count <= 0) return emptyList()
-        // 例句填词需要例句、词形变化需要能推断出词形；用不了的题型直接退回英译汉，
-        // 别在自建词库上出一堆空题
         val effectiveMode = when {
             !allowRichModes && (mode == PracticeMode.EX_SPELL || mode == PracticeMode.FORM) -> PracticeMode.EN_ZH
             else -> mode
         }
-        // 例句填词和词形变化有前提条件，先按条件筛一遍，宁可这轮题少也别出空题
         val usable = when (effectiveMode) {
             PracticeMode.EX_SPELL -> pool.filter { blankExample(it.exampleEn, it.text) != null }
             PracticeMode.FORM -> pool.filter { com.worddrill.app.data.WordForms.questionFor(it) != null }
             else -> pool
         }
-        if (usable.isEmpty()) return emptyList()
-        val picked = usable.shuffled(random).distinctBy { it.id }.take(count)
-        // 一轮里干扰项候选池固定，预处理一次就够
-        val confusePool = Confuse.Pool(allWords)
-        return picked.map { word ->
+        return usable.shuffled(random).distinctBy { it.id }.take(count)
+    }
+
+    /**
+     * 给已经选好的词逐个出题。可以只传前几个先让用户开练，剩下的再分批算。
+     */
+    fun buildItems(
+        words: List<Word>,
+        allWords: List<Word>,
+        mode: PracticeMode,
+        random: Random = Random.Default,
+        ttsEnabled: Boolean = true,
+        allowRichModes: Boolean = true,
+        varyDistractors: Boolean = true,
+        /** 一轮里词表固定，干扰项候选池预处理一次就够；不传就现建。 */
+        confusePool: Confuse.Pool = Confuse.Pool(allWords),
+    ): List<QuizItem> {
+        if (words.isEmpty()) return emptyList()
+        val effectiveMode = when {
+            !allowRichModes && (mode == PracticeMode.EX_SPELL || mode == PracticeMode.FORM) -> PracticeMode.EN_ZH
+            else -> mode
+        }
+        return words.map { word ->
             val itemMode = if (effectiveMode == PracticeMode.MIXED) {
                 pickMixed(word, ttsEnabled, allowRichModes)
             } else {

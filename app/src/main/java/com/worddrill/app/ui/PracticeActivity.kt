@@ -22,6 +22,7 @@ import com.worddrill.app.R
 import com.worddrill.app.data.AnswerRecord
 import com.worddrill.app.data.PracticeMode
 import com.worddrill.app.data.ReviewRating
+import com.worddrill.app.data.Word
 import com.worddrill.app.data.WordFilter
 import com.worddrill.app.data.WordRepository
 import com.worddrill.app.databinding.ActivityPracticeBinding
@@ -42,6 +43,10 @@ class PracticeActivity : BaseActivity() {
     private var bookName: String = ""
     private var items: List<QuizItem> = emptyList()
     private var index = 0
+
+    /** 本轮总题数（词一选中就固定），第一批题算好之前 item 可能还没齐。 */
+    private var totalCount = 0
+    private var waitingForItems = false
     private var answered = false
     private val records = mutableListOf<AnswerRecord>()
     private var pendingNext: Runnable? = null
@@ -153,41 +158,105 @@ class PracticeActivity : BaseActivity() {
             } else {
                 repo.pickWords(bookId, start, end, count, allowRepeat, filter, require)
             }
-            val all = repo.allWords()
             // 自建词库没有例句/词形数据：不出例句填词、词形变化，混合也只混基础题型
             val allowRichModes = repo.book(bookId)?.builtin != false
-            QuizEngine.build(
-                pool = words,
+            // 点“开始”就把词定下来：洗牌、过滤、取前 N 个，之后不再变
+            val selected = QuizEngine.selectWords(words, requested, mode, allowRichModes = allowRichModes)
+            // 干扰项只在本轮涉及的词库里抽：更贴题，建池也快得多
+            val bookIds = selected.map { it.bookId }.toSet()
+            val all = repo.wordsOfBooks(bookIds).ifEmpty { repo.allWords() }
+            val pool = com.worddrill.app.quiz.Confuse.Pool(all)
+            // 先只算前面几题，剩下的边答题边算
+            val first = QuizEngine.buildItems(
+                words = selected.take(FIRST_BATCH),
                 allWords = all,
-                count = requested,
                 mode = mode,
                 ttsEnabled = Settings.ttsEnabled(this),
                 allowRichModes = allowRichModes,
                 varyDistractors = Settings.varyDistractors(this),
+                confusePool = pool,
+            )
+            Session(
+                words = selected,
+                allWords = all,
+                confusePool = pool,
+                items = first.toMutableList(),
+                allowRichModes = allowRichModes,
+                practiced = repo.practicedWordIds(),
             )
         }) { result ->
             binding.progressBar.isIndeterminate = false
-            result.onSuccess { quiz ->
-                if (quiz.isEmpty()) {
+            result.onSuccess { session ->
+                if (session.items.isEmpty()) {
                     showEmptyDialog(allowRepeat)
                     return@onSuccess
                 }
                 // 首练标记：还没进 practice_log 的词，可以顺手标成「已掌握」
-                val practiced = repo.practicedWordIds()
-                items = quiz.map { item ->
-                    if (item.word.id in practiced) item else item.copy(firstTime = true)
+                session.items.indices.forEach { i ->
+                    val item = session.items[i]
+                    if (item.word.id !in session.practiced) session.items[i] = item.copy(firstTime = true)
                 }
-                baseSize = items.size
+                items = session.items
+                totalCount = session.words.size
+                baseSize = session.words.size
                 index = 0
                 render()
-                if (quiz.size < requested) {
-                    toast("可用单词不足，本轮共 ${quiz.size} 题")
+                if (session.words.size < requested) {
+                    toast("可用单词不足，本轮共 ${session.words.size} 题")
                 }
+                buildRemaining(session)
             }.onFailure {
                 toast("加载失败：${it.message}")
                 finish()
             }
         }
+    }
+
+    /** 第一批已经能开练，剩下的题在后台接着算；算到当前题时会自动接上。 */
+    private fun buildRemaining(session: Session) {
+        val rest = session.words.drop(session.items.size)
+        if (rest.isEmpty()) return
+        Bg.run({
+            QuizEngine.buildItems(
+                words = rest,
+                allWords = session.allWords,
+                mode = mode,
+                ttsEnabled = Settings.ttsEnabled(this),
+                allowRichModes = session.allowRichModes,
+                varyDistractors = Settings.varyDistractors(this),
+                confusePool = session.confusePool,
+            )
+        }) { result ->
+            result.onSuccess { built ->
+                if (isFinishing || isDestroyed) return@onSuccess
+                val more = built.map { item ->
+                    if (item.word.id in session.practiced) item else item.copy(firstTime = true)
+                }
+                session.items += more
+                binding.progressBar.isIndeterminate = false
+                if (waitingForItems && index < items.size) {
+                    waitingForItems = false
+                    render()
+                }
+            }.onFailure {
+                if (isFinishing || isDestroyed) return@onFailure
+                if (waitingForItems) {
+                    toast("后面的题准备失败，本轮到此结束")
+                    finishSession()
+                }
+            }
+        }
+    }
+
+    /** 用户答得比后台算得快：先停住，等这一题算出来再继续。 */
+    private fun waitForItems() {
+        waitingForItems = true
+        binding.progressBar.isIndeterminate = true
+        binding.tvProgress.text = "正在准备下一题…"
+        binding.optionContainer.visibility = View.GONE
+        binding.spellContainer.visibility = View.GONE
+        binding.btnDontKnow.isEnabled = false
+        binding.btnNext.visibility = View.GONE
     }
 
     private fun showEmptyDialog(allowRepeat: Boolean) {
@@ -221,11 +290,12 @@ class PracticeActivity : BaseActivity() {
         shownAt = SystemClock.elapsedRealtime()
         val itemMode = item.mode
         binding.tvProgress.text = if (mode == PracticeMode.MIXED) {
-            "第 ${index + 1} 题 / 共 ${items.size} 题 · ${itemMode.label}"
+            "第 ${index + 1} 题 / 共 $totalCount 题 · ${itemMode.label}"
         } else {
-            "第 ${index + 1} 题 / 共 ${items.size} 题"
+            "第 ${index + 1} 题 / 共 $totalCount 题"
         }
-        binding.progressBar.max = items.size
+        binding.progressBar.isIndeterminate = false
+        binding.progressBar.max = totalCount
         binding.progressBar.setProgressCompat(index, true)
         val isListen = itemMode == PracticeMode.LISTEN_SPELL || itemMode == PracticeMode.LISTEN_ZH
         val canHear = isListen || itemMode == PracticeMode.EN_ZH
@@ -319,7 +389,7 @@ class PracticeActivity : BaseActivity() {
 
     private fun chooseOption(option: Int) {
         if (answered) return
-        val item = items[index]
+        val item = items.getOrNull(index) ?: return
         answered = true
         binding.btnDontKnow.isEnabled = false
         val correct = option == item.correctOption
@@ -364,8 +434,8 @@ class PracticeActivity : BaseActivity() {
 
     /** 「我不会」：直接记为答错，进错题本并进入下一题。 */
     private fun markUnknown() {
-        if (answered || items.isEmpty()) return
-        val item = items[index]
+        if (answered) return
+        val item = items.getOrNull(index) ?: return
         answered = true
         binding.btnDontKnow.isEnabled = false
         binding.etAnswer.isEnabled = false
@@ -377,8 +447,8 @@ class PracticeActivity : BaseActivity() {
     }
 
     private fun submitSpelling() {
-        if (answered || items.isEmpty()) return
-        val item = items[index]
+        if (answered) return
+        val item = items.getOrNull(index) ?: return
         val input = binding.etAnswer.text?.toString().orEmpty()
         if (input.isBlank()) {
             toast("请输入英文")
@@ -400,8 +470,8 @@ class PracticeActivity : BaseActivity() {
      * 已经答过的题不给这个入口——不然答错之后一点，错题记录就白留了。
      */
     private fun markKnownWord() {
-        if (answered || items.isEmpty()) return
-        val item = items[index]
+        if (answered) return
+        val item = items.getOrNull(index) ?: return
         pendingNext?.let { binding.root.removeCallbacks(it) }
         pendingNext = null
         Bg.run({ repo.setKnown(item.word.id, true) }) { result ->
@@ -524,7 +594,11 @@ class PracticeActivity : BaseActivity() {
     private fun requeueForRetry(item: QuizItem) {
         if (!retried.add(item.word.id)) return
         if (baseSize <= 0 || items.size >= baseSize * 2) return
-        items = items + item
+        // 题目列表和后台补算共用同一个 MutableList，这里必须原地追加，
+        // 否则后台算好的题会追加到旧列表上，用户走到新题时会卡在「准备中」
+        val live = items as? MutableList<QuizItem>
+        if (live != null) live.add(item) else items = items + item
+        totalCount = items.size
         if (!retryHintShown) {
             retryHintShown = true
             toast("答错的单词会在本轮末尾再出现一次")
@@ -568,8 +642,11 @@ class PracticeActivity : BaseActivity() {
         pendingNext = null
         ratingWordId = null
         index++
-        if (index >= items.size) {
+        if (index >= totalCount) {
             finishSession()
+        } else if (index >= items.size) {
+            // 后台还没算到这一题：先停住，等它算出来
+            waitForItems()
         } else {
             render()
         }
@@ -582,8 +659,7 @@ class PracticeActivity : BaseActivity() {
     }
 
     private fun toggleStar() {
-        if (items.isEmpty()) return
-        val item = items[index]
+        val item = items.getOrNull(index) ?: return
         val target = !item.word.starred
         Bg.run({ repo.setStar(item.word.id, target) }) { result ->
             result.onSuccess {
@@ -621,7 +697,19 @@ class PracticeActivity : BaseActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    /** 一轮练习的会话：词已经定死，题目可以分批算。 */
+    private data class Session(
+        val words: List<Word>,
+        val allWords: List<Word>,
+        val confusePool: com.worddrill.app.quiz.Confuse.Pool,
+        val items: MutableList<QuizItem>,
+        val allowRichModes: Boolean,
+        val practiced: Set<Long>,
+    )
+
     companion object {
+        private const val FIRST_BATCH = 3
+
         private const val EXTRA_MODE = "mode"
         private const val EXTRA_BOOK_ID = "book_id"
         private const val EXTRA_BOOK_NAME = "book_name"
