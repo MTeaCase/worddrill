@@ -1,8 +1,8 @@
 {
-  "versionCode": 24,
-  "versionName": "1.6.3",
-  "content": "1. 练习页开练不再等整轮：点击即锁定本轮单词，先算前 3 题进入练习，其余边答题边算\n2. 干扰项候选池改为只取本轮涉及的词库，建池与形近计算更快，选项也更贴题\n3. 答到尚未算好的题会显示「正在准备下一题…」并自动接上，不会跳过或崩溃\n4. 进度按本轮总题数显示，分批出题不影响进度条\n5. 其余内容同 1.6.2：形近干扰项、错题 CSV、主题三态、备份配置与覆盖恢复、复习全部等",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.3/WordDrill-1.6.3.apk",
-  "size": 7733675,
-  "md5": "3ced07f14595d61727cb9abbe84605cf"
+  "versionCode": 25,
+  "versionName": "1.6.4",
+  "content": "1. 智能解析改走自建边缘节点（api.zzlltt.xyz），保留 Vercel / Netlify 作为回退地址\n2. 「我的」页不再显示解析服务地址，普通用户看不到接口配置\n3. 导入页提示卡补充「也可以直接用下方的 AI 智能解析」，底部按钮改为「AI 智能解析」\n4. 其余内容同 1.6.3：开练分批出题、形近干扰项、错题 CSV、主题三态、备份配置与覆盖恢复",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.4/WordDrill-1.6.4.apk",
+  "size": 7732435,
+  "md5": "c182b87998d7b1a32a1855a07006328d"
 }
