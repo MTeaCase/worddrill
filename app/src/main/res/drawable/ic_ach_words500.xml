@@ -6,5 +6,5 @@
     <!-- 书架上一排书：练过 500 个词 -->
     <path
         android:fillColor="#FF000000"
-        android:pathData="M4.8,7.4h2.9V18H4.8zM8.4,6.2h2.9V18H8.4zM12,8h2.9V18H12zM15.6,5.4h2.9V18h-2.9zM3.4,18.9h17.2V20.2H3.4z" />
+        android:pathData="M5,7.2h2.8V18H5zM8.6,7.2h2.8V18H8.6zM12.2,7.2h2.8V18h-2.8zM15.8,7.2h2.8V18h-2.8zM3.4,18.8h17.2v1.4H3.4z" />
 </vector>
