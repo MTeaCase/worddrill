@@ -110,6 +110,42 @@ class ScreenshotTest {
         return bookId
     }
 
+    /** 成就页：练一个词解锁「首个单词」，其余保持灰色。 */
+    @Test
+    fun renderAchievementsScreen() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        unlockFirstAchievement(context)
+
+        val activity = Robolectric.buildActivity(AchievementsActivity::class.java).setup().get()
+        val deadline = System.currentTimeMillis() + 15_000
+        while (System.currentTimeMillis() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle()
+            val recycler = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(
+                R.id.rvAchievements,
+            )
+            if ((recycler?.adapter?.itemCount ?: 0) > 0) break
+            Thread.sleep(50)
+        }
+        shadowOf(Looper.getMainLooper()).idle()
+        Thread.sleep(300)
+        shadowOf(Looper.getMainLooper()).idle()
+        capture(activity.window.decorView, "achievements.png")
+    }
+
+    /** 练会一个词并跑一次判定，让「首个单词」解锁。 */
+    private fun unlockFirstAchievement(context: Context) {
+        val repo = WordRepository(context)
+        val latch = CountDownLatch(1)
+        Thread {
+            val bookId = repo.books().first().id
+            val word = repo.words(bookId, limit = 1).first()
+            repo.recordAnswer(word.id, com.worddrill.app.data.PracticeMode.EN_ZH, correct = true)
+            repo.checkAchievements()
+            latch.countDown()
+        }.start()
+        latch.await(30, TimeUnit.SECONDS)
+    }
+
     /** 切到底部某个页签，等布局跑完再截图。 */
     private fun switchTab(activity: MainActivity, itemId: Int, name: String) {
         activity.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(

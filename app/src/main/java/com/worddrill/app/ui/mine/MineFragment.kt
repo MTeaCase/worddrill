@@ -137,7 +137,9 @@ class MineFragment : Fragment() {
                 .show()
         }
         binding.rowExam.setOnClickListener { pickExam() }
-        binding.rowAchievements.setOnClickListener { showAchievements() }
+        binding.rowAchievements.setOnClickListener {
+            startActivity(com.worddrill.app.ui.AchievementsActivity.intent(requireContext()))
+        }
         binding.rowVocabTest.setOnClickListener {
             startActivity(android.content.Intent(requireContext(), VocabTestActivity::class.java))
         }
@@ -290,28 +292,6 @@ class MineFragment : Fragment() {
             calendar.get(java.util.Calendar.MONTH),
             calendar.get(java.util.Calendar.DAY_OF_MONTH),
         ).show()
-    }
-
-    private fun showAchievements() {
-        Bg.run({ repo.checkAchievements(); repo.achievementState() }) { result ->
-            result.onSuccess { list ->
-                if (_binding == null || !isAdded) return@onSuccess
-                val text = list.joinToString("\n") { (def, at) ->
-                    val mark = if (at > 0L) "已获得" else "未获得"
-                    val whenText = if (at > 0L) {
-                        SimpleDateFormat("MM-dd", Locale.US).format(Date(at))
-                    } else {
-                        "待解锁"
-                    }
-                    "$mark · ${def.title}：${def.detail}（$whenText）"
-                }
-                AlertDialog.Builder(requireContext())
-                    .setTitle(R.string.settings_achievements)
-                    .setMessage(text)
-                    .setPositiveButton("关闭", null)
-                    .show()
-            }
-        }
     }
 
     private fun pickAccent() {

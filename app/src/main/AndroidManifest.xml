@@ -70,6 +70,8 @@
 
         <activity android:name=".ui.PrivacyActivity" />
 
+        <activity android:name=".ui.AchievementsActivity" />
+
         <activity
             android:name=".ui.ImportActivity"
             android:exported="true"

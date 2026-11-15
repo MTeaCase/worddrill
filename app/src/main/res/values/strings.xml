@@ -57,6 +57,12 @@
     <!-- 成就 -->
     <string name="settings_achievements">成就徽章</string>
     <string name="settings_achievements_desc">连续打卡、掌握词数、快速答对可解锁</string>
+    <string name="ach_summary">已获得 %1$d / %2$d</string>
+    <string name="ach_hint">答完题自动判定，解锁后不会重复计入</string>
+    <string name="ach_unlocked">已获得</string>
+    <string name="ach_locked">未获得</string>
+    <string name="ach_unlocked_at">解锁于 %1$s</string>
+    <string name="ach_locked_when">完成条件后自动解锁</string>
 
     <!-- 词汇量自测 -->
     <string name="settings_vocab_test">词汇量自测</string>
