@@ -60,7 +60,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swTts"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -143,7 +143,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swReminder"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -172,7 +172,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swExampleAi"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -226,7 +226,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swSelfRating"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -248,7 +248,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swVaryDistractors"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -270,7 +270,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swRevealMeanings"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"
@@ -541,7 +541,7 @@
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swAutoBackup"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:minHeight="48dp"
                         android:paddingStart="16dp"
                         android:paddingTop="0dp"

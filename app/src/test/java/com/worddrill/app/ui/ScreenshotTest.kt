@@ -55,6 +55,15 @@ class ScreenshotTest {
         switchTab(activity, R.id.tab_mine, "tab_mine.png")
     }
 
+    /** 设置页很长，用一块高画布把整页拍下来，才看得到备份 / 其他两段。 */
+    @Test
+    @Config(sdk = [34], qualifiers = "w411dp-h2400dp-xxhdpi")
+    fun renderMineFullPage() {
+        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        waitForBooks(activity)
+        switchTab(activity, R.id.tab_mine, "tab_mine_full.png")
+    }
+
     /** 切到底部某个页签，等布局跑完再截图。 */
     private fun switchTab(activity: MainActivity, itemId: Int, name: String) {
         activity.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(
