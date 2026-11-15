@@ -1,8 +1,8 @@
 # WordDrill 隐私政策
 
 **生效日期：2026 年 11 月 3 日**
-**更新日期：2026 年 11 月 3 日**
-**适用版本：1.2.1 及以上**
+**更新日期：2026 年 11 月 15 日**
+**适用版本：1.6.4 及以上**
 
 ---
 
@@ -39,7 +39,7 @@ WordDrill（以下简称"本应用"）是一款运行于 Android 平台的离线
 （1）您使用或导入的词库名称及词条内容（英文、词性、中文释义）；
 （2）您对词条所作的标记，包括星标、屏蔽状态；
 （3）您的学习记录，包括错题记录、答题次数、答题正确情况、连续打卡天数、复习等级与到期时间；
-（4）您的应用设置，包括每日练习目标、单词朗读开关、智能解析服务地址；
+（4）您的应用设置，包括每日练习目标、各类配额、单词朗读与口音、主题、备份间隔等偏好；
 （5）版本更新过程中下载的安装包临时文件。
 
 2.2 上述信息存储于本应用的私有存储空间（应用沙箱内的 SQLite 数据库、SharedPreferences 及私有文件目录），
@@ -81,8 +81,9 @@ WordDrill（以下简称"本应用"）是一款运行于 Android 平台的离线
 4.1 **触发条件。** 智能解析功能不会自动执行。仅在您主动点击"智能解析"按钮、阅读确认提示并点击确认后，
 本应用才会向网络发送数据。
 
-4.2 **处理流程。** 您提交的文本首先发送至我们部署在 Netlify 平台的中转服务，由该服务转发至商汤科技
-（SenseNova 日日新）的大语言模型接口，模型返回整理结果后，经中转服务回传至您的设备。
+4.2 **处理流程。** 您提交的文本首先发送至我们部署在腾讯云 EdgeOne 边缘节点上的中转服务（主线路；
+该服务不可用时回退到部署在 Netlify 平台上的同功能服务），由该服务转发至商汤科技（SenseNova 日日新）的
+大语言模型接口，模型返回整理结果后，经中转服务回传至您的设备。两条线路使用同一套处理逻辑，均不留存文本。
 
 4.3 **存储情况。** 中转服务仅完成转发，**不将您提交的文本写入数据库，不进行留存**；服务端运行日志仅记录调用
 时间、状态码等技术元信息，不记录文本内容。
@@ -103,13 +104,15 @@ WordDrill（以下简称"本应用"）是一款运行于 Android 平台的离线
 
 （1）Cloudflare, Inc.：托管版本更新清单文件；
 （2）Gitee（码云）、GitHub, Inc.：托管版本更新安装包文件；
-（3）Netlify, Inc.：运行智能解析中转服务；
-（4）商汤科技（SenseNova）：提供大语言模型推理服务。
+（3）腾讯云（Tencent Cloud，EdgeOne 边缘函数）：运行智能解析中转服务（主线路）；
+（4）Netlify, Inc.：运行智能解析中转服务（回退线路）；
+（5）商汤科技（SenseNova）：提供大语言模型推理服务。
 
 上述服务方的隐私政策参见其官方网站公示内容，主要链接如下：
 
 - Cloudflare：https://www.cloudflare.com/privacypolicy/
 - GitHub：https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement
+- 腾讯云：https://cloud.tencent.com/document/product/301/11470
 - Netlify：https://www.netlify.com/privacy/
 - 商汤科技：https://www.sensecore.cn/privacy
 
@@ -134,7 +137,7 @@ WordDrill（以下简称"本应用"）是一款运行于 Android 平台的离线
 7.2 **删除。** 您可通过卸载本应用、清除应用数据或删除自建词库的方式删除全部本地数据。
 
 7.3 **撤回同意。** 智能解析功能以您的单次点击为触发条件，不点击即不发送数据，无需另行撤回；
-您也可以在设置中修改或清空智能解析服务地址。
+您也可以在系统设置中禁止本应用使用移动数据或 Wi-Fi，或在「我的」里关闭「AI 例句生成」。
 
 7.4 **备份文件的管理。** 您通过"导出备份"生成的文件由您自行选择保存位置。该文件不经过我们的服务器，
 其删除、转移与保管由您自主控制。
@@ -182,7 +185,7 @@ GitHub Issues：https://github.com/SpeakerC/worddrill/issues
 | 版本检查与更新包下载 | `app/src/main/java/com/worddrill/app/util/Updater.kt`、`ApkDownloader.kt` |
 | 更新包安装 | `app/src/main/java/com/worddrill/app/util/ApkInstaller.kt` |
 | 智能解析客户端 | `app/src/main/java/com/worddrill/app/util/SmartParser.kt` |
-| 智能解析中转服务 | `netlify/functions/smart-parse.js` |
+| 智能解析中转服务 | `edgeone/smart-parse.js`（主）、`netlify/functions/smart-parse.js`（回退） |
 | 权限声明 | `app/src/main/AndroidManifest.xml` |
 | 本地数据存储 | `app/src/main/java/com/worddrill/app/data/WordDb.kt`、`WordRepository.kt` |
 
