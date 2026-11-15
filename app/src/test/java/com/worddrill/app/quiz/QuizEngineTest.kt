@@ -125,7 +125,7 @@ class QuizEngineTest {
             confusePool = Confuse.Pool(all),
         )
         assertEquals(selected.map { it.id }, built.map { it.word.id })
-        assertEquals(3, built.map { it.options.size }.min())
+        assertTrue("每题都应有 4 个选项", built.all { it.options.size == 4 })
     }
 
     @Test
