@@ -1,8 +1,8 @@
 {
-  "versionCode": 25,
-  "versionName": "1.6.4",
-  "content": "1. 智能解析改走自建边缘节点（api.zzlltt.xyz），保留 Vercel / Netlify 作为回退地址\n2. 「我的」页不再显示解析服务地址，普通用户看不到接口配置\n3. 导入页提示卡补充「也可以直接用下方的 AI 智能解析」，底部按钮改为「AI 智能解析」\n4. 其余内容同 1.6.3：开练分批出题、形近干扰项、错题 CSV、主题三态、备份配置与覆盖恢复",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.4/WordDrill-1.6.4.apk",
-  "size": 7732435,
-  "md5": "c182b87998d7b1a32a1855a07006328d"
+  "versionCode": 26,
+  "versionName": "1.6.5",
+  "content": "1. 「我的」页重排：统一行式，标题 / 说明 / 当前值各归其位，左基线、行高、间距与分组线全部对齐\n2. 修复：点「不再练习此单词」后可能一直停在「正在准备下一题…」；顺带修掉删最后一题会退回上一题、后台算题失败会空转、答错补练会把轮次提前结束\n3. 等下一题时保留对错高亮与讲解、保留「第 N 题 / 共 M 题」\n4. 「开始练习」改为实心主按钮；提示文字与对错反馈对比度达到 4.5:1\n5. 移除 Vercel 镜像：检查更新走 Gitee → Cloudflare Pages，智能解析走 EdgeOne → Netlify\n6. README 与隐私政策同步更新",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.5/WordDrill-1.6.5.apk",
+  "size": 7736203,
+  "md5": "98043d3f4ebb79c1884c6b1bfc956381"
 }
