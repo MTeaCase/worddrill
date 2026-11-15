@@ -1,8 +1,8 @@
 {
-  "versionCode": 26,
-  "versionName": "1.6.5",
-  "content": "1. 「我的」页重排：统一行式，标题 / 说明 / 当前值各归其位，左基线、行高、间距与分组线全部对齐\n2. 修复：点「不再练习此单词」后可能一直停在「正在准备下一题…」；顺带修掉删最后一题会退回上一题、后台算题失败会空转、答错补练会把轮次提前结束\n3. 等下一题时保留对错高亮与讲解、保留「第 N 题 / 共 M 题」\n4. 「开始练习」改为实心主按钮；提示文字与对错反馈对比度达到 4.5:1\n5. 移除 Vercel 镜像：检查更新走 Gitee → Cloudflare Pages，智能解析走 EdgeOne → Netlify\n6. README 与隐私政策同步更新",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.5/WordDrill-1.6.5.apk",
-  "size": 7736203,
-  "md5": "98043d3f4ebb79c1884c6b1bfc956381"
+  "versionCode": 27,
+  "versionName": "1.6.6",
+  "content": "1. 新增「成就徽章」页：8 枚里程碑单独成页，每枚一个手绘图标；已解锁显示获得日期，未解锁整行压灰\n2. 修复：复习页「未来 7 天复习量」有逾期时只显示一块空白卡片（图表从未喂数据）\n3. 「今日」口径统一：柱状图第 0 格与「今天到期」用同一判断\n4. 掌握度卡片去掉重复的百分比条，只留四段分布\n5. 练习首页重排：八种题型 2×4 常驻卡片、题量与范围改值行、间距与圆角统一\n6. 柱状条圆角修正；README 与隐私政策同步更新",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.6/WordDrill-1.6.6.apk",
+  "size": 7751441,
+  "md5": "d6a8116587e4ea141e8b7d9ff4b764f6"
 }
