@@ -15,9 +15,9 @@
 | 请求格式 | `application/json` |
 | 响应格式 | `application/json; charset=utf-8` |
 | 鉴权 | 无（公开接口，不要在里面放任何私密数据） |
-| 回退地址 | `https://worddrill-vercel.vercel.app/api/smart-parse`、`https://worddrill-ai.netlify.app/api/smart-parse`（协议完全一致，按顺序回退） |
+| 回退地址 | `https://worddrill-ai.netlify.app/api/smart-parse`（协议完全一致，主地址失败时回退） |
 
-> 三个地址的请求/响应完全一致，客户端可以按顺序尝试；也可以只用一个。
+> 两个地址的请求/响应完全一致，客户端可以按顺序尝试；也可以只用一个。
 
 ## 请求
 

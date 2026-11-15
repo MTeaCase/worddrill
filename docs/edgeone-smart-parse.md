@@ -88,11 +88,11 @@ curl -X POST "https://<你的站点域名>/api/smart-parse" \
 
 两种方式，选一种：
 
-1. **不改包**：「我的 → 智能解析服务地址」填 `https://<你的站点域名>/api/smart-parse`；
-2. **改默认值**：把 `app/build.gradle.kts` 的 `SMART_PARSE_URL` 前置成新地址（保留 Netlify / Vercel 作回退），重新发版。
+1. **不改包**：旧版本（1.6.3 及以前）可在「我的 → 智能解析服务地址」填 `https://<你的站点域名>/api/smart-parse`；1.6.4 起该入口已隐藏，只能走下面的默认值；
+2. **改默认值**：把 `app/build.gradle.kts` 的 `SMART_PARSE_URL` 前置成新地址（保留 Netlify 作回退），重新发版。
 
 ## 需要留意的
 
 - 边缘函数对**单次总时长**没有在限制表里写明，只写了 CPU 200 ms。先按上面的 curl 实测：如果 5–9 秒的模型调用会被截断，把 `UPSTREAM_TIMEOUT_MS` 调小或改用 SCF（Node 运行时，超时可配 30 秒以上）。
-- 免费版超额是「规则失效」，不会自动扣费，但代理会直接不可用；用量大时要么升级套餐，要么保留 Netlify / Vercel 作为回退地址。
+- 免费版超额是「规则失效」，不会自动扣费，但代理会直接不可用；用量大时要么升级套餐，要么保留 Netlify 作为回退地址。
 - 触发规则只匹配 `/api/smart-parse` 这一个路径，不会影响站点上的其他资源。

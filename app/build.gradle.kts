@@ -14,21 +14,21 @@ android {
         versionCode = 25
         versionName = "1.6.4"
 
-        // 更新检查地址（Cloudflare Pages / Workers 均可）。改这里即可换源，不用改代码。
-        // 支持用英文逗号分隔配多个镜像，会按顺序尝试，第一个可用即返回，例如：
+        // 更新检查地址（Gitee raw 优先，Cloudflare Pages 兜底）。改这里即可换源，不用改代码。
+        // 支持用英文逗号分隔配多个镜像，会按顺序问，取其中版本号最高的那份。
         //   "https://worddrill-update.pages.dev/update.json,https://cdn.jsdelivr.net/gh/xxx/update.json"
         buildConfigField(
             "String",
             "UPDATE_URL",
-            "\"https://gitee.com/MTeaCase/worddrill/raw/master/update.json,https://worddrill-update.pages.dev/update.json,https://worddrill-vercel.vercel.app/update.json\"",
+            "\"https://gitee.com/MTeaCase/worddrill/raw/master/update.json,https://worddrill-update.pages.dev/update.json\"",
         )
 
-        // 智能解析服务（Vercel → 商汤日日新）。部署代码见 vercel/，换地址填这里即可，
-        // 也可以在 App 的「设置 → 智能解析服务地址」里临时改，不用重新打包。
+        // 智能解析服务（EdgeOne → 商汤日日新，失败回退 Netlify）。换地址填这里即可，
+        // 1.6.3 及以前还可以在「设置 → 智能解析服务地址」里临时改，1.6.4 起该入口已隐藏。
         buildConfigField(
             "String",
             "SMART_PARSE_URL",
-            "\"https://api.zzlltt.xyz/api/smart-parse,https://worddrill-vercel.vercel.app/api/smart-parse,https://worddrill-ai.netlify.app/api/smart-parse\"",
+            "\"https://api.zzlltt.xyz/api/smart-parse,https://worddrill-ai.netlify.app/api/smart-parse\"",
         )
     }
 
