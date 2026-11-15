@@ -65,7 +65,7 @@
     </style>
 
     <!-- 卡片内容统一 16dp 横向内边距：整页的文字都从同一条左基线开始 -->
-    <style name="Widget.WordDrill.SettingRow">
+    <style name="Widget.WordDrill.SettingRow" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:minHeight">48dp</item>
@@ -75,7 +75,7 @@
         <item name="android:paddingEnd">16dp</item>
     </style>
 
-    <style name="Widget.WordDrill.SettingDivider">
+    <style name="Widget.WordDrill.SettingDivider" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
         <item name="android:layout_marginStart">16dp</item>
