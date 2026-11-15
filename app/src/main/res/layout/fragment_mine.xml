@@ -53,105 +53,52 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="16dp"
                     android:paddingTop="8dp"
-                    android:paddingEnd="16dp"
                     android:paddingBottom="8dp">
 
-                                        <TextView
-                        style="@style/Text.SectionLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="2dp"
-                        android:text="@string/mine_section_speech" />
-<com.google.android.material.materialswitch.MaterialSwitch
+                    <!-- 朗读 -->
+                    <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swTts"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
                         android:text="@string/settings_tts_title"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_tts_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                                        <TextView
-                        style="@style/Text.SectionLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="2dp"
-                        android:text="@string/mine_section_rhythm" />
-<com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/swReminder"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="48dp"
-                        android:text="@string/settings_reminder"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tvReminderTime"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/swExampleAi"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="48dp"
-                        android:text="@string/settings_example_ai"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_example_ai_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_tts_desc" />
 
                     <LinearLayout
                         android:id="@+id/rowAccent"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_accent"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_accent" />
 
                         <TextView
                             android:id="@+id/tvAccent"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -163,30 +110,24 @@
 
                     <LinearLayout
                         android:id="@+id/rowRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_speech_rate"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_speech_rate" />
 
                         <TextView
                             android:id="@+id/tvRate"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -196,32 +137,83 @@
                             app:tint="@color/text_hint" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/rowQuota"
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
+                    <!-- 提醒 -->
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swReminder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
+                        android:text="@string/settings_reminder"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvReminderTime"
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
                         android:focusable="true"
-                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp" />
+
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
+                    <!-- 例句生成 -->
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swExampleAi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
+                        android:text="@string/settings_example_ai"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        style="@style/Text.SettingDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_example_ai_desc" />
+
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
+                    <!-- 练习 -->
+                    <LinearLayout
+                        android:id="@+id/rowQuota"
+                        style="@style/Widget.WordDrill.SettingRow"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_quota"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_quota" />
 
                         <TextView
                             android:id="@+id/tvQuota"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -236,85 +228,89 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
                         android:text="@string/settings_self_rating"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_self_rating_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_self_rating_desc" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swVaryDistractors"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
                         android:text="@string/settings_vary"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_vary_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_vary_desc" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swRevealMeanings"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
                         android:text="@string/settings_reveal"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_reveal_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_reveal_desc" />
 
-                                        <TextView
-                        style="@style/Text.SectionLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="2dp"
-                        android:text="@string/mine_section_more" />
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
                     <LinearLayout
                         android:id="@+id/rowTheme"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_theme"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_theme" />
 
                         <TextView
                             android:id="@+id/tvTheme"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -326,30 +322,24 @@
 
                     <LinearLayout
                         android:id="@+id/rowExam"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_exam"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_exam" />
 
                         <TextView
                             android:id="@+id/tvExam"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -361,30 +351,24 @@
 
                     <LinearLayout
                         android:id="@+id/rowAchievements"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_achievements"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_achievements" />
 
                         <TextView
                             android:id="@+id/tvAchievements"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -402,8 +386,12 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -412,19 +400,17 @@
                             android:orientation="vertical">
 
                             <TextView
+                                style="@style/Text.SettingTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/settings_vocab_test"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
+                                android:text="@string/settings_vocab_test" />
 
                             <TextView
-                                android:layout_width="wrap_content"
+                                style="@style/Text.SettingDesc"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/settings_vocab_test_desc"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:text="@string/settings_vocab_test_desc" />
                         </LinearLayout>
 
                         <ImageView
@@ -434,23 +420,20 @@
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/text_hint" />
                     </LinearLayout>
+
                     <LinearLayout
                         android:id="@+id/rowHelp"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_help"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_help" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -484,144 +467,119 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="8dp"
-                    android:paddingBottom="4dp">
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp">
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnExport"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_export"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_export" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_export_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_export_desc" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnImport"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_import"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_import" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_import_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_import_desc" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnRestoreAuto"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_restore_auto"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_restore_auto" />
 
                     <TextView
                         android:id="@+id/tvAutoBackupTime"
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRedeploy"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_redeploy"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_redeploy_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnClearLog"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/action_clear_log"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_clear_log_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swAutoBackup"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="0dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="0dp"
                         android:text="@string/settings_auto_backup"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/settings_auto_backup_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_auto_backup_desc" />
 
                     <LinearLayout
                         android:id="@+id/rowBackupInterval"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_backup_interval"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_backup_interval" />
 
                         <TextView
                             android:id="@+id/tvBackupInterval"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -633,30 +591,24 @@
 
                     <LinearLayout
                         android:id="@+id/rowBackupKeep"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        style="@style/Widget.WordDrill.SettingRow"
                         android:background="?attr/selectableItemBackground"
                         android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:orientation="horizontal">
+                        android:focusable="true">
 
                         <TextView
+                            style="@style/Text.SettingTitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/settings_backup_keep"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:text="@string/settings_backup_keep" />
 
                         <TextView
                             android:id="@+id/tvBackupKeep"
+                            style="@style/Text.SettingValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="13sp" />
+                            android:layout_marginEnd="8dp" />
 
                         <ImageView
                             android:layout_width="18dp"
@@ -666,23 +618,79 @@
                             app:tint="@color/text_hint" />
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSnapshotNow"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_snapshot_now"
-                        android:textSize="14sp" />
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
+                        android:id="@+id/btnSnapshotNow"
+                        style="@style/Text.SettingAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_snapshot_now" />
+
+                    <TextView
                         android:id="@+id/btnClearCache"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_clear_cache" />
+
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
+                    <TextView
+                        android:id="@+id/btnRedeploy"
+                        style="@style/Text.SettingAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_redeploy" />
+
+                    <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_clear_cache"
-                        android:textSize="14sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_redeploy_desc" />
+
+                    <TextView
+                        android:id="@+id/btnClearLog"
+                        style="@style/Text.SettingAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/action_clear_log" />
+
+                    <TextView
+                        style="@style/Text.SettingDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_clear_log_desc" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -708,82 +716,100 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="8dp"
-                    android:paddingBottom="4dp">
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp">
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnDictionary"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/title_dictionary"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/title_dictionary" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnCheckUpdate"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_check_update"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_check_update" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_update_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_update_desc" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnPrivacy"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_privacy"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_privacy" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_privacy_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_privacy_desc" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnLicense"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_license"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_license" />
 
                     <TextView
+                        style="@style/Text.SettingDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/settings_license_desc"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_license_desc" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <TextView
                         android:id="@+id/btnAbout"
-                        style="@style/Widget.Material3.Button.TextButton"
+                        style="@style/Text.SettingAction"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="@string/settings_about"
-                        android:textSize="14sp" />
+                        android:layout_height="48dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_about" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
