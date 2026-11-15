@@ -41,11 +41,15 @@ class PracticeActivity : BaseActivity() {
 
     private var mode: PracticeMode = PracticeMode.EN_ZH
     private var bookName: String = ""
-    private var items: List<QuizItem> = emptyList()
+
+    /** 题目队列：和后台算题线程共用同一个列表，杜绝「换成新列表」导致后面的题丢失。 */
+    private val queue = PracticeQueue()
+    private val items get() = queue.items
     private var index = 0
 
-    /** 本轮总题数（词一选中就固定），第一批题算好之前 item 可能还没齐。 */
-    private var totalCount = 0
+    /** 每一轮练习一个编号：换轮之后，上一轮后台算好的题直接丢掉。 */
+    private var sessionId = 0
+
     private var waitingForItems = false
     private var answered = false
     private val records = mutableListOf<AnswerRecord>()
@@ -135,6 +139,8 @@ class PracticeActivity : BaseActivity() {
     }
 
     private fun loadSession() {
+        sessionId++
+        val sid = sessionId
         binding.progressBar.isIndeterminate = true
         val bookId = intent.getLongExtra(EXTRA_BOOK_ID, -1L)
         val count = intent.getIntExtra(EXTRA_COUNT, 20)
@@ -185,6 +191,7 @@ class PracticeActivity : BaseActivity() {
                 practiced = repo.practicedWordIds(),
             )
         }) { result ->
+            if (sid != sessionId) return@run
             binding.progressBar.isIndeterminate = false
             result.onSuccess { session ->
                 if (session.items.isEmpty()) {
@@ -196,8 +203,7 @@ class PracticeActivity : BaseActivity() {
                     val item = session.items[i]
                     if (item.word.id !in session.practiced) session.items[i] = item.copy(firstTime = true)
                 }
-                items = session.items
-                totalCount = session.words.size
+                queue.reset(session.items, session.words.size)
                 baseSize = session.words.size
                 index = 0
                 render()
@@ -214,8 +220,12 @@ class PracticeActivity : BaseActivity() {
 
     /** 第一批已经能开练，剩下的题在后台接着算；算到当前题时会自动接上。 */
     private fun buildRemaining(session: Session) {
+        val sid = sessionId
         val rest = session.words.drop(session.items.size)
-        if (rest.isEmpty()) return
+        if (rest.isEmpty()) {
+            queue.markBuilt()
+            return
+        }
         Bg.run({
             QuizEngine.buildItems(
                 words = rest,
@@ -227,12 +237,15 @@ class PracticeActivity : BaseActivity() {
                 confusePool = session.confusePool,
             )
         }) { result ->
+            // 用户中途换了一轮（比如「本轮重练」），上一轮算好的题不能混进新队列
+            if (sid != sessionId) return@run
             result.onSuccess { built ->
                 if (isFinishing || isDestroyed) return@onSuccess
                 val more = built.map { item ->
                     if (item.word.id in session.practiced) item else item.copy(firstTime = true)
                 }
-                session.items += more
+                queue.append(more)
+                queue.markBuilt()
                 binding.progressBar.isIndeterminate = false
                 if (waitingForItems && index < items.size) {
                     waitingForItems = false
@@ -240,6 +253,8 @@ class PracticeActivity : BaseActivity() {
                 }
             }.onFailure {
                 if (isFinishing || isDestroyed) return@onFailure
+                // 剩下的算不出来：把队列按现有题数截断，否则走到末尾会一直转圈
+                queue.truncate()
                 if (waitingForItems) {
                     toast("后面的题准备失败，本轮到此结束")
                     finishSession()
@@ -289,13 +304,14 @@ class PracticeActivity : BaseActivity() {
         answered = false
         shownAt = SystemClock.elapsedRealtime()
         val itemMode = item.mode
+        val planned = queue.plannedTotal
         binding.tvProgress.text = if (mode == PracticeMode.MIXED) {
-            "第 ${index + 1} 题 / 共 $totalCount 题 · ${itemMode.label}"
+            "第 ${index + 1} 题 / 共 $planned 题 · ${itemMode.label}"
         } else {
-            "第 ${index + 1} 题 / 共 $totalCount 题"
+            "第 ${index + 1} 题 / 共 $planned 题"
         }
         binding.progressBar.isIndeterminate = false
-        binding.progressBar.max = totalCount
+        binding.progressBar.max = planned
         binding.progressBar.setProgressCompat(index, true)
         val isListen = itemMode == PracticeMode.LISTEN_SPELL || itemMode == PracticeMode.LISTEN_ZH
         val canHear = isListen || itemMode == PracticeMode.EN_ZH
@@ -472,20 +488,35 @@ class PracticeActivity : BaseActivity() {
     private fun markKnownWord() {
         if (answered) return
         val item = items.getOrNull(index) ?: return
+        // 先占住「已作答」：连点两下不能删掉两个词
+        answered = true
         pendingNext?.let { binding.root.removeCallbacks(it) }
         pendingNext = null
         Bg.run({ repo.setKnown(item.word.id, true) }) { result ->
             result.onSuccess {
-                items = items.toMutableList().apply { removeAt(index) }
+                // 原地删除，保持与后台算题线程共用同一个列表
+                queue.removeAt(index)
                 toast(getString(R.string.skip_word_done, item.word.text))
                 if (items.isEmpty()) {
                     // 一道题都没答就全标已掌握：直接回练习页，别给一张空成绩单
                     if (records.isEmpty()) finish() else finishSession()
                     return@onSuccess
                 }
-                if (index >= items.size) index = items.size - 1
+                if (index >= items.size) {
+                    // 删掉的是最后一题：后台算完了就收尾，没算完就等它接上，
+                    // 不能回退到上一题（那题已经答过了）
+                    if (queue.builtAll) {
+                        finishSession()
+                    } else {
+                        waitForItems()
+                    }
+                    return@onSuccess
+                }
                 render()
-            }.onFailure { toast("操作失败：${it.message}") }
+            }.onFailure {
+                answered = false
+                toast("操作失败：${it.message}")
+            }
         }
     }
 
@@ -594,11 +625,8 @@ class PracticeActivity : BaseActivity() {
     private fun requeueForRetry(item: QuizItem) {
         if (!retried.add(item.word.id)) return
         if (baseSize <= 0 || items.size >= baseSize * 2) return
-        // 题目列表和后台补算共用同一个 MutableList，这里必须原地追加，
-        // 否则后台算好的题会追加到旧列表上，用户走到新题时会卡在「准备中」
-        val live = items as? MutableList<QuizItem>
-        if (live != null) live.add(item) else items = items + item
-        totalCount = items.size
+        // 原地追加：题队列和后台补算是同一个列表，换成新列表会让补算的题丢掉
+        queue.requeue(item)
         if (!retryHintShown) {
             retryHintShown = true
             toast("答错的单词会在本轮末尾再出现一次")
@@ -641,14 +669,15 @@ class PracticeActivity : BaseActivity() {
         pendingNext?.let { binding.root.removeCallbacks(it) }
         pendingNext = null
         ratingWordId = null
-        index++
-        if (index >= totalCount) {
-            finishSession()
-        } else if (index >= items.size) {
-            // 后台还没算到这一题：先停住，等它算出来
-            waitForItems()
-        } else {
-            render()
+        // 「还有没有题」交给队列判断：后台没算完就等，算完/被截断就收尾。
+        // 不能只看计划题数——「不再练习此单词」会删掉题目，计划数也会随之减少。
+        when (val next = queue.next(index)) {
+            is PracticeQueue.Next.Show -> {
+                index = next.index
+                render()
+            }
+            PracticeQueue.Next.Wait -> waitForItems()
+            PracticeQueue.Next.Finish -> finishSession()
         }
     }
 
@@ -664,7 +693,7 @@ class PracticeActivity : BaseActivity() {
         Bg.run({ repo.setStar(item.word.id, target) }) { result ->
             result.onSuccess {
                 val updated = item.copy(word = item.word.copy(starred = target))
-                items = items.toMutableList().also { it[index] = updated }
+                queue.replaceAt(index, updated)
                 updateStar(updated)
             }.onFailure { toast("操作失败：${it.message}") }
         }
