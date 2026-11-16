@@ -11,8 +11,8 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 27
-        versionName = "1.6.6"
+        versionCode = 28
+        versionName = "1.6.7"
 
         // 更新检查地址（Gitee raw 优先，Cloudflare Pages 兜底）。改这里即可换源，不用改代码。
         // 支持用英文逗号分隔配多个镜像，会按顺序问，取其中版本号最高的那份。
