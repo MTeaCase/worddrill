@@ -305,12 +305,16 @@ class PracticeFragment : Fragment() {
     private fun renderWeek(stats: BookStats) {
         val days = stats.summary.days
         val total = days.sumOf { it.answered }
-        binding.chartWeek.setStats(days, stats.summary.dailyGoal)
         binding.tvWeekTotal.text = getString(R.string.week_total, total)
-        binding.tvWeekHint.text = if (stats.summary.streak > 0) {
-            getString(R.string.week_hint, stats.summary.streak)
+        // 一条记录都没有时不画空图，卡片自然变矮，也别把「开始练习」挤到第二屏
+        binding.chartWeek.isVisible = total > 0
+        if (total > 0) {
+            binding.chartWeek.setStats(days, stats.summary.dailyGoal)
+            binding.tvWeekHint.isVisible = stats.summary.streak > 0
+            binding.tvWeekHint.text = getString(R.string.week_hint, stats.summary.streak)
         } else {
-            getString(R.string.week_hint_empty)
+            binding.tvWeekHint.isVisible = true
+            binding.tvWeekHint.text = getString(R.string.week_hint_empty)
         }
     }
 

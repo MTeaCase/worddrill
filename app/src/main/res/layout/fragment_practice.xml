@@ -717,7 +717,7 @@
                     <com.worddrill.app.ui.widget.BarChartView
                         android:id="@+id/chartWeek"
                         android:layout_width="match_parent"
-                        android:layout_height="110dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="8dp" />
 
                     <TextView
