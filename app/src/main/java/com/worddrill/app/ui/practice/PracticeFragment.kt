@@ -270,6 +270,7 @@ class PracticeFragment : Fragment() {
                     if (max == 0) append(" · 没有可练习的单词")
                     examHint(stats.practiced, stats.total)?.let { append(" · ").append(it) }
                 }
+                renderWeek(stats)
                 val due = stats.summary.dueReview
                 binding.btnReviewNow.isVisible = due > 0
                 binding.btnReviewNow.text = "复习今日到期的 $due 个单词"
@@ -297,6 +298,19 @@ class PracticeFragment : Fragment() {
             }.onFailure {
                 if (_binding != null) toast("读取词库信息失败：${it.message}")
             }
+        }
+    }
+
+    /** 首页下半部分的「最近 7 天」小图：把报告页的练习量搬到开练前，顺带填满空白。 */
+    private fun renderWeek(stats: BookStats) {
+        val days = stats.summary.days
+        val total = days.sumOf { it.answered }
+        binding.chartWeek.setStats(days, stats.summary.dailyGoal)
+        binding.tvWeekTotal.text = getString(R.string.week_total, total)
+        binding.tvWeekHint.text = if (stats.summary.streak > 0) {
+            getString(R.string.week_hint, stats.summary.streak)
+        } else {
+            getString(R.string.week_hint_empty)
         }
     }
 
