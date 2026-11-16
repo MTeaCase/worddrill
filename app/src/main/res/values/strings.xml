@@ -118,10 +118,6 @@
     <string name="mode_spell_desc">看释义，拼写英文</string>
 
     <string name="start_practice">开始练习</string>
-    <string name="label_last_week">最近 7 天</string>
-    <string name="week_total">共 %1$d 题</string>
-    <string name="week_hint">连续打卡 %1$d 天</string>
-    <string name="week_hint_empty">还没开始，练一题就有记录</string>
     <string name="action_review">复习今日到期的单词</string>
     <string name="review_none">今天没有待复习的单词</string>
     <string name="starred_words">星标词汇</string>

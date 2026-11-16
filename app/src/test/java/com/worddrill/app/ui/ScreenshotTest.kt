@@ -73,42 +73,6 @@ class ScreenshotTest {
         switchTab(activity, R.id.tab_mine, "tab_mine_full.png")
     }
 
-    /** 练习页有记录时的样子：最近 7 天卡片要真的画出柱子。 */
-    @Test
-    fun renderPracticeTabWithWeekData() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val bookId = seedWeekData(context)
-        com.worddrill.app.util.Settings.setSelectedBookId(context, bookId)
-
-        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
-        waitForBooks(activity)
-        shadowOf(Looper.getMainLooper()).idle()
-        Thread.sleep(300)
-        shadowOf(Looper.getMainLooper()).idle()
-        capture(activity.window.decorView, "tab_practice_week.png")
-    }
-
-    /** 造一批今天的练习记录，让首页的「最近 7 天」有柱子。 */
-    private fun seedWeekData(context: Context): Long {
-        val repo = WordRepository(context)
-        val latch = CountDownLatch(1)
-        var bookId = -1L
-        Thread {
-            val entries = (1..12).map { VocabEntry("week$it", "n.", "本周词 $it") }
-            bookId = repo.importEntries(null, "本周练习测试", entries).bookId
-            repo.words(bookId).forEachIndexed { index, word ->
-                repo.recordAnswer(
-                    word.id,
-                    com.worddrill.app.data.PracticeMode.EN_ZH,
-                    correct = index % 3 != 0,
-                )
-            }
-            latch.countDown()
-        }.start()
-        latch.await(60, TimeUnit.SECONDS)
-        return bookId
-    }
-
     /** 复习页有排期时的样子：逾期、明天、后天都要在折线/柱状里看得见。 */
     @Test
     fun renderReviewWithForecast() {

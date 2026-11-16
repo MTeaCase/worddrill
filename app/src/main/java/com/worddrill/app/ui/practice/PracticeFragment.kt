@@ -270,7 +270,6 @@ class PracticeFragment : Fragment() {
                     if (max == 0) append(" · 没有可练习的单词")
                     examHint(stats.practiced, stats.total)?.let { append(" · ").append(it) }
                 }
-                renderWeek(stats)
                 val due = stats.summary.dueReview
                 binding.btnReviewNow.isVisible = due > 0
                 binding.btnReviewNow.text = "复习今日到期的 $due 个单词"
@@ -301,22 +300,6 @@ class PracticeFragment : Fragment() {
         }
     }
 
-    /** 首页下半部分的「最近 7 天」小图：把报告页的练习量搬到开练前，顺带填满空白。 */
-    private fun renderWeek(stats: BookStats) {
-        val days = stats.summary.days
-        val total = days.sumOf { it.answered }
-        binding.tvWeekTotal.text = getString(R.string.week_total, total)
-        // 一条记录都没有时不画空图，卡片自然变矮，也别把「开始练习」挤到第二屏
-        binding.chartWeek.isVisible = total > 0
-        if (total > 0) {
-            binding.chartWeek.setStats(days, stats.summary.dailyGoal)
-            binding.tvWeekHint.isVisible = stats.summary.streak > 0
-            binding.tvWeekHint.text = getString(R.string.week_hint, stats.summary.streak)
-        } else {
-            binding.tvWeekHint.isVisible = true
-            binding.tvWeekHint.text = getString(R.string.week_hint_empty)
-        }
-    }
 
     private fun refreshSettingsSummary() {
         val count = binding.etCount.text?.toString()?.trim()?.toIntOrNull()
