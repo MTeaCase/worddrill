@@ -1,8 +1,8 @@
 {
-  "versionCode": 28,
-  "versionName": "1.6.7",
-  "content": "1. 练习页「今日进度」蓝色卡片与复习页顶边对齐，卡片内部收紧（「词表」按钮 48→32dp）\n2. 八种题型卡片调大并统一尺寸（64dp 高、15sp），与「练习方式」之间留 8dp\n3. 题型说明、题量与范围等块间距统一到 12 / 14dp\n4. 底部导航条高度 70dp，多出的 6dp 放在文字下方（图标 22dp、标签 11sp）\n5. 柱状条圆角修正，复习预测图不再画成胶囊",
-  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.7/WordDrill-1.6.7.apk",
-  "size": 7751565,
-  "md5": "09ee6d3fc3b496d52b134d2a7ea87e57"
+  "versionCode": 29,
+  "versionName": "1.6.8",
+  "content": "1. 新增「离线语音包」：系统自带语音不可用（缺英语语音数据、TTS 被 ROM 精简）时，可装一个独立语音引擎，在手机上离线朗读\n2. 「我的 → 离线语音包」可下载（约 42MB）、切换系统语音/离线语音、试听与卸载；装完不联网，美式英式都支持\n3. 主包体积基本不变（+21KB），32 位设备自动隐藏入口",
+  "url": "https://gitee.com/MTeaCase/worddrill/releases/download/v1.6.8/WordDrill-1.6.8.apk",
+  "size": 7773725,
+  "md5": "2e9841d7aa07a1a9344756bf96657297"
 }
