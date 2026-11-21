@@ -23,6 +23,14 @@ android {
             "\"https://gitee.com/MTeaCase/worddrill/raw/master/update.json,https://worddrill-update.pages.dev/update.json\"",
         )
 
+        // 离线语音包清单（独立仓库 worddrilltts 发布，格式与 update.json 同款）。
+        // 同样支持逗号分隔多镜像，取版本号最高的那份。
+        buildConfigField(
+            "String",
+            "TTS_ENGINE_MANIFEST",
+            "\"https://gitee.com/MTeaCase/worddrilltts/raw/master/tts-engine.json,https://worddrill-update.pages.dev/tts-engine.json\"",
+        )
+
         // 智能解析服务（EdgeOne → 商汤日日新，失败回退 Netlify）。换地址填这里即可，
         // 1.6.3 及以前还可以在「设置 → 智能解析服务地址」里临时改，1.6.4 起该入口已隐藏。
         buildConfigField(

@@ -134,6 +134,7 @@ object ApkInstaller {
         file: File,
         expectedMd5: String?,
         minVersionCode: Int,
+        expectedPackage: String = context.packageName,
     ): String? {
         if (!file.isFile || file.length() <= 0L) return "文件为空"
         if (!ApkDownloader.looksLikeApk(file)) return "不是有效的 APK 文件"
@@ -150,8 +151,8 @@ object ApkInstaller {
             context.packageManager.getPackageArchiveInfo(file.absolutePath, 0)
         }.getOrNull() ?: return "无法读取安装包信息"
 
-        if (info.packageName != context.packageName) {
-            return "安装包包名是 ${info.packageName}，与本机 ${context.packageName} 不一致"
+        if (info.packageName != expectedPackage) {
+            return "安装包包名是 ${info.packageName}，期望的是 $expectedPackage"
         }
 
         @Suppress("DEPRECATION")

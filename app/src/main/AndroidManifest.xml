@@ -15,6 +15,9 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+
+        <!-- 离线语音包（独立安装的 TTS 引擎）：要能查它的版本号，才判断得出「装没装 / 有没有新版」 -->
+        <package android:name="com.worddrill.tts" />
     </queries>
 
     <application

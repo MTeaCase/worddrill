@@ -6,18 +6,24 @@ import com.worddrill.app.data.Accent
 import java.util.Locale
 
 /**
- * 系统 TTS 的薄封装。
+ * 语音朗读入口，两种引擎二选一：
  *
- * 设计要点：
- * - 初始化是异步的，内部记住待读文本，引擎就绪后立刻朗读；
- * - 初始化失败 / 没有英语语音数据时，通过 onError 回调把原因交给 UI 显示，
- *   而不是静默失败；
- * - 口音（美式 / 英式）和语速都从设置里读，改完设置调用 [refreshVoice] 立即生效；
- * - 提供 [diagnose] 输出引擎与语言可用性，方便排查「装了没声音」。
+ * - **系统 TTS**（默认）：`TextToSpeech(context, listener)`，用设备自带的语音引擎；
+ * - **离线语音包**（可选）：用户下载安装 com.worddrill.tts 后，用
+ *   `TextToSpeech(context, listener, "com.worddrill.tts")` 指名调用它。
+ *
+ * 选哪个由设置里的开关决定，但**永远兜底**：离线引擎初始化失败（被卸载、数据损坏、
+ * ROM 拦截）就自动切回系统语音，同时把开关关掉，并在回调里告诉用户为什么。
+ *
+ * 其它设计沿用之前：初始化异步、口音/语速跟随设置、失败原因交给 UI、diagnose 排查。
  */
 object Tts {
 
     private var engine: TextToSpeech? = null
+
+    /** 当前实例实际用的引擎包名；null 表示系统默认引擎。 */
+    private var enginePackage: String? = null
+
     private var ready = false
     private var failed: String? = null
     private var pendingText: String? = null
@@ -28,6 +34,12 @@ object Tts {
     private var appliedAccent: Accent? = null
     private var appliedRate: Float = -1f
 
+    /** 上一次设置语言时是否因为设备缺语音包而回退过，给 UI 提示用。 */
+    private var missingAccent = false
+
+    /** 最近一次自动回退的原因，diagnose 里能看到。 */
+    private var lastFallback: String? = null
+
     /** 朗读 [text]；失败时调用 [onError] 并给出可读原因。 */
     fun speak(context: Context, text: String, onError: ((String) -> Unit)? = null) {
         val application = context.applicationContext
@@ -35,6 +47,9 @@ object Tts {
         if (!Settings.ttsEnabled(application)) return
         val clean = text.trim()
         if (clean.isEmpty()) return
+
+        // 设置里换了引擎、或者离线包被卸载了：把旧引擎丢掉重建
+        if (engine != null && enginePackage != desiredPackage(application)) resetEngine()
 
         failed?.let {
             onError?.invoke(it)
@@ -61,14 +76,49 @@ object Tts {
         }
     }
 
+    /** 设置里切换「系统语音 / 离线语音」后调用，下一次朗读就用新引擎。 */
+    fun refreshEngine() {
+        resetEngine()
+        failed = null
+        ready = false
+    }
+
+    private fun desiredPackage(context: Context): String? {
+        if (!Settings.offlineTtsEnabled(context)) return null
+        if (!TtsPack.isSupported()) return null
+        return if (TtsPack.isInstalled(context)) TtsPack.ENGINE_PACKAGE else null
+    }
+
     private fun createEngine(application: Context) {
-        engine = TextToSpeech(application) { status ->
-            if (status != TextToSpeech.SUCCESS) {
-                fail("系统未提供语音引擎（初始化返回 $status），请在系统设置中安装或启用「文字转语音」")
-                return@TextToSpeech
-            }
-            engine?.let { configure(it) }
+        val wanted = desiredPackage(application)
+        enginePackage = wanted
+        val listener = TextToSpeech.OnInitListener { status -> onInit(application, status) }
+        engine = if (wanted == null) {
+            TextToSpeech(application, listener)
+        } else {
+            TextToSpeech(application, listener, wanted)
         }
+    }
+
+    private fun onInit(application: Context, status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            engine?.let { configure(it) }
+            return
+        }
+
+        // 离线引擎起不来：切回系统语音，别让用户「点了没声音」
+        if (enginePackage != null) {
+            Settings.setOfflineTtsEnabled(application, false)
+            lastFallback = "离线语音初始化失败（$status），已切回系统语音"
+            resetEngine()
+            val callback = pendingError
+            pendingError = null
+            callback?.invoke(lastFallback.orEmpty())
+            createEngine(application)
+            return
+        }
+
+        fail("系统未提供语音引擎（初始化返回 $status），请在系统设置中安装或启用「文字转语音」")
     }
 
     private fun configure(current: TextToSpeech) {
@@ -105,9 +155,6 @@ object Tts {
         }
     }
 
-    /** 上一次设置语言时是否因为设备缺语音包而回退过，给 UI 提示用。 */
-    private var missingAccent = false
-
     fun accentFallbackWarning(): String? =
         if (missingAccent) "未安装对应英语语音包，暂用通用发音" else null
 
@@ -125,7 +172,7 @@ object Tts {
             current.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
         }.getOrElse { TextToSpeech.ERROR }
         if (code == TextToSpeech.ERROR) {
-            onError?.invoke("播放失败：系统语音引擎缺少英语发音，可在「设置 → 文字转语音」中下载英语语音包")
+            onError?.invoke("播放失败：语音引擎没有发出声音，可在设置里换用离线语音包")
         }
     }
 
@@ -138,6 +185,13 @@ object Tts {
     }
 
     fun isReady(): Boolean = ready
+
+    /** 当前用的是哪个引擎，给设置页和排查用。 */
+    fun engineLabel(): String = when (enginePackage) {
+        null -> "系统语音"
+        TtsPack.ENGINE_PACKAGE -> "离线语音包"
+        else -> enginePackage.orEmpty()
+    }
 
     /** 排查用：返回语言可用性与初始化状态描述。 */
     fun diagnose(context: Context): String {
@@ -153,8 +207,12 @@ object Tts {
             Int.MIN_VALUE -> "引擎未初始化"
             else -> "未知($langCode)"
         }
+        val packVersion = TtsPack.installedVersion(context)
         return buildString {
-            append("当前口音：").append(accent.label)
+            append("当前引擎：").append(if (ready) engineLabel() else "未就绪")
+            append("\n离线语音包：")
+            append(if (packVersion > 0) "已安装（versionCode $packVersion）" else "未安装")
+            append("\n当前口音：").append(accent.label)
             append("\n${accent.label}英语：").append(langText)
             append("\n语速：").append(Settings.speechRate(context)).append("×")
             append("\n初始化状态：")
@@ -166,21 +224,28 @@ object Tts {
                     else -> "初始化中"
                 },
             )
-            append("\n如显示「缺少语音数据」，请在「设置 → 文字转语音」中安装对应英语语音包")
+            lastFallback?.let { append("\n最近一次回退：").append(it) }
+            append("\n如显示「缺少语音数据」，可在设置里下载离线语音包，或在系统「文字转语音」中安装语音数据")
         }
     }
 
-    fun shutdown() {
+    /** 只拆掉当前引擎实例，保留待朗读的文本和错误回调。 */
+    private fun resetEngine() {
         runCatching { engine?.stop() }
         runCatching { engine?.shutdown() }
         engine = null
+        enginePackage = null
         ready = false
+        appliedAccent = null
+        appliedRate = -1f
+    }
+
+    fun shutdown() {
+        resetEngine()
         failed = null
         pendingText = null
         pendingError = null
         app = null
-        appliedAccent = null
-        appliedRate = -1f
         missingAccent = false
     }
 

@@ -340,4 +340,30 @@
     <string name="settings_help">使用帮助</string>
     <string name="help_title">使用帮助</string>
     <string name="help_body">一、学习包\n按当日配额组合「到期复习」「错题」「未练习的新词」，一次开始。配额在「我的 → 每日学习包题量」中调整。\n\n二、复习等级\n每次答对升一级，间隔依次为 1、2、4、7、15、30、60 天；答错归零，次日重来。等级达到 5 级视为掌握。开启「答完题后自评」后，可按认识 / 模糊 / 忘了调整排期。\n\n三、题型\n英译汉、汉译英、单词默写、听音拼写、听音选义、例句填词、词形变化、混合题型。混合模式在同一轮内轮换题型，同一个单词题型固定。\n\n四、操作\n练习页长按可加星标；答题页点扬声器重听；词表长按屏蔽；「我的」中可导出备份。</string>
+
+    <!-- 离线语音包（独立安装的 TTS 引擎 com.worddrill.tts） -->
+    <string name="settings_tts_pack">离线语音包</string>
+    <string name="settings_tts_pack_desc">系统里没有英语语音时，可以用它在本机离线朗读。</string>
+    <string name="settings_tts_offline">使用离线语音</string>
+    <string name="tts_pack_title">离线语音包</string>
+    <string name="tts_pack_not_installed">未安装</string>
+    <string name="tts_pack_installed">已装 v%1$s</string>
+    <string name="tts_pack_outdated">可更新 v%1$s</string>
+    <string name="tts_pack_unsupported">此设备不支持</string>
+    <string name="tts_pack_desc_unsupported">离线语音包只提供 64 位（arm64）版本，这台设备装不了；可以继续用系统语音。</string>
+    <string name="tts_pack_desc_installed">已安装 v%1$s，打开上面的开关即用本机模型合成本次发音。</string>
+    <string name="tts_pack_downloading">正在下载离线语音包</string>
+    <string name="tts_pack_download">下载并安装</string>
+    <string name="tts_pack_update">更新到 v%1$s</string>
+    <string name="tts_pack_test">试听</string>
+    <string name="tts_pack_uninstall">卸载</string>
+    <string name="tts_pack_uninstall_failed">未找到系统卸载界面</string>
+    <string name="tts_pack_installing">下载完成，正在打开安装程序…</string>
+    <string name="tts_pack_size">安装包 %1$s，装完即可离线朗读，之后不再需要网络。</string>
+    <string name="tts_pack_message_not_installed">离线语音包是一个独立的小 App（约 47MB），内置美式、英式两个发音模型，装完就脱离系统 TTS。\n\n装好后它会出现在系统的「文字转语音」列表里，回到这里打开「使用离线语音」即可。</string>
+    <string name="tts_pack_message_installed">当前已安装 %1$s。\n\n打开「使用离线语音」后，单词朗读由本机模型合成，不再依赖系统 TTS；关掉则照旧用系统语音。</string>
+    <string name="tts_pack_message_outdated">发现新版本 %1$s，可以直接覆盖更新，已下载的模型会保留。</string>
+    <string name="tts_pack_message_unsupported">离线语音包目前只提供 64 位（arm64）版本，这台设备装不了。\n\n可以继续使用系统语音，或在系统设置里给「文字转语音」安装英语语音数据。</string>
+    <string name="tts_pack_not_ready">离线语音包还没装好</string>
+    <string name="tts_pack_no_manifest">连不上语音包清单服务器，请检查网络后重试。</string>
 </resources>

@@ -10,6 +10,7 @@ object Settings {
     private const val PREFS = "worddrill_settings"
     private const val KEY_GOAL = "daily_goal"
     private const val KEY_TTS = "tts_enabled"
+    private const val KEY_OFFLINE_TTS = "tts_offline"
     private const val KEY_SMART_URL = "smart_parse_url"
     private const val KEY_REMINDER = "review_reminder"
     private const val KEY_REMINDER_HOUR = "review_reminder_hour"
@@ -64,6 +65,19 @@ object Settings {
 
     fun setTtsEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_TTS, enabled).apply()
+    }
+
+    /**
+     * 是否优先用离线语音包（独立安装的 com.worddrill.tts）。
+     *
+     * 默认关：没下载过的用户行为一点不变，仍旧走系统 TTS。
+     * 打开后如果引擎初始化失败，[Tts] 会自动切回系统语音并把这个开关关掉。
+     */
+    fun offlineTtsEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_OFFLINE_TTS, false)
+
+    fun setOfflineTtsEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_OFFLINE_TTS, enabled).apply()
     }
 
     /** 智能解析服务地址；没手动设置过就用编译进去的默认值。 */

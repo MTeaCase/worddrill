@@ -33,6 +33,7 @@ import com.worddrill.app.util.Bg
 import com.worddrill.app.util.ReviewReminder
 import com.worddrill.app.util.Settings
 import com.worddrill.app.util.Tts
+import com.worddrill.app.util.TtsPack
 import com.worddrill.app.util.Updater
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -49,6 +50,10 @@ class MineFragment : Fragment() {
 
     private lateinit var repo: WordRepository
     private var suppressSwitchEvent = false
+
+    /** 离线语音包清单（可能为 null：没拉到 / 没联网），只用来显示「有没有新版」。 */
+    private var packInfo: TtsPack.Info? = null
+    private var packLoading = false
 
     private val notifyPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -90,6 +95,32 @@ class MineFragment : Fragment() {
         binding.swTts.setOnCheckedChangeListener { _, checked ->
             Settings.setTtsEnabled(requireContext(), checked)
             if (checked) Tts.speak(requireContext(), "hello")
+        }
+
+        // 离线语音：只有装过引擎包才允许打开，否则提示先去下载
+        binding.swTtsOffline.setOnCheckedChangeListener { _, checked ->
+            if (suppressSwitchEvent) return@setOnCheckedChangeListener
+            val context = requireContext()
+            if (checked && !TtsPack.isInstalled(context)) {
+                suppressSwitchEvent = true
+                binding.swTtsOffline.isChecked = false
+                suppressSwitchEvent = false
+                toast(getString(R.string.tts_pack_not_ready))
+                return@setOnCheckedChangeListener
+            }
+            Settings.setOfflineTtsEnabled(context, checked)
+            Tts.refreshEngine()
+            Tts.speak(context, "hello, this is a test") { reason -> toast(reason) }
+        }
+
+        binding.rowTtsPack.setOnClickListener {
+            TtsPack.showDialog(activity(), packInfo) {
+                packInfo = null
+                loadPackInfo(force = true)
+                refresh()
+            }
+            // 顺手刷一次清单，下次进来「有没有新版」才是新的
+            loadPackInfo(force = true)
         }
 
         binding.swReminder.setOnCheckedChangeListener { _, checked ->
@@ -181,9 +212,58 @@ class MineFragment : Fragment() {
     private fun refresh() {
         refreshSwitches()
         refreshVoiceSettings()
+        refreshTtsPack()
         refreshReminderText()
         refreshAutoBackupTime()
         refreshBackupControls()
+    }
+
+    /**
+     * 离线语音包这一行 + 开关的状态。
+     *
+     * 三种情况：设备不支持（32 位）/ 没装 / 装了（可能还有新版）。
+     * 装过之后又被用户在系统里卸载，这里会把开关自动关掉并切回系统语音。
+     */
+    private fun refreshTtsPack() {
+        if (_binding == null) return
+        val context = requireContext()
+        val supported = TtsPack.isSupported()
+        val installed = TtsPack.installedVersion(context)
+
+        if (installed <= 0 && Settings.offlineTtsEnabled(context)) {
+            Settings.setOfflineTtsEnabled(context, false)
+            Tts.refreshEngine()
+        }
+
+        suppressSwitchEvent = true
+        binding.swTtsOffline.isEnabled = supported && installed > 0
+        binding.swTtsOffline.isChecked =
+            supported && installed > 0 && Settings.offlineTtsEnabled(context)
+        suppressSwitchEvent = false
+
+        binding.tvTtsPack.text = TtsPack.label(context, packInfo)
+        binding.tvTtsOfflineDesc.text = when {
+            !supported -> getString(R.string.tts_pack_desc_unsupported)
+            installed > 0 -> getString(R.string.tts_pack_desc_installed, TtsPack.installedName(context))
+            else -> getString(R.string.settings_tts_pack_desc)
+        }
+        if (supported && packInfo == null) loadPackInfo(force = false)
+    }
+
+    /** 后台拉引擎清单（内部有 2 小时节流，重复调用不会反复联网）。 */
+    private fun loadPackInfo(force: Boolean) {
+        if (_binding == null || packLoading) return
+        packLoading = true
+        val appContext = requireContext().applicationContext
+        Thread({
+            val info = runCatching { TtsPack.newest(appContext, force) }.getOrNull()
+            Bg.post {
+                packLoading = false
+                if (info == null) return@post
+                packInfo = info
+                if (_binding != null) refreshTtsPack()
+            }
+        }, "tts-pack-check").apply { isDaemon = true }.start()
     }
 
     private fun activity(): AppCompatActivity = requireActivity() as AppCompatActivity

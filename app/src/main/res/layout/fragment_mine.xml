@@ -139,6 +139,59 @@
 
                     <View style="@style/Widget.WordDrill.SettingDivider" />
 
+                    <!-- 离线语音包：独立安装的 TTS 引擎，主包里不带原生库 -->
+                    <LinearLayout
+                        android:id="@+id/rowTtsPack"
+                        style="@style/Widget.WordDrill.SettingRow"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            style="@style/Text.SettingTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/settings_tts_pack" />
+
+                        <TextView
+                            android:id="@+id/tvTtsPack"
+                            style="@style/Text.SettingValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/text_hint" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swTtsOffline"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:minHeight="48dp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/settings_tts_offline"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvTtsOfflineDesc"
+                        style="@style/Text.SettingDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/settings_tts_pack_desc" />
+
+                    <View style="@style/Widget.WordDrill.SettingDivider" />
+
                     <!-- 提醒 -->
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swReminder"
