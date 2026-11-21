@@ -16,7 +16,6 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 /**
  * 离线语音包（独立安装的 TTS 引擎 App）。
@@ -36,7 +35,7 @@ object TtsPack {
 
     private const val PREFS = "tts_pack"
     private const val KEY_LAST_CHECK = "last_check"
-    private const val CHECK_INTERVAL_MS = TimeUnit.HOURS.toMillis(2)
+    private const val CHECK_INTERVAL_MS = 2L * 60 * 60 * 1000
 
     data class Info(
         val versionCode: Int,
