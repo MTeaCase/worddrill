@@ -1,0 +1,8 @@
+{
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "content": "1. 首个版本：美式 en_US / 英式 en_GB 两个离线发音模型\n2. 装完即用，运行时不联网；只支持 64 位（arm64）设备\n3. 装好后会出现在系统的「文字转语音」列表里",
+  "url": "https://gitee.com/MTeaCase/worddrilltts/releases/download/v1.0.0/WordDrill-tts-engine-1.0.0.apk",
+  "size": 41812295,
+  "md5": "00c0b0d94a57d5b8d45b546a656f57fe"
+}

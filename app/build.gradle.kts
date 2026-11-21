@@ -11,8 +11,8 @@ android {
         applicationId = "com.worddrill.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 28
-        versionName = "1.6.7"
+        versionCode = 29
+        versionName = "1.6.8"
 
         // 更新检查地址（Gitee raw 优先，Cloudflare Pages 兜底）。改这里即可换源，不用改代码。
         // 支持用英文逗号分隔配多个镜像，会按顺序问，取其中版本号最高的那份。
@@ -25,10 +25,11 @@ android {
 
         // 离线语音包清单（独立仓库 worddrilltts 发布，格式与 update.json 同款）。
         // 同样支持逗号分隔多镜像，取版本号最高的那份。
+        // 注意分支名：worddrilltts 仓库用的是 main（主仓库是 master）。
         buildConfigField(
             "String",
             "TTS_ENGINE_MANIFEST",
-            "\"https://gitee.com/MTeaCase/worddrilltts/raw/master/tts-engine.json,https://worddrill-update.pages.dev/tts-engine.json\"",
+            "\"https://gitee.com/MTeaCase/worddrilltts/raw/main/tts-engine.json,https://worddrill-update.pages.dev/tts-engine.json,https://raw.githubusercontent.com/MTeaCase/worddrilltts/main/tts-engine.json\"",
         )
 
         // 智能解析服务（EdgeOne → 商汤日日新，失败回退 Netlify）。换地址填这里即可，
